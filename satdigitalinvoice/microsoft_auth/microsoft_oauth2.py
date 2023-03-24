@@ -1,13 +1,14 @@
 import hashlib
-import json
 import posixpath
 import secrets
 import webbrowser
 from base64 import urlsafe_b64encode
 from random import randrange
+
 import requests
-from .utils.auth_code_receiver import AuthCodeReceiver
-from .utils.jwt_util import load_jwt
+
+from .auth_code_receiver import AuthCodeReceiver
+from .jwt_util import load_jwt
 
 
 def get_token(

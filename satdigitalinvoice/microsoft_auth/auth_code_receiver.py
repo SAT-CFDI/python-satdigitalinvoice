@@ -120,11 +120,3 @@ class AuthCodeReceiver(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-if __name__ == "__main__":
-    server = AuthCodeReceiver(port=0)
-    a = server.get_port()
-    print(a)
-    result = server.get_auth_response(timeout=1000)
-    print(result)
