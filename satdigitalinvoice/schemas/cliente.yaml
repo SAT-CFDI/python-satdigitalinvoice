@@ -1,0 +1,70 @@
+$schema: 'https://json-schema.org/draft/2020-12/schema'
+type: object
+properties:
+  CodigoPostal:
+    type: string
+  IdCIF:
+    type: string
+  Domicilio:
+    type: string
+  RazonSocial:
+    type: string
+  CURP:
+    type: string
+  Nombre:
+    type: string
+  ApellidoPaterno:
+    type: string
+  ApellidoMaterno:
+    type: string
+  Cuenta:
+    type: string
+  CuentaBancaria:
+    type: object
+    properties:
+      Clabe:
+        type: string
+      Banco:
+        type: string
+    additionalProperties: false
+  RegimenFiscal:
+    type: string
+  Email:
+    type: array
+    items:
+      type: string
+      format: email
+  EmailNotas:
+    type: string
+  Representante:
+    type: object
+    properties:
+      Nombre:
+        type: string
+      CURP:
+        type: string
+      Domicilio:
+        type: string
+    additionalProperties: false
+  Fiadores:
+    type: array
+    items:
+      type: object
+      properties:
+        Nombre:
+          type: string
+        CURP:
+          type: string
+        Domicilio:
+          type: string
+      additionalProperties: false
+required:
+- CodigoPostal
+- IdCIF
+- RazonSocial
+- RegimenFiscal
+- Email
+additionalProperties: false
+
+
+

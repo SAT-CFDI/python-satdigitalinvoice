@@ -1,0 +1,31 @@
+CACX7605101P8:
+  RazonSocial: CACERES XAVIER
+  CodigoPostal: '64264'
+  RegimenFiscal: '612' # Régimen General de Ley Personas Morales
+  IdCIF: 'XAXX010101000'
+  Email:
+  - emailfake@email.com
+
+ABV9901115S7:
+  RazonSocial: SERVICIOS COMERCIALES ANDREA
+  CodigoPostal: '64264'
+  RegimenFiscal: '601' # Régimen General de Ley Personas Morales
+  IdCIF: '1234456789'
+  Email:
+  - emailfake@email.com
+
+ABC1511034U3:
+  RazonSocial: INSTITUTO EDUCATIVO DE EDUCACION BASICA
+  CodigoPostal: '64264'
+  RegimenFiscal: '603' # Régimen de Personas Morales con Fines no Lucrativos
+  IdCIF: '1234456789'
+  Email:
+  - emailfake@email.com
+
+ABMG891115PD7:
+  RazonSocial:  PEPE ALEJANDRO LOPEZ
+  CodigoPostal: '64264'
+  RegimenFiscal: '621' # Régimen de Incorporacion Fiscal
+  IdCIF: '1234456789'
+  Email:
+  - emailfake@email.com
