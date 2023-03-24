@@ -342,7 +342,7 @@ def main_loop():
                 case _:
                     logger.error(f"Unknown event {event}")
 
-        except Exception as ex:
+        except Exception:
             log_line("ERROR NO CONTROLADO", exc_info=True)
 
 
@@ -359,5 +359,3 @@ window = sg.Window(
 )
 main_loop()
 window.close()
-
-# Update
