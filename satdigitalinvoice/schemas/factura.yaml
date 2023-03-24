@@ -1,0 +1,68 @@
+type: object
+properties:
+  Rfc:
+    type: string
+  UsoCFDI:
+    type: string
+  MetodoPago:
+    type: string
+  FormaPago:
+    type: string
+  Conceptos:
+    type: array
+    items:
+      type: object
+      properties:
+        CuentaPredial:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+        ClaveProdServ:
+          type: string
+        Cantidad:
+          type: number
+        ClaveUnidad:
+          type: string
+        Descripcion:
+          type: string
+        _periodo_mes_ajuste:
+          type: string
+        ValorUnitario:
+          type: number
+        Impuestos:
+          type: object
+          properties:
+            Traslados:
+              anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+            Retenciones:
+              anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - ClaveProdServ
+      - Cantidad
+      - ClaveUnidad
+      - Descripcion
+      - ValorUnitario
+      - Impuestos
+      - _periodo_mes_ajuste
+  Total:
+    type: number
+required:
+- Rfc
+- UsoCFDI
+- MetodoPago
+- FormaPago
+- Conceptos
+- Total
+additionalProperties: false
