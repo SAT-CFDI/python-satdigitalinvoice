@@ -1,0 +1,76 @@
+$schema: 'https://json-schema.org/draft/2020-12/schema'
+type: object
+properties:
+  Emisor:
+    type: object
+    properties:
+      RegimenFiscal:
+        type: string
+    additionalProperties: false
+  Receptor:
+    type: string
+  UsoCFDI:
+    type: string
+  MetodoPago:
+    type: string
+  FormaPago:
+    type: string
+  Conceptos:
+    type: array
+    items:
+      type: object
+      properties:
+        CuentaPredial:
+          anyOf:
+          - type: string
+          - type: array
+            items:
+              type: string
+        ClaveProdServ:
+          type: string
+        Cantidad:
+          type: number
+        ClaveUnidad:
+          type: string
+        Descripcion:
+          type: string
+        _periodo_mes_ajuste:
+          type: string
+        ValorUnitario:
+          type:
+          - number
+          - 'null'
+        Impuestos:
+          type: object
+          properties:
+            Traslados:
+              anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+            Retenciones:
+              anyOf:
+              - type: string
+              - type: array
+                items:
+                  type: string
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - ClaveProdServ
+      - Cantidad
+      - ClaveUnidad
+      - Descripcion
+      - ValorUnitario
+      - Impuestos
+      - _periodo_mes_ajuste
+  Total:
+    type: number
+required:
+- Receptor
+- UsoCFDI
+- MetodoPago
+- FormaPago
+- Conceptos
+additionalProperties: false

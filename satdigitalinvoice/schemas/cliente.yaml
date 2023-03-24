@@ -1,0 +1,28 @@
+$schema: 'https://json-schema.org/draft/2020-12/schema'
+type: object
+properties:
+  CodigoPostal:
+    type: string
+  IdCIF:
+    type: string
+  RazonSocial:
+    type: string
+  RegimenFiscal:
+    type: string
+  Email:
+    type: array
+    items:
+      type: string
+      format: email
+  Celular:
+    type: string
+required:
+- CodigoPostal
+- IdCIF
+- RazonSocial
+- RegimenFiscal
+- Email
+additionalProperties: false
+
+
+
