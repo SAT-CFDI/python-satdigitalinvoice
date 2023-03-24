@@ -1,0 +1,25 @@
+$schema: 'https://json-schema.org/draft/2020-12/schema'
+type: object
+properties:
+  serie:
+    type: string
+  pagar_a_partir:
+    type: object
+  rfc_prediales:
+    type: array
+  csd:
+    type: object
+  fiel:
+    type: object
+  email:
+    type: object
+  pac:
+    type: object
+required:
+- serie
+- enviar_a_partir
+- pagar_a_partir
+- csd
+- pac
+
+
