@@ -1,0 +1,22 @@
+Constants:
+- &arrendamiento_de_inmuebles_moral
+  ClaveProdServ: '80131502'
+  Cantidad: 1
+  ClaveUnidad: E48
+  Impuestos:
+    Traslados: 'IVA|Tasa|0.160000'
+    Retenciones:
+    - 'ISR|Tasa|0.100000'
+    - 'IVA|Tasa|0.106667'
+
+- &pue
+  UsoCFDI: G03
+  MetodoPago: PUE
+  FormaPago: "03"
+
+- &ppd
+  UsoCFDI: G03
+  MetodoPago: PPD
+  FormaPago: "99"
+
+Facturas: []
