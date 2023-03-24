@@ -71,5 +71,11 @@ setuptools.setup(
         'markdown2',
         'python-dateutil',
         'PySimpleGUI',
-    ]
+    ],
+    extras_require={
+        'test': [
+            'coverage',
+            'pytest',
+        ]
+    }
 )
