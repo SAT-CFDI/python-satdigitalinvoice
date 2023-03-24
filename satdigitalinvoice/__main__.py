@@ -3,8 +3,9 @@ from datetime import date, datetime
 
 import PySimpleGUI as sg
 import yaml
-from PySimpleGUI import POPUP_BUTTONS_YES_NO, POPUP_BUTTONS_OK_CANCEL
+from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL
 from babel.dates import format_date
+from satcfdi import Code
 from satcfdi.accounting import filter_invoices_by, InvoiceType
 
 from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION
@@ -108,6 +109,13 @@ class Handler(logging.StreamHandler):
 logging.basicConfig(level=logging.DEBUG)
 
 
+def log_line(text, exc_info=False):
+    logger.info(
+        f"====================================================== {text} ==================================================================",
+        exc_info=exc_info
+    )
+
+
 class InvoiceButtonManager:
     def __init__(self):
         self._cfdis = []
@@ -118,17 +126,13 @@ class InvoiceButtonManager:
             cfdi_copy = cfdi.copy()
             del cfdi_copy["Certificado"]
             del cfdi_copy["Sello"]
-            del cfdi_copy["NoCertificado"]
-            del cfdi_copy["Serie"]
             detallado = window['detallado'].get()
             if not detallado:
+                del cfdi_copy["Serie"]
+                del cfdi_copy["NoCertificado"]
                 cfdi_copy.pop("Emisor")
-                cfdi_copy["Receptor"] = {
-                    "Rfc": cfdi_copy["Receptor"]["Rfc"],
-                    "Nombre": cfdi_copy["Receptor"]["Nombre"]
-                }
-                # cfdi_copy["Conceptos"] = f"<< {len(cfdi_copy['Conceptos'])} >>"
-                cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]
+                cfdi_copy["Receptor"] = Code(cfdi_copy['Receptor']['Rfc'], cfdi_copy['Receptor']['Nombre'])
+                cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]  # f"<< {len(cfdi_copy['Conceptos'])} >>"
                 cfdi_copy.pop("Impuestos", None)
                 cfdi_copy.pop("Fecha")
                 cfdi_copy.pop("LugarExpedicion")
@@ -140,9 +144,8 @@ class InvoiceButtonManager:
                     del cfdi_copy["FormaPago"]
                 if cfdi_copy.get("Moneda") in ("MXN", "XXX"):
                     del cfdi_copy["Moneda"]
-            logger.info(f"========================================= FACTURA NUMERO: {i} =====================================================")
-            # logger.info(cfdi_cop.json_str(pretty_print=True))
-            logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1024, sort_keys=False))
+            log_line(f"FACTURA NUMERO: {i}")
+            logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1280, sort_keys=False))
 
         self.style_button(typo)
 
@@ -172,7 +175,7 @@ class EmailButtonManager:
             client = clients[receptor_rfc]
             to_addrs = client["Email"]
 
-            logger.info(f"========================================= CORREO NUMERO: {i} =====================================================")
+            log_line(f"CORREO NUMERO: {i}")
             logger.info(f"{cfdi.name} {receptor_rfc} {to_addrs}")
         self.style_button()
 
@@ -242,17 +245,17 @@ def main_loop():
                 case "validate_clientes":
                     res = sg.popup(
                         f"Estas seguro que quieres validar {len(clients)} clientes?",
-                        title="VALIDAR CLIENTES",
+                        title=window[event].ButtonText,
                         button_type=POPUP_BUTTONS_OK_CANCEL,
                     )
                     if res == "OK":
                         for rfc, details in clients.items():
-                            logger.info(f"==== VALIDANDO {rfc} =====")
+                            log_line(f"VALIDANDO {rfc}")
                             window.read(timeout=0)
                             validar_client(rfc, details)
-                        logger.info("====== FIN ======")
+                        log_line("FIN")
                     else:
-                        logger.info("====== OPERACION CANCELADA ======")
+                        log_line("OPERACION CANCELADA")
 
                 case "validate_invoices":
                     facturas = generate_ingresos(values)
@@ -277,7 +280,7 @@ def main_loop():
                 case "crear_facturas":
                     res = sg.popup(
                         f"Estas seguro que quieres crear {len(invoices_to_create)} facturas?",
-                        title="CREAR FACTURAS",
+                        title=window[event].ButtonText,
                         button_type=POPUP_BUTTONS_OK_CANCEL,
 
                     )
@@ -288,9 +291,9 @@ def main_loop():
                                 ref_id=None
                             )
                             window.read(timeout=0)
-                        logger.info("====== FIN ======")
+                        log_line("FIN")
                     else:
-                        logger.info("====== OPERACION CANCELADA ======")
+                        log_line("OPERACION CANCELADA")
 
                 case "prepare_correos":
                     all_invoices = get_all_cfdi()
@@ -305,22 +308,20 @@ def main_loop():
                 case "enviar_correos":
                     res = sg.popup(
                         f"Estas seguro que quieres enviar {len(emails_to_send)} correos?",
-                        title="ENVIAR CORREOS",
+                        title=window[event].ButtonText,
                         button_type=POPUP_BUTTONS_OK_CANCEL
                     )
                     if res == "OK":
                         enviar_correos(emails_to_send)
-                        logger.info("====== FIN ======")
+                        log_line("FIN")
                     else:
-                        logger.info("====== OPERACION CANCELADA ======")
+                        log_line("OPERACION CANCELADA")
 
                 case "status_sat":
                     i = find_factura(values["factura_pagar"])
                     if i:
                         estado = cancelados_manager.get_state(i, only_cache=False)
                         logger.info(estado)
-                    else:
-                        logger.info("Factura No Encontrada")
 
                 case "facturas_pendientes":
                     all_invoices = get_all_cfdi()
@@ -342,7 +343,7 @@ def main_loop():
                     logger.error(f"Unknown event {event}")
 
         except Exception as ex:
-            logger.exception("=======  ERROR NO CONTROLADO =======")
+            log_line("ERROR NO CONTROLADO", exc_info=True)
 
 
 ch = Handler()
@@ -350,9 +351,10 @@ ch.setLevel(logging.INFO)
 logging.getLogger().addHandler(ch)
 
 window = sg.Window(
-    f"{EMISOR.legal_name}  RFC: {EMISOR.rfc}  Facturas: {FACTURAS_SOURCE}  Serie: {SERIE}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
+    f"Facturacion 4.0  RazonSocial: {EMISOR.legal_name}  RFC: {EMISOR.rfc}  Facturas: {FACTURAS_SOURCE}  "
+    f"Serie: {SERIE}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
     make_layout(),
-    size=(1024, 800),
+    size=(1280, 800),
     resizable=True
 )
 main_loop()
