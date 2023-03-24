@@ -5,4 +5,3 @@ def test_auth_receiver():
     server = AuthCodeReceiver(port=0)
     a = server.get_port()
     assert a < 65536
-
