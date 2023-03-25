@@ -1,22 +1,22 @@
 import logging
 from datetime import date, datetime
 
-from satcfdi.exceptions import ResponseError
 import PySimpleGUI as sg
-import yaml
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL
 from babel.dates import format_date
 from satcfdi import Code
 from satcfdi.accounting import filter_invoices_by, InvoiceType
+from satcfdi.exceptions import ResponseError
 
 from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
+from .log_tools import LogAdapter, LogHandler, log_cfdi
 from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI
 
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger()
+logger = LogAdapter(logging.getLogger())
 
 
 def make_layout():
@@ -78,52 +78,12 @@ def make_layout():
     ]
 
 
-class Handler(logging.StreamHandler):
-    def __init__(self):
-        super().__init__()
-        self.buffer = ""
-
-    def emit(self, record):
-        msg = self.format(record)
-        self.buffer += '\n' + msg
-        window['console'].update(value=self.buffer)
-
-    def clear(self):
-        self.buffer = ""
-        window['console'].update(value="")
-
-
 def log_line(text, exc_info=False):
+    ln = (150 - len(text)) // 2
     logger.info(
-        ("=" * 65) + " " + text + " " + ("=" * 65),
+        ("=" * ln) + " " + text + " " + ("=" * ln),
         exc_info=exc_info
     )
-
-
-def log_cfdi(cfdi):
-    cfdi_copy = cfdi.copy()
-    del cfdi_copy["Certificado"]
-    del cfdi_copy["Sello"]
-    detallado = window['detallado'].get()
-    if not detallado:
-        del cfdi_copy["Serie"]
-        del cfdi_copy["NoCertificado"]
-        cfdi_copy.pop("Emisor")
-        cfdi_copy["Receptor"] = Code(cfdi_copy['Receptor']['Rfc'], cfdi_copy['Receptor']['Nombre'])
-        cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]  # f"<< {len(cfdi_copy['Conceptos'])} >>"
-        cfdi_copy.pop("Impuestos", None)
-        cfdi_copy.pop("Fecha")
-        cfdi_copy.pop("LugarExpedicion")
-        cfdi_copy.pop("Version")
-        cfdi_copy.pop("TipoDeComprobante")
-        if cfdi_copy.get("Exportacion") == "01":
-            del cfdi_copy["Exportacion"]
-        if cfdi_copy.get("FormaPago") == "99":
-            del cfdi_copy["FormaPago"]
-        if cfdi_copy.get("Moneda") in ("MXN", "XXX"):
-            del cfdi_copy["Moneda"]
-
-    logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1280, sort_keys=False))
 
 
 def cfdi_header(cfdi):
@@ -139,7 +99,7 @@ class InvoiceButtonManager:
         self._cfdis = invoices
         for i, cfdi in enumerate(self._cfdis, start=1):
             log_line(f"FACTURA NUMERO: {i}")
-            log_cfdi(cfdi)
+            log_cfdi(cfdi, detailed=window['detallado'].get())
 
         self.style_button()
 
@@ -285,7 +245,7 @@ def main_loop():
                             except ResponseError as ex:
                                 logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
                                 logger.error(f"Status Code: {ex.response.status_code}")
-                                logger.info(yaml.safe_dump(ex.response.json(), allow_unicode=True, width=1280, sort_keys=False))
+                                logger.info_yaml(ex.response.json())
                                 break
                         log_line("FIN")
                     else:
@@ -317,7 +277,7 @@ def main_loop():
                     i = find_factura(values["factura_pagar"])
                     if i:
                         estado = cancelados_manager.get_state(i, only_cache=False)
-                        logger.info(estado)
+                        logger.info_yaml(estado)
 
                 case "facturas_pendientes":
                     all_invoices = get_all_cfdi()
@@ -332,10 +292,10 @@ def main_loop():
                     for i in fac_pen:
                         f = {
                             'Receptor': Code(i['Receptor']['Rfc'], i['Receptor']['Nombre']),
-                            'Factura': i.name,
+                            'Factura': f"{i.name} - {i.uuid}",
                             'SaldoPendiente': i.saldo_pendiente
                         }
-                        logger.info(yaml.safe_dump(f, allow_unicode=True, width=1280, sort_keys=False))
+                        logger.info_yaml(f)
 
                 case "periodo" | "inicio" | "final" | "factura_pagar" | "fecha_pago" | "forma_pago":
                     pass
@@ -347,10 +307,6 @@ def main_loop():
             log_line("ERROR NO CONTROLADO", exc_info=True)
 
 
-ch = Handler()
-ch.setLevel(logging.INFO)
-logging.getLogger().addHandler(ch)
-
 window = sg.Window(
     f"Facturacion 4.0  RazonSocial: {EMISOR.legal_name}  RFC: {EMISOR.rfc}  Facturas: {FACTURAS_SOURCE}  "
     f"Serie: {SERIE}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
@@ -358,5 +314,10 @@ window = sg.Window(
     size=(1280, 800),
     resizable=True
 )
+
+ch = LogHandler(window['console'])
+ch.setLevel(logging.INFO)
+logging.getLogger().addHandler(ch)
+
 main_loop()
 window.close()

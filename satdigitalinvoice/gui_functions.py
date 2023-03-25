@@ -1,5 +1,7 @@
 import logging
+import uuid
 from datetime import datetime
+from uuid import UUID
 
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante
@@ -72,25 +74,43 @@ def find_factura(factura):
         logger.error("Especificar factura a pagar")
         return
 
+    try:
+        factura_uuid = uuid.UUID(factura)
+    except:
+        factura_uuid = None
+
     all_invoices = get_all_cfdi()
     for i in all_invoices.values():
-        if i.name == factura and i["Emisor"]["Rfc"] == EMISOR.rfc:
+        if (i.name == factura or i.uuid == factura_uuid) and i["Emisor"]["Rfc"] == EMISOR.rfc:
             logger.info(f"Factura Encontrada: {i['Receptor']['Rfc']}  {i.name}  {i.uuid}  {i['Fecha']}")
             return i
 
     logger.info(f"Factura No Encontrada {factura}")
 
 
-def pago_factura(factura_pagar, fecha_pago, forma_pago):
-    fecha_pago = datetime.fromisoformat(fecha_pago).replace(hour=12)
+def parse_fecha_pago(fecha_pago):
+    fecha_pago = datetime.fromisoformat(fecha_pago)
+    if fecha_pago > datetime.now():
+        logger.error("Fecha de Pago esta en el futuro")
+        return
+
+    if fecha_pago.replace(hour=12) > datetime.now():
+        fecha_pago = datetime.now()
+    else:
+        fecha_pago = fecha_pago.replace(hour=12)
 
     dif = datetime.now() - fecha_pago
     if dif.days > 30:
-        logger.error("Fecha de Pago es de hace mas de 30 dias")
+        logger.error("!!! FECHA DE PAGO ES MAYOR A 30 DIAS !!!")
+
+    return fecha_pago
+
+
+def pago_factura(factura_pagar, fecha_pago, forma_pago):
+    if not (fecha_pago := parse_fecha_pago(fecha_pago)):
         return
 
-    i = find_factura(factura_pagar)
-    if i:
+    if i := find_factura(factura_pagar):
         if i["TipoDeComprobante"] != "I":
             logger.error("Comprobante a pagar no es de Ingreso")
             return
@@ -102,6 +122,10 @@ def pago_factura(factura_pagar, fecha_pago, forma_pago):
         if i.saldo_pendiente != i["Total"]:
             logger.error("Comprobante ya tiene pago anterior")
             logger.error(f"Saldo Pendiente: {i.saldo_pendiente}")
+            return
+
+        if i.estatus != "1":
+            logger.error("Comprobante ya esta cancelado")
             return
 
         return generar_pago(cfdi=i, fecha_pago=fecha_pago, forma_pago=forma_pago)
