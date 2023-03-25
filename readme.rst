@@ -2,8 +2,8 @@
     :target: https://github.com/badges/SAT-CFDI/python-satdigitalinvoice
     :alt: Activity
 
-.. image:: https://readthedocs.org/projects/satcfdi/badge?version=latest
-    :target: https://satcfdi.readthedocs.io?badge=latest
+.. image:: https://readthedocs.org/projects/satdigitalinvoice/badge?version=latest
+    :target: https://satdigitalinvoice.readthedocs.io?badge=latest
     :alt: Documentation Status
 
 .. image:: https://github.com/SAT-CFDI/python-satdigitalinvoice/actions/workflows/tests.yml/badge.svg
@@ -22,12 +22,12 @@
     :target: https://github.com/SAT-CFDI/python-satdigitalinvoice/releases
     :alt: Releases
 
-.. image:: https://pepy.tech/badge/satcfdi/month
-    :target: https://pepy.tech/project/satcfdi
+.. image:: https://pepy.tech/badge/satdigitalinvoice/month
+    :target: https://pepy.tech/project/satdigitalinvoice
     :alt: Downloads
 
-.. image:: https://img.shields.io/pypi/pyversions/satcfdi.svg
-    :target: https://pypi.org/project/satcfdi
+.. image:: https://img.shields.io/pypi/pyversions/satdigitalinvoice.svg
+    :target: https://pypi.org/project/satdigitalinvoice
     :alt: Supported Versions
 
 .. image:: https://img.shields.io/github/contributors/SAT-CFDI/python-satdigitalinvoice.svg
@@ -39,7 +39,7 @@
     :alt: Scrutinizer Code Quality
 
 .. image:: https://scrutinizer-ci.com/g/SAT-CFDI/python-satdigitalinvoice/badges/coverage.png?b=main
-    :target: https://scrutinizer-ci.com/g/SAT-CFDI/python-satdigitalinvoice/code-structure/main/code-coverage/satcfdi/
+    :target: https://scrutinizer-ci.com/g/SAT-CFDI/python-satdigitalinvoice/code-structure/main/code-coverage/satdigitalinvoice/
     :alt: Code Coverage
 
 .. image:: https://img.shields.io/discord/1045508868807073792?logo=discord&style=flat
@@ -59,7 +59,7 @@ Install SAT-CFDI from PyPI with:
 
 .. code-block:: sh
 
-    python -m pip install satcfdi
+    python -m pip install satdigitalinvoice
 
 or install from source with:
 
