@@ -14,6 +14,7 @@ from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
 from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager
 
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 
@@ -78,21 +79,17 @@ def make_layout():
 
 class Handler(logging.StreamHandler):
     def __init__(self):
-        logging.StreamHandler.__init__(self)
+        super().__init__()
         self.buffer = ""
 
     def emit(self, record):
         msg = self.format(record)
-
-        self.buffer = f'{self.buffer}\n{msg}'.strip()
+        self.buffer += '\n' + msg
         window['console'].update(value=self.buffer)
 
     def clear(self):
         self.buffer = ""
         window['console'].update(value="")
-
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 def log_line(text, exc_info=False):
