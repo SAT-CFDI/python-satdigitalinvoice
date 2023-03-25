@@ -294,21 +294,14 @@ def email_invoices(all_invoices: Mapping[UUID, MyCFDI], email_sender: EmailSende
                 r.notified = ",".join(to_addrs)
 
 
-def generate_invoice(invoice, ref_id):
-    try:
-        res = PAC_SERVICE.stamp(
-            cfdi=invoice,
-            accept=Accept.XML_PDF,
-            ref_id=ref_id
-        )
-        serie = invoice.get("Serie")
-        folio = invoice.get("Folio")
-        if serie and folio:
-            notifications.set_folio(serie, folio)
-        cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
-        logger.info(f'Factura Generada {serie}{folio} {cfdi["Receptor"]["Rfc"]}')
-    except ResponseError as ex:
-        logger.error(f"Status Code {ex.response.status_code}")
-        logger.error(f"Text {ex.response.text}")
-        raise
-
+def generate_invoice(invoice, ref_id=None):
+    res = PAC_SERVICE.stamp(
+        cfdi=invoice,
+        accept=Accept.XML_PDF,
+        ref_id=ref_id
+    )
+    serie = invoice.get("Serie")
+    folio = invoice.get("Folio")
+    if serie and folio:
+        notifications.set_folio(serie, folio)
+    return move_to_folder(res.xml, pdf_data=res.pdf)

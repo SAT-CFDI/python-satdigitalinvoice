@@ -1,6 +1,7 @@
 import logging
 from datetime import date, datetime
 
+from satcfdi.exceptions import ResponseError
 import PySimpleGUI as sg
 import yaml
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL
@@ -12,7 +13,7 @@ from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
-from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager
+from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
@@ -68,9 +69,9 @@ def make_layout():
     # ----- Full layout -----
     return [
         [button_column],
-        [sg.HSeparator(),],
+        [sg.HSeparator(), ],
         [button_column_second],
-        [sg.HSeparator(),],
+        [sg.HSeparator(), ],
         [button_column_third],
         [sg.Output(expand_x=True, expand_y=True, key="console")],
         [button_column_low]
@@ -94,9 +95,40 @@ class Handler(logging.StreamHandler):
 
 def log_line(text, exc_info=False):
     logger.info(
-        ("="*65) + " " + text + " " + ("="*65),
+        ("=" * 65) + " " + text + " " + ("=" * 65),
         exc_info=exc_info
     )
+
+
+def log_cfdi(cfdi):
+    cfdi_copy = cfdi.copy()
+    del cfdi_copy["Certificado"]
+    del cfdi_copy["Sello"]
+    detallado = window['detallado'].get()
+    if not detallado:
+        del cfdi_copy["Serie"]
+        del cfdi_copy["NoCertificado"]
+        cfdi_copy.pop("Emisor")
+        cfdi_copy["Receptor"] = Code(cfdi_copy['Receptor']['Rfc'], cfdi_copy['Receptor']['Nombre'])
+        cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]  # f"<< {len(cfdi_copy['Conceptos'])} >>"
+        cfdi_copy.pop("Impuestos", None)
+        cfdi_copy.pop("Fecha")
+        cfdi_copy.pop("LugarExpedicion")
+        cfdi_copy.pop("Version")
+        cfdi_copy.pop("TipoDeComprobante")
+        if cfdi_copy.get("Exportacion") == "01":
+            del cfdi_copy["Exportacion"]
+        if cfdi_copy.get("FormaPago") == "99":
+            del cfdi_copy["FormaPago"]
+        if cfdi_copy.get("Moneda") in ("MXN", "XXX"):
+            del cfdi_copy["Moneda"]
+
+    logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1280, sort_keys=False))
+
+
+def cfdi_header(cfdi):
+    receptor = Code(cfdi['Receptor']['Rfc'], cfdi['Receptor']['Nombre'])
+    return f"{cfdi.name} {receptor}"
 
 
 class InvoiceButtonManager:
@@ -106,29 +138,8 @@ class InvoiceButtonManager:
     def set_invoices(self, invoices):
         self._cfdis = invoices
         for i, cfdi in enumerate(self._cfdis, start=1):
-            cfdi_copy = cfdi.copy()
-            del cfdi_copy["Certificado"]
-            del cfdi_copy["Sello"]
-            detallado = window['detallado'].get()
-            if not detallado:
-                del cfdi_copy["Serie"]
-                del cfdi_copy["NoCertificado"]
-                cfdi_copy.pop("Emisor")
-                cfdi_copy["Receptor"] = Code(cfdi_copy['Receptor']['Rfc'], cfdi_copy['Receptor']['Nombre'])
-                cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]  # f"<< {len(cfdi_copy['Conceptos'])} >>"
-                cfdi_copy.pop("Impuestos", None)
-                cfdi_copy.pop("Fecha")
-                cfdi_copy.pop("LugarExpedicion")
-                cfdi_copy.pop("Version")
-                cfdi_copy.pop("TipoDeComprobante")
-                if cfdi_copy.get("Exportacion") == "01":
-                    del cfdi_copy["Exportacion"]
-                if cfdi_copy.get("FormaPago") == "99":
-                    del cfdi_copy["FormaPago"]
-                if cfdi_copy.get("Moneda") in ("MXN", "XXX"):
-                    del cfdi_copy["Moneda"]
             log_line(f"FACTURA NUMERO: {i}")
-            logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1280, sort_keys=False))
+            log_cfdi(cfdi)
 
         self.style_button()
 
@@ -155,11 +166,11 @@ class EmailButtonManager:
 
         for i, cfdi in enumerate(self._emails, start=1):
             receptor_rfc = cfdi["Receptor"]["Rfc"]
-            client = clients[receptor_rfc]
-            to_addrs = client["Email"]
+            to_addrs = clients[receptor_rfc]["Email"]
 
             log_line(f"CORREO NUMERO: {i}")
-            logger.info(f"{cfdi.name} {receptor_rfc} {to_addrs}")
+            logger.info(cfdi_header(cfdi))
+            logger.info(to_addrs)
         self.style_button()
 
     def clear(self):
@@ -267,11 +278,16 @@ def main_loop():
                     )
                     if res == "OK":
                         for invoice in invoices_to_create:
-                            generate_invoice(
-                                invoice=invoice,
-                                ref_id=None
-                            )
-                            window.read(timeout=0)
+                            try:
+                                cfdi = generate_invoice(invoice=invoice)
+                                logger.info(f'Factura Generada: {cfdi_header(cfdi)}')
+                                window.read(timeout=0)
+                            except ResponseError as ex:
+                                logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
+                                logger.error(f"Status Code: {ex.response.status_code}")
+                                logger.info(yaml.safe_dump(ex.response.json(), allow_unicode=True, width=1280, sort_keys=False))
+                                break
+
                         log_line("FIN")
                     else:
                         log_line("OPERACION CANCELADA")
@@ -315,7 +331,12 @@ def main_loop():
                         estatus='1'
                     )
                     for i in fac_pen:
-                        logger.info(f"{i['Receptor']['Rfc']} {i.name} ${i.saldo_pendiente}")
+                        f = {
+                            'Receptor': Code(i['Receptor']['Rfc'], i['Receptor']['Nombre']),
+                            'Factura': i.name,
+                            'SaldoPendiente': i.saldo_pendiente
+                        }
+                        logger.info(yaml.safe_dump(f, allow_unicode=True, width=1280, sort_keys=False))
 
                 case "periodo" | "inicio" | "final" | "factura_pagar" | "fecha_pago" | "forma_pago":
                     pass
