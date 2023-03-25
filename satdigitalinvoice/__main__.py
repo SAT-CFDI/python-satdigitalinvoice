@@ -44,9 +44,9 @@ def make_layout():
             sg.Button("Preparar Pago", key="prepare_pago"),
             sg.Text("De:"),
             sg.Input("", size=(30, 1), key="factura_pagar", change_submits=True),
-            sg.Text("Fecha Pago:"),
+            sg.Text("Fecha:"),
             sg.Input(f"{datetime.today():%Y-%m-%d}", size=(12, 1), key="fecha_pago", change_submits=True),
-            sg.Text("Forma Pago:"),
+            sg.Text("Forma:"),
             sg.Input("03", size=(4, 1), key="forma_pago", change_submits=True),
         ]
     ]
@@ -69,9 +69,9 @@ def make_layout():
     # ----- Full layout -----
     return [
         [button_column],
-        [sg.HSeparator(), ],
+        [sg.HSeparator()],
         [button_column_second],
-        [sg.HSeparator(), ],
+        [sg.HSeparator()],
         [button_column_third],
         [sg.Output(expand_x=True, expand_y=True, key="console")],
         [button_column_low]
