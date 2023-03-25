@@ -225,8 +225,8 @@ def enviar_correos(invoices):
 
 def main_loop():
     while True:
+        event, values = window.read()
         try:
-            event, values = window.read()
             if event in ("Exit", sg.WIN_CLOSED):
                 return
 
@@ -287,7 +287,6 @@ def main_loop():
                                 logger.error(f"Status Code: {ex.response.status_code}")
                                 logger.info(yaml.safe_dump(ex.response.json(), allow_unicode=True, width=1280, sort_keys=False))
                                 break
-
                         log_line("FIN")
                     else:
                         log_line("OPERACION CANCELADA")
