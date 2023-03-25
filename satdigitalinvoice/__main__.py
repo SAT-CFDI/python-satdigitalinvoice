@@ -58,7 +58,7 @@ def make_layout():
 
     button_column_low = [
         [
-            sg.Button(f"Validar {len(clients)} Clientes", key="validate_clientes"),
+            sg.Button("Validar Clientes", key="validate_clientes"),
             sg.Button("Crear Facturas", disabled=True, key="crear_facturas"),
             sg.Button("Enviar Correos", disabled=True, key="enviar_correos"),
         ]
@@ -66,27 +66,13 @@ def make_layout():
 
     # ----- Full layout -----
     return [
-        [
-            button_column
-        ],
-        [
-            sg.HSeparator(),
-        ],
-        [
-            button_column_second
-        ],
-        [
-            sg.HSeparator(),
-        ],
-        [
-            button_column_third
-        ],
-        [
-            sg.Output(expand_x=True, expand_y=True, key="console")
-        ],
-        [
-            button_column_low
-        ]
+        [button_column],
+        [sg.HSeparator(),],
+        [button_column_second],
+        [sg.HSeparator(),],
+        [button_column_third],
+        [sg.Output(expand_x=True, expand_y=True, key="console")],
+        [button_column_low]
     ]
 
 
@@ -111,7 +97,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 def log_line(text, exc_info=False):
     logger.info(
-        f"====================================================== {text} ==================================================================",
+        ("="*65) + " " + text + " " + ("="*65),
         exc_info=exc_info
     )
 
@@ -120,7 +106,7 @@ class InvoiceButtonManager:
     def __init__(self):
         self._cfdis = []
 
-    def set_invoices(self, invoices, typo):
+    def set_invoices(self, invoices):
         self._cfdis = invoices
         for i, cfdi in enumerate(self._cfdis, start=1):
             cfdi_copy = cfdi.copy()
@@ -147,18 +133,18 @@ class InvoiceButtonManager:
             log_line(f"FACTURA NUMERO: {i}")
             logger.info(yaml.safe_dump(cfdi_copy, allow_unicode=True, width=1280, sort_keys=False))
 
-        self.style_button(typo)
+        self.style_button()
 
     def clear(self):
         cfdis = self._cfdis
         self._cfdis = []
-        self.style_button(None)
+        self.style_button()
         return cfdis
 
-    def style_button(self, typo):
+    def style_button(self):
         button = window['crear_facturas']
         button.update(
-            f"Crear {len(self._cfdis)} Facturas {typo}",
+            f"Crear Facturas",
             disabled=len(self._cfdis) == 0
         )
 
@@ -188,7 +174,7 @@ class EmailButtonManager:
     def style_button(self):
         button = window['enviar_correos']
         button.update(
-            f"Enviar Correos {len(self._emails)} Facturas",
+            f"Enviar Correos",
             disabled=len(self._emails) == 0
         )
 
@@ -261,8 +247,7 @@ def main_loop():
                     facturas = generate_ingresos(values)
                     if facturas:
                         invoice_button_manager.set_invoices(
-                            facturas,
-                            typo="Ingreso"
+                            facturas
                         )
 
                 case "prepare_pago":
@@ -273,8 +258,7 @@ def main_loop():
                     )
                     if cfdi_pago:
                         invoice_button_manager.set_invoices(
-                            [cfdi_pago],
-                            typo="Pago"
+                            [cfdi_pago]
                         )
 
                 case "crear_facturas":
