@@ -301,7 +301,7 @@ def generate_invoice(invoice, ref_id=None):
         ref_id=ref_id
     )
     serie = invoice.get("Serie")
-    folio = invoice.get("Folio")
+    folio = int(invoice.get("Folio"))
     if serie and folio:
         notifications.set_folio(serie, folio)
     return move_to_folder(res.xml, pdf_data=res.pdf)

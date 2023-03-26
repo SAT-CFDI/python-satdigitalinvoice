@@ -274,7 +274,6 @@ def main_loop():
                         )
                         # noinspection PyUnresolvedReferences
                         facturas_pendientes = [x for x in fac_pen if x.notified]
-
                         cfdi_correos[receptor_rfc] = (notify_invoices, facturas_pendientes)
 
                     if cfdi_correos:
