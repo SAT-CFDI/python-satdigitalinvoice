@@ -3,6 +3,8 @@ import logging
 import yaml
 from satcfdi import Code, CFDI
 
+from .mycfdi import clients
+
 
 class LogAdapter(logging.LoggerAdapter):
     def info_yaml(self, data):
@@ -79,3 +81,12 @@ def log_cfdi(cfdi: CFDI, detailed=True):
                 }
 
     logger.info_yaml(cfdi_copy)
+
+
+def log_email(receptor_rfc, notify_invoices, facturas_pendientes):
+    logger.info_yaml({
+        "Rfc": receptor_rfc,
+        "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
+        "Pendientes Meses Anteriores": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
+        "Correos": clients[receptor_rfc]["Email"]
+    })

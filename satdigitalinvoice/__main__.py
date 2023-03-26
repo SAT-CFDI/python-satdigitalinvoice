@@ -20,7 +20,7 @@ from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, P
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
-from .log_tools import LogAdapter, LogHandler, log_cfdi
+from .log_tools import LogAdapter, LogHandler, log_cfdi, log_email
 from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder, notifications
 
 logging.basicConfig(level=logging.DEBUG)
@@ -167,12 +167,7 @@ class EmailButtonManager:
 
         for i, (receptor_rfc, (notify_invoices, facturas_pendientes)) in enumerate(invoices.items(), start=1):
             log_item(f"CORREO NUMERO: {i}")
-            logger.info_yaml({
-                "Rfc": receptor_rfc,
-                "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
-                "Pendientes Meses Anteriores": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
-                "Correos": clients[receptor_rfc]["Email"]
-            })
+            log_email(receptor_rfc, notify_invoices, facturas_pendientes)
 
         self.style_button()
 
@@ -219,6 +214,8 @@ def enviar_correos(invoices):
                 html=message,
                 file_attachments=attachments
             )
+
+            window.read(timeout=0)
 
             for r in notify_invoices:
                 r.notified = ",".join(to_addrs)
