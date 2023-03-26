@@ -86,9 +86,10 @@ def make_layout():
         sg.Button("Facturas Pendientes", key="facturas_pendientes"),
         sg.Checkbox("Ver Detallado", default=False, key="detallado"),
         sg.VSeparator(),
-        sg.Text("Recupera:"),
+        sg.Text("Recuperar:"),
         sg.Button("Emitidas", key="recuperar_emitidas"),
         sg.Button("Recibidas", key="recuperar_recibidas"),
+        sg.Text("Dias:"),
         sg.Input("40", size=(4, 1), key="recuperar_dias"),
     ]
 
@@ -228,12 +229,14 @@ def recupera_comprobantes(id_solicitud):
         id_solicitud=id_solicitud
     )
     logger.info_yaml(response)
+    window.read(timeout=0)
     if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
         for id_paquete in response['IdsPaquetes']:
             response, paquete = SAT_SERVICE.recover_comprobante_download(
                 id_paquete=id_paquete
             )
             logger.info_yaml(response)
+            window.read(timeout=0)
             yield id_paquete, base64.b64decode(paquete)
 
 
@@ -242,6 +245,7 @@ def unzip_cfdi(file):
         for fileinfo in zf.infolist():
             xml_data = zf.read(fileinfo)
             move_to_folder(xml_data, pdf_data=None)
+            window.read(timeout=0)
 
 
 def main_loop():
@@ -260,15 +264,15 @@ def main_loop():
                 case "recuperar_emitidas" | "recuperar_recibidas":
                     log_line("RECUPERAR")
                     fecha_final = date.today()
-                    fecha_inicial = fecha_final - timedelta(days=40)
+                    fecha_inicial = fecha_final - timedelta(days=int(values["recuperar_dias"]))
                     id_solicitud = notifications.get(event)
 
                     if not id_solicitud:
                         response = SAT_SERVICE.recover_comprobante_request(
                             fecha_inicial=fecha_inicial,
                             fecha_final=fecha_final,
-                            rfc_receptor=SAT_SERVICE.signer.rfc if "recuperar_recibidas" else None,
-                            rfc_emisor=SAT_SERVICE.signer.rfc if "recuperar_emitidas" else None,
+                            rfc_receptor=SAT_SERVICE.signer.rfc if "recuperar_recibidas" == event else None,
+                            rfc_emisor=SAT_SERVICE.signer.rfc if "recuperar_emitidas" == event else None,
                             tipo_solicitud=TipoDescargaMasivaTerceros.CFDI,
                         )
                         logger.info_yaml(response)
