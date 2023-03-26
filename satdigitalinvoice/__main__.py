@@ -237,7 +237,7 @@ def recupera_comprobantes(id_solicitud):
             )
             logger.info_yaml(response)
             window.read(timeout=0)
-            yield id_paquete, base64.b64decode(paquete)
+            yield id_paquete, base64.b64decode(paquete) if paquete else None
 
 
 def unzip_cfdi(file):
@@ -281,11 +281,14 @@ def main_loop():
                         notifications[event] = response['IdSolicitud']
                         notifications.save()
                     else:
-                        logger.info(f"Solicitud: {id_solicitud}")
+                        logger.info_yaml({
+                            'IdSolicitud': id_solicitud
+                        })
                         window.read(timeout=0)
                         for paquete_id, data in recupera_comprobantes(id_solicitud):
-                            with io.BytesIO(data) as b:
-                                unzip_cfdi(b)
+                            if data:
+                                with io.BytesIO(data) as b:
+                                    unzip_cfdi(b)
                             del notifications[event]
                             notifications.save()
 
