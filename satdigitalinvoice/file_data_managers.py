@@ -65,7 +65,7 @@ class NotificationsManager(LocalData):
     def folio(self, serie):
         return self["Series"][serie]
 
-    def set_folio(self, serie, folio):
+    def set_folio(self, serie: str, folio: int):
         self["Series"][serie] = max(self["Series"][serie], folio + 1)
         self.save()
 
