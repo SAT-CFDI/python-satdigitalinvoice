@@ -156,7 +156,7 @@ class EmailButtonManager:
             logger.info_yaml({
                 "Rfc": receptor_rfc,
                 "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
-                "Pendientes": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
+                "Pendientes Meses Anteriores": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
                 "Correos": clients[receptor_rfc]["Email"]
             })
 
@@ -340,16 +340,27 @@ def main_loop():
 
                     fac_pen = filter_invoices_by(
                         invoices=all_invoices,
-                        # fecha=lambda x: x < dp,
                         invoice_type=InvoiceType.PAYMENT_PENDING,
                         rfc_emisor=EMISOR.rfc,
                         estatus='1'
                     )
-                    for i in fac_pen:
+                    for receptor_rfc, fac_pen in itertools.groupby(
+                            sorted(
+                                fac_pen,
+                                key=lambda r: r["Receptor"]["Rfc"]
+                            ),
+                            lambda r: r["Receptor"]["Rfc"]
+                    ):
                         f = {
-                            'Receptor': Code(i['Receptor']['Rfc'], i['Receptor']['Nombre']),
-                            'Factura': f"{i.name} - {i.uuid}",
-                            'SaldoPendiente': i.saldo_pendiente
+                            'Receptor': Code(receptor_rfc, clients[receptor_rfc]['RazonSocial']),
+                            'Facturas Pendientes': [
+                                {
+                                    "Factura": f"{i.name} - {i.uuid}",
+                                    'SaldoPendiente': i.saldo_pendiente,
+                                    'Fecha': i["Fecha"]
+                                }
+                                for i in fac_pen
+                            ]
                         }
                         logger.info_yaml(f)
 
