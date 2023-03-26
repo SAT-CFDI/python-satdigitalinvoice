@@ -3,21 +3,26 @@ import logging
 from datetime import date, datetime
 
 import PySimpleGUI as sg
-from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL
+from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, ThisRow
 from babel.dates import format_date
 from satcfdi import Code
 from satcfdi.accounting import filter_invoices_by, InvoiceType
-from satcfdi.exceptions import ResponseError
+from satcfdi.exceptions import ResponseError, DocumentNotFoundError
+from satcfdi.pacs import Accept
+# noinspection PyUnresolvedReferences
+from satcfdi.transform.catalog import CATALOGS
 
-from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION
+from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
 from .log_tools import LogAdapter, LogHandler, log_cfdi
-from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI
+from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder
 
 logging.basicConfig(level=logging.DEBUG)
 logger = LogAdapter(logging.getLogger())
+
+FORMA_PAGO = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_FormaPago']
 
 
 def make_layout():
@@ -29,53 +34,67 @@ def make_layout():
 
     # LAYOUT
     button_column = [
-        [
-            sg.Button("Preparar Facturas", key="validate_invoices"),
-            sg.Text("Periodo:"),
-            sg.Input(format_date(date.today(), locale='es_MX', format="'Mes de' MMMM 'del' y").upper(), key="periodo", change_submits=True),
-            sg.Text("De:"),
-            sg.Input("1", key="inicio", size=(4, 1), change_submits=True),
-            sg.Text("Hasta:"),
-            sg.Input(str(numero_facturas), key="final", size=(4, 1), change_submits=True),
-        ]
+        sg.Button("Preparar Facturas", key="validate_invoices"),
+        sg.Text("Periodo:"),
+        sg.Input(format_date(date.today(), locale='es_MX', format="'Mes de' MMMM 'del' y").upper(), key="periodo", change_submits=True),
+        sg.Text("De:"),
+        sg.Input("1", key="inicio", size=(4, 1), change_submits=True),
+        sg.Text("Hasta:"),
+        sg.Input(str(numero_facturas), key="final", size=(4, 1), change_submits=True),
     ]
-    button_column_second = [
-        [
-            sg.Button("Status SAT", key="status_sat"),
-            sg.Button("Preparar Pago", key="prepare_pago"),
-            sg.Text("De:"),
-            sg.Input("", size=(30, 1), key="factura_pagar", change_submits=True),
-            sg.Text("Fecha:"),
-            sg.Input(f"{datetime.today():%Y-%m-%d}", size=(12, 1), key="fecha_pago", change_submits=True),
-            sg.Text("Forma:"),
-            sg.Input("03", size=(4, 1), key="forma_pago", change_submits=True),
-        ]
+
+    c_second = [
+        sg.Column(
+            [
+                [
+                    sg.Text("Factura:"),
+                    sg.Input("", size=(30, 1), key="factura_pagar", change_submits=True),
+                ],
+                [
+                    sg.Button("Status", key="status_sat"),
+                    sg.Button("Descarga", key="descarga"),
+                ]
+            ],
+            pad=0
+        ),
+        sg.VSeparator(),
+        sg.Column(
+            [
+                [
+                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, border_width=0, target="fecha_pago"),
+                    sg.Input("", size=(12, 1), key="fecha_pago", change_submits=True),
+                    sg.Text("FormaPago:"),
+                    sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", change_submits=True)
+                ],
+                [
+                    sg.Button("Preparar Pago", key="prepare_pago"),
+                ]
+            ],
+            pad=0
+        )
     ]
+
     button_column_third = [
-        [
-            sg.Button("Preparar Correos", key="prepare_correos"),
-            sg.Button("Facturas Pendientes", key="facturas_pendientes"),
-            sg.Checkbox("Ver Detallado", default=False, key="detallado")
-        ]
+        sg.Button("Preparar Correos", key="prepare_correos"),
+        sg.Button("Facturas Pendientes", key="facturas_pendientes"),
+        sg.Checkbox("Ver Detallado", default=False, key="detallado")
     ]
 
     button_column_low = [
-        [
-            sg.Button("Validar Clientes", key="validate_clientes"),
-            sg.Button("Crear Facturas", disabled=True, key="crear_facturas"),
-            sg.Button("Enviar Correos", disabled=True, key="enviar_correos"),
-        ]
+        sg.Button("Validar Clientes", key="validate_clientes"),
+        sg.Button("Crear Facturas", disabled=True, key="crear_facturas"),
+        sg.Button("Enviar Correos", disabled=True, key="enviar_correos"),
     ]
 
     # ----- Full layout -----
     return [
-        [button_column],
+        button_column,
         [sg.HSeparator()],
-        [button_column_second],
+        c_second,
         [sg.HSeparator()],
-        [button_column_third],
+        button_column_third,
         [sg.Output(expand_x=True, expand_y=True, key="console")],
-        [button_column_low]
+        button_column_low
     ]
 
 
@@ -89,7 +108,7 @@ def log_line(text, exc_info=False):
 
 def cfdi_header(cfdi):
     receptor = Code(cfdi['Receptor']['Rfc'], cfdi['Receptor']['Nombre'])
-    return f"{cfdi.name} {receptor}"
+    return f"{cfdi.name} - {cfdi.uuid} {receptor}"
 
 
 class InvoiceButtonManager:
@@ -113,14 +132,13 @@ class InvoiceButtonManager:
     def style_button(self):
         button = window['crear_facturas']
         button.update(
-            f"Crear Facturas",
             disabled=len(self._cfdis) == 0
         )
 
 
 class EmailButtonManager:
     def __init__(self):
-        self._emails = []
+        self._emails = {}
 
     def set_invoices(self, invoices):
         self._emails = invoices
@@ -129,8 +147,8 @@ class EmailButtonManager:
             log_line(f"CORREO NUMERO: {i}")
             logger.info_yaml({
                 "Rfc": receptor_rfc,
-                "Facturas": [x.name for x in notify_invoices],
-                "Pendientes": [x.name for x in facturas_pendientes],
+                "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
+                "Pendientes": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
                 "Correos": clients[receptor_rfc]["Email"]
             })
 
@@ -145,7 +163,6 @@ class EmailButtonManager:
     def style_button(self):
         button = window['enviar_correos']
         button.update(
-            f"Enviar Correos",
             disabled=len(self._emails) == 0
         )
 
@@ -199,6 +216,7 @@ def main_loop():
 
             match event:
                 case "validate_clientes":
+                    log_line("VALIDAR CLIENTES")
                     res = sg.popup(
                         f"Estas seguro que quieres validar {len(clients)} clientes?",
                         title=window[event].ButtonText,
@@ -214,6 +232,7 @@ def main_loop():
                         log_line("OPERACION CANCELADA")
 
                 case "validate_invoices":
+                    log_line("PREPARAR FACTURAS")
                     facturas = generate_ingresos(values)
                     if facturas:
                         invoice_button_manager.set_invoices(
@@ -221,6 +240,7 @@ def main_loop():
                         )
 
                 case "prepare_pago":
+                    log_line("PREPARAR PAGO")
                     cfdi_pago = pago_factura(
                         factura_pagar=values["factura_pagar"],
                         fecha_pago=values["fecha_pago"],
@@ -232,6 +252,7 @@ def main_loop():
                         )
 
                 case "crear_facturas":
+                    log_line("CREAR FACTURAS")
                     res = sg.popup(
                         f"Estas seguro que quieres crear {len(invoices_to_create)} facturas?",
                         title=window[event].ButtonText,
@@ -254,6 +275,7 @@ def main_loop():
                         log_line("OPERACION CANCELADA")
 
                 case "prepare_correos":
+                    log_line("PREPARAR CORREOS")
                     all_invoices = get_all_cfdi()
 
                     cfdi_correos = {}
@@ -284,6 +306,7 @@ def main_loop():
                         logger.info("No hay correos pendientes de enviar")
 
                 case "enviar_correos":
+                    log_line("ENVIAR CORREOS")
                     res = sg.popup(
                         f"Estas seguro que quieres enviar {len(emails_to_send)} correos?",
                         title=window[event].ButtonText,
@@ -296,12 +319,14 @@ def main_loop():
                         log_line("OPERACION CANCELADA")
 
                 case "status_sat":
+                    log_line("STATUS")
                     i = find_factura(values["factura_pagar"])
                     if i:
                         estado = cancelados_manager.get_state(i, only_cache=False)
                         logger.info_yaml(estado)
 
                 case "facturas_pendientes":
+                    log_line("FACTURAS PENDIENTES")
                     all_invoices = get_all_cfdi()
 
                     fac_pen = filter_invoices_by(
@@ -318,6 +343,15 @@ def main_loop():
                             'SaldoPendiente': i.saldo_pendiente
                         }
                         logger.info_yaml(f)
+
+                case "descarga":
+                    log_line('DESCARGADA')
+                    try:
+                        res = PAC_SERVICE.recover(values["factura_pagar"], accept=Accept.XML_PDF)
+                        cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
+                        log_cfdi(cfdi, detailed=values['detallado'])
+                    except DocumentNotFoundError:
+                        logger.info("Factura no encontrada")
 
                 case "periodo" | "inicio" | "final" | "factura_pagar" | "fecha_pago" | "forma_pago":
                     pass

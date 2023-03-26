@@ -71,7 +71,7 @@ def generate_ingresos(values):
 
 def find_factura(factura):
     if not factura:
-        logger.error("Especificar factura a pagar")
+        logger.error("Factura No Especificada")
         return
 
     try:
@@ -89,6 +89,10 @@ def find_factura(factura):
 
 
 def parse_fecha_pago(fecha_pago):
+    if not fecha_pago:
+        logger.error("Fecha de Pago esta vacia")
+        return
+
     fecha_pago = datetime.fromisoformat(fecha_pago)
     if fecha_pago > datetime.now():
         logger.error("Fecha de Pago esta en el futuro")

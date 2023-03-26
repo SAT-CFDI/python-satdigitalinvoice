@@ -232,68 +232,6 @@ def get_all_retenciones() -> Mapping[UUID, MyCFDI]:
     return all_invoices
 
 
-def email_invoices(all_invoices: Mapping[UUID, MyCFDI], email_sender: EmailSender):
-    now = datetime.now()
-    dp = DatePeriod(now.year, now.month)
-
-    with email_sender as s:
-        for receptor_rfc, notify_invoices in groupby(
-                sorted(
-                    (i for i in all_invoices.values() if not i.notified),
-                    key=lambda r: r["Receptor"]["Rfc"]
-                ),
-                lambda r: r["Receptor"]["Rfc"]
-        ):
-            notify_invoices = list(notify_invoices)  # type: list[MyCFDI]
-            client = clients[receptor_rfc]
-            receptor_nombre = client["RazonSocial"]
-            to_addrs = client["Email"]
-            template = environment_default.get_template(
-                client.get('EmailTemplate', 'mail_facturas_template.html')
-            )
-            email_review = client.get("EmailReview", False)
-
-            attachments = []
-            for r in notify_invoices:
-                attachments.append(r.filename + ".xml")
-                attachments.append(r.filename + ".pdf")
-
-            fac_pen = filter_invoices_by(
-                invoices=all_invoices,
-                fecha=lambda x: x < dp,
-                invoice_type=InvoiceType.PAYMENT_PENDING,
-                rfc_emisor=EMISOR.rfc,
-                rfc_receptor=receptor_rfc,
-                estatus='1'
-            )
-            facturas_pendientes = ", ".join(r.name for r in fac_pen)
-
-            message = template.render(
-                invoices=notify_invoices,
-                pending_invoices=facturas_pendientes
-            )
-
-            print("Confirm Email To:", receptor_nombre, to_addrs)
-            print("Facturas:", [r.name for r in notify_invoices])
-            print("Facturas Pendientes:", facturas_pendientes)
-            user_input = input("Confirm send (y/n/r) [n]:").upper()
-
-            if user_input in ("Y", "R"):
-                if email_review or user_input == "R":
-                    message = f"Enviar a: {','.join(to_addrs)}<br><br>" + message
-                    to_addrs = [email_sender.user]
-
-                s.send_email(
-                    subject=f"Comprobantes Fiscales {receptor_nombre} - {receptor_rfc}",
-                    to_addrs=to_addrs,
-                    html=message,
-                    file_attachments=attachments
-                )
-
-            for r in notify_invoices:
-                r.notified = ",".join(to_addrs)
-
-
 def generate_invoice(invoice, ref_id=None):
     res = PAC_SERVICE.stamp(
         cfdi=invoice,
