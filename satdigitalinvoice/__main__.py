@@ -5,7 +5,7 @@ from datetime import date, datetime
 import PySimpleGUI as sg
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, ThisRow
 from babel.dates import format_date
-from satcfdi import Code
+from satcfdi import Code, DatePeriod
 from satcfdi.accounting import filter_invoices_by, InvoiceType
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
@@ -61,7 +61,7 @@ def make_layout():
         sg.Column(
             [
                 [
-                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, border_width=0, target="fecha_pago"),
+                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago"),
                     sg.Input("", size=(12, 1), key="fecha_pago", change_submits=True),
                     sg.Text("FormaPago:"),
                     sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", change_submits=True)
@@ -106,6 +106,14 @@ def log_line(text, exc_info=False):
     )
 
 
+def log_item(text, exc_info=False):
+    ln = (150 - len(text)) // 2
+    logger.info(
+        ("*" * ln) + " " + text + " " + ("*" * ln),
+        exc_info=exc_info
+    )
+
+
 def cfdi_header(cfdi):
     receptor = Code(cfdi['Receptor']['Rfc'], cfdi['Receptor']['Nombre'])
     return f"{cfdi.name} - {cfdi.uuid} {receptor}"
@@ -118,7 +126,7 @@ class InvoiceButtonManager:
     def set_invoices(self, invoices):
         self._cfdis = invoices
         for i, cfdi in enumerate(self._cfdis, start=1):
-            log_line(f"FACTURA NUMERO: {i}")
+            log_item(f"FACTURA NUMERO: {i}")
             log_cfdi(cfdi, detailed=window['detallado'].get())
 
         self.style_button()
@@ -144,7 +152,7 @@ class EmailButtonManager:
         self._emails = invoices
 
         for i, (receptor_rfc, (notify_invoices, facturas_pendientes)) in enumerate(invoices.items(), start=1):
-            log_line(f"CORREO NUMERO: {i}")
+            log_item(f"CORREO NUMERO: {i}")
             logger.info_yaml({
                 "Rfc": receptor_rfc,
                 "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
@@ -224,12 +232,12 @@ def main_loop():
                     )
                     if res == "OK":
                         for rfc, details in clients.items():
-                            log_line(f"VALIDANDO {rfc}")
+                            log_item(f"VALIDANDO {rfc}")
                             window.read(timeout=0)
                             validar_client(rfc, details)
-                        log_line("FIN")
+                        log_item("FIN")
                     else:
-                        log_line("OPERACION CANCELADA")
+                        log_item("OPERACION CANCELADA")
 
                 case "validate_invoices":
                     log_line("PREPARAR FACTURAS")
@@ -270,13 +278,15 @@ def main_loop():
                                 logger.error(f"Status Code: {ex.response.status_code}")
                                 logger.info_yaml(ex.response.json())
                                 break
-                        log_line("FIN")
+                        log_item("FIN")
                     else:
-                        log_line("OPERACION CANCELADA")
+                        log_item("OPERACION CANCELADA")
 
                 case "prepare_correos":
                     log_line("PREPARAR CORREOS")
                     all_invoices = get_all_cfdi()
+                    now = datetime.now()
+                    dp = DatePeriod(now.year, now.month)
 
                     cfdi_correos = {}
                     for receptor_rfc, notify_invoices in itertools.groupby(
@@ -289,6 +299,7 @@ def main_loop():
                         notify_invoices = list(notify_invoices)
                         fac_pen = filter_invoices_by(
                             invoices=all_invoices,
+                            fecha=lambda x: x < dp,
                             invoice_type=InvoiceType.PAYMENT_PENDING,
                             rfc_emisor=EMISOR.rfc,
                             rfc_receptor=receptor_rfc,
@@ -314,9 +325,9 @@ def main_loop():
                     )
                     if res == "OK":
                         enviar_correos(emails_to_send)
-                        log_line("FIN")
+                        log_item("FIN")
                     else:
-                        log_line("OPERACION CANCELADA")
+                        log_item("OPERACION CANCELADA")
 
                 case "status_sat":
                     log_line("STATUS")
