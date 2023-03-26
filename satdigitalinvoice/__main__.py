@@ -305,9 +305,7 @@ def main_loop():
                             rfc_receptor=receptor_rfc,
                             estatus='1'
                         )
-                        # noinspection PyUnresolvedReferences
-                        facturas_pendientes = [x for x in fac_pen if x.notified]
-                        cfdi_correos[receptor_rfc] = (notify_invoices, facturas_pendientes)
+                        cfdi_correos[receptor_rfc] = (notify_invoices, fac_pen)
 
                     if cfdi_correos:
                         email_button_manager.set_invoices(
