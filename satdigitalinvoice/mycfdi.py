@@ -191,7 +191,7 @@ def move_to_folder(xml_data, pdf_data):
     try:
         with open(full_name + ".xml", 'xb') as fp:
             fp.write(xml_data)
-        logger.info("Invoice has been added '%s'", full_name)
+        logger.info("Factura ha sido agregada: '%s'", full_name)
 
         if pdf_data:
             with open(full_name + ".pdf", 'wb') as fp:
@@ -200,9 +200,9 @@ def move_to_folder(xml_data, pdf_data):
             try:
                 cfdi.pdf_write(full_name + ".pdf")
             except:
-                logger.exception("Failed to create PDF")
+                logger.exception("Fallo crear PDF: '%s'", full_name)
     except FileExistsError:
-        logger.info("Invoice already found %s", full_name)
+        logger.info("Factura ya se tenia: %s", full_name)
 
     return cfdi
 
