@@ -1,3 +1,4 @@
+import itertools
 import logging
 from datetime import date, datetime
 
@@ -124,18 +125,20 @@ class EmailButtonManager:
     def set_invoices(self, invoices):
         self._emails = invoices
 
-        for i, cfdi in enumerate(self._emails, start=1):
-            receptor_rfc = cfdi["Receptor"]["Rfc"]
-            to_addrs = clients[receptor_rfc]["Email"]
-
+        for i, (receptor_rfc, (notify_invoices, facturas_pendientes)) in enumerate(invoices.items(), start=1):
             log_line(f"CORREO NUMERO: {i}")
-            logger.info(cfdi_header(cfdi))
-            logger.info(to_addrs)
+            logger.info_yaml({
+                "Rfc": receptor_rfc,
+                "Facturas": [x.name for x in notify_invoices],
+                "Pendientes": [x.name for x in facturas_pendientes],
+                "Correos": clients[receptor_rfc]["Email"]
+            })
+
         self.style_button()
 
     def clear(self):
         emails = self._emails
-        self._emails = []
+        self._emails = {}
         self.style_button()
         return emails
 
@@ -152,35 +155,34 @@ email_button_manager = EmailButtonManager()
 
 
 def enviar_correos(invoices):
-    email_sender = EMAIL_MANAGER.sender
     template = environment_default.get_template(
-        'mail_facturas_template_simple.html'
+        'mail_facturas_template.html'
     )
 
-    with email_sender as s:
-        for invoice in invoices:
-            receptor_rfc = invoice["Receptor"]["Rfc"]
-
+    with EMAIL_MANAGER.sender as s:
+        for receptor_rfc, (notify_invoices, facturas_pendientes) in invoices.items():
             client = clients[receptor_rfc]
             receptor_nombre = client["RazonSocial"]
             to_addrs = client["Email"]
 
+            attachments = []
+            for r in notify_invoices:
+                attachments += [r.filename + ".xml", r.filename + ".pdf"]
+
             message = template.render(
-                invoices=[invoice],
+                invoices=notify_invoices,
+                pending_invoices=facturas_pendientes
             )
 
             s.send_email(
                 subject=f"Comprobantes Fiscales {receptor_nombre} - {receptor_rfc}",
                 to_addrs=to_addrs,
                 html=message,
-                file_attachments=[
-                    invoice.filename + ".xml",
-                    invoice.filename + ".pdf"
-                ]
+                file_attachments=attachments
             )
-            logger.info(f"Correo Enviado: {invoice.name} {receptor_rfc} {to_addrs}")
-            window.read(timeout=0)
-            invoice.notified = ",".join(to_addrs)
+
+            for r in notify_invoices:
+                r.notified = ",".join(to_addrs)
 
 
 def main_loop():
@@ -253,7 +255,28 @@ def main_loop():
 
                 case "prepare_correos":
                     all_invoices = get_all_cfdi()
-                    cfdi_correos = [i for i in all_invoices.values() if not i.notified]
+
+                    cfdi_correos = {}
+                    for receptor_rfc, notify_invoices in itertools.groupby(
+                            sorted(
+                                (i for i in all_invoices.values() if not i.notified),
+                                key=lambda r: r["Receptor"]["Rfc"]
+                            ),
+                            lambda r: r["Receptor"]["Rfc"]
+                    ):
+                        notify_invoices = list(notify_invoices)
+                        fac_pen = filter_invoices_by(
+                            invoices=all_invoices,
+                            invoice_type=InvoiceType.PAYMENT_PENDING,
+                            rfc_emisor=EMISOR.rfc,
+                            rfc_receptor=receptor_rfc,
+                            estatus='1'
+                        )
+                        # noinspection PyUnresolvedReferences
+                        facturas_pendientes = [x for x in fac_pen if x.notified]
+
+                        cfdi_correos[receptor_rfc] = (notify_invoices, facturas_pendientes)
+
                     if cfdi_correos:
                         email_button_manager.set_invoices(
                             cfdi_correos
