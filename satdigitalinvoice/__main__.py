@@ -268,6 +268,8 @@ def main_loop():
                     id_solicitud = notifications.get(event)
 
                     if not id_solicitud:
+                        logger.info("Creando Nueva Solicitud")
+                        window.read(timeout=0)
                         response = SAT_SERVICE.recover_comprobante_request(
                             fecha_inicial=fecha_inicial,
                             fecha_final=fecha_final,
@@ -279,6 +281,8 @@ def main_loop():
                         notifications[event] = response['IdSolicitud']
                         notifications.save()
                     else:
+                        logger.info(f"Solicitud: {id_solicitud}")
+                        window.read(timeout=0)
                         for paquete_id, data in recupera_comprobantes(id_solicitud):
                             with io.BytesIO(data) as b:
                                 unzip_cfdi(b)
