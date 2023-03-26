@@ -5,19 +5,15 @@ import os
 from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
-from itertools import groupby
 from typing import MutableMapping
 from uuid import UUID
 
 import diskcache
-from satcfdi import DatePeriod
-from satcfdi.accounting import filter_invoices_by, InvoiceType, complement_invoices_data, SatCFDI
-from satcfdi.accounting.email import EmailSender
-from satcfdi.exceptions import ResponseError
+from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.pacs import Accept
 
 from . import EMISOR, PAC_SERVICE
-from .file_data_managers import CanceladosManager, PaymentsManager, NotificationsManager, ClientsManager, environment_default
+from .file_data_managers import CanceladosManager, PaymentsManager, NotificationsManager, ClientsManager
 
 ALL_INVOICES = b'all_invoices'
 ALL_RETENCIONES = b'all_retenciones'

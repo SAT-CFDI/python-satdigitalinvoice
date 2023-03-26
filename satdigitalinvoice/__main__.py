@@ -1,6 +1,9 @@
+import base64
+import io
 import itertools
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+from zipfile import ZipFile
 
 import PySimpleGUI as sg
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, ThisRow
@@ -9,20 +12,24 @@ from satcfdi import Code, DatePeriod
 from satcfdi.accounting import filter_invoices_by, InvoiceType
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
+from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 
-from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE
+from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE, FIEL_SIGNER
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default
 from .gui_functions import generate_ingresos, pago_factura, find_factura
 from .log_tools import LogAdapter, LogHandler, log_cfdi
-from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder
+from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder, notifications
 
 logging.basicConfig(level=logging.DEBUG)
 logger = LogAdapter(logging.getLogger())
 
 FORMA_PAGO = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_FormaPago']
+SAT_SERVICE = SAT(
+    signer=FIEL_SIGNER
+)
 
 
 def make_layout():
@@ -77,13 +84,19 @@ def make_layout():
     button_column_third = [
         sg.Button("Preparar Correos", key="prepare_correos"),
         sg.Button("Facturas Pendientes", key="facturas_pendientes"),
-        sg.Checkbox("Ver Detallado", default=False, key="detallado")
+        sg.Checkbox("Ver Detallado", default=False, key="detallado"),
+        sg.VSeparator(),
+        sg.Text("Recupera:"),
+        sg.Button("Emitidas", key="recuperar_emitidas"),
+        sg.Button("Recibidas", key="recuperar_recibidas"),
+        sg.Input("40", size=(4, 1), key="recuperar_dias"),
     ]
 
     button_column_low = [
         sg.Button("Validar Clientes", key="validate_clientes"),
         sg.Button("Crear Facturas", disabled=True, key="crear_facturas"),
         sg.Button("Enviar Correos", disabled=True, key="enviar_correos"),
+
     ]
 
     # ----- Full layout -----
@@ -210,6 +223,27 @@ def enviar_correos(invoices):
                 r.notified = ",".join(to_addrs)
 
 
+def recupera_comprobantes(id_solicitud):
+    response = SAT_SERVICE.recover_comprobante_status(
+        id_solicitud=id_solicitud
+    )
+    logger.info_yaml(response)
+    if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
+        for id_paquete in response['IdsPaquetes']:
+            response, paquete = SAT_SERVICE.recover_comprobante_download(
+                id_paquete=id_paquete
+            )
+            logger.info_yaml(response)
+            yield id_paquete, base64.b64decode(paquete)
+
+
+def unzip_cfdi(file):
+    with ZipFile(file, "r") as zf:
+        for fileinfo in zf.infolist():
+            xml_data = zf.read(fileinfo)
+            move_to_folder(xml_data, pdf_data=None)
+
+
 def main_loop():
     while True:
         event, values = window.read()
@@ -223,6 +257,30 @@ def main_loop():
             emails_to_send = email_button_manager.clear()
 
             match event:
+                case "recuperar_emitidas" | "recuperar_recibidas":
+                    log_line("RECUPERAR")
+                    fecha_final = date.today()
+                    fecha_inicial = fecha_final - timedelta(days=40)
+                    id_solicitud = notifications.get(event)
+
+                    if not id_solicitud:
+                        response = SAT_SERVICE.recover_comprobante_request(
+                            fecha_inicial=fecha_inicial,
+                            fecha_final=fecha_final,
+                            rfc_receptor=SAT_SERVICE.signer.rfc if "recuperar_recibidas" else None,
+                            rfc_emisor=SAT_SERVICE.signer.rfc if "recuperar_emitidas" else None,
+                            tipo_solicitud=TipoDescargaMasivaTerceros.CFDI,
+                        )
+                        logger.info_yaml(response)
+                        notifications[event] = response['IdSolicitud']
+                        notifications.save()
+                    else:
+                        for paquete_id, data in recupera_comprobantes(id_solicitud):
+                            with io.BytesIO(data) as b:
+                                unzip_cfdi(b)
+                            del notifications[event]
+                            notifications.save()
+
                 case "validate_clientes":
                     log_line("VALIDAR CLIENTES")
                     res = sg.popup(
