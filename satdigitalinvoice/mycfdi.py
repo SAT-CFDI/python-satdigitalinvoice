@@ -13,7 +13,7 @@ from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.create import Issuer
 from satcfdi.pacs import Accept
 
-from . import PAC_SERVICE, CSD_SIGNER
+from .credential_loader import PAC_SERVICE, CSD_SIGNER
 from .file_data_managers import CanceladosManager, PaymentsManager, NotificationsManager, ClientsManager
 
 ALL_INVOICES = b'all_invoices'
@@ -243,8 +243,7 @@ def generate_invoice(invoice, ref_id=None):
         accept=Accept.XML_PDF,
         ref_id=ref_id
     )
-    serie = invoice.get("Serie")
     folio = int(invoice.get("Folio"))
-    if serie and folio:
-        notifications.set_folio(serie, folio)
+    if folio:
+        notifications.set_folio(folio + 1)
     return move_to_folder(res.xml, pdf_data=res.pdf)

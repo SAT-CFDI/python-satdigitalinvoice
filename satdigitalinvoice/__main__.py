@@ -19,7 +19,7 @@ from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 
-from . import EMAIL_MANAGER, FACTURAS_SOURCE, SERIE, PAC_SERVICE, FIEL_SIGNER, AJUSTES_DIR, CORREO_FIRMA
+from .credential_loader import EMAIL_MANAGER, FACTURAS_SOURCE, PAC_SERVICE, FIEL_SIGNER, AJUSTES_DIR, CORREO_FIRMA
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default, generate_pdf_template
 from .formatting_functions.common import fecha, pesos, porcentaje
@@ -511,7 +511,7 @@ def main_loop():
 
 window = sg.Window(
     f"Facturacion 4.0  RazonSocial: {EMISOR.legal_name}  RFC: {EMISOR.rfc}  Facturas: {FACTURAS_SOURCE}  "
-    f"Serie: {SERIE}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
+    f"Serie: {notifications.serie()}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
     make_layout(),
     size=(1280, 800),
     resizable=True,

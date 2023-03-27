@@ -5,7 +5,6 @@ from datetime import datetime
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante
 
-from . import SERIE
 from .file_data_managers import FacturasManager
 from .mycfdi import notifications, clients, get_all_cfdi, EMISOR, LUGAR_EXPEDICION
 
@@ -66,7 +65,11 @@ def generate_ingresos(values):
         logger.error("Final no Valido")
 
     facturas = facturas[inicio - 1:final]
-    cfdis = [create_cfdi(f, SERIE, str(notifications.folio(SERIE) + i)) for i, f in enumerate(facturas)]
+
+    folio = notifications.folio()
+    serie = notifications.serie()
+
+    cfdis = [create_cfdi(f, serie, str(folio + i)) for i, f in enumerate(facturas)]
 
     if None in cfdis:
         return
@@ -141,14 +144,17 @@ def pago_factura(factura_pagar, fecha_pago, forma_pago):
 
 
 def generar_pago(cfdi, fecha_pago, forma_pago="03"):
+    folio = notifications.folio()
+    serie = notifications.serie()
+
     pago = Comprobante.pago_comprobantes(
         emisor=EMISOR,
         lugar_expedicion=LUGAR_EXPEDICION,
         comprobantes=cfdi,
         fecha_pago=fecha_pago,
         forma_pago=forma_pago,
-        serie=SERIE,
-        folio=str(notifications.folio(SERIE)),
+        serie=serie,
+        folio=str(folio),
     ).process()
     return pago
 

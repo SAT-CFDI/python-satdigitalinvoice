@@ -62,11 +62,14 @@ class PaymentsManager(LocalData):
 class NotificationsManager(LocalData):
     file_source = "notifications.yaml"
 
-    def folio(self, serie):
-        return self["Series"][serie]
+    def folio(self):
+        return self["Folio"]
 
-    def set_folio(self, serie: str, folio: int):
-        self["Series"][serie] = max(self["Series"][serie], folio + 1)
+    def serie(self):
+        return self["Serie"]
+
+    def set_folio(self, folio: int):
+        self["Folio"] = folio
         self.save()
 
 
