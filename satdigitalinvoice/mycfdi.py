@@ -10,9 +10,10 @@ from uuid import UUID
 
 import diskcache
 from satcfdi.accounting import complement_invoices_data, SatCFDI
+from satcfdi.create import Issuer
 from satcfdi.pacs import Accept
 
-from . import EMISOR, PAC_SERVICE
+from . import PAC_SERVICE, CSD_SIGNER
 from .file_data_managers import CanceladosManager, PaymentsManager, NotificationsManager, ClientsManager
 
 ALL_INVOICES = b'all_invoices'
@@ -29,6 +30,14 @@ cancelados_manager = CanceladosManager()
 payments_manager = PaymentsManager()
 notifications = NotificationsManager()
 clients = ClientsManager()
+
+EMISOR_CIF = clients[CSD_SIGNER.rfc]
+LUGAR_EXPEDICION = EMISOR_CIF['CodigoPostal']
+EMISOR = Issuer(
+    signer=CSD_SIGNER,
+    tax_system=EMISOR_CIF['RegimenFiscal'],
+    legal_name=EMISOR_CIF['RazonSocial']
+)
 
 pagados = payments_manager["Pagados"]
 ignorar = payments_manager["IgnorarPendienteDePago"]
@@ -125,19 +134,19 @@ class MyCFDI(SatCFDI):
         match self.tag:
             case '{http://www.sat.gob.mx/cfd/3}Comprobante' | '{http://www.sat.gob.mx/cfd/4}Comprobante':
                 return "facturas/{3:%Y}/{3:%Y-%m}/{4}/{3:%Y-%m-%d}_{0}_[{1}]_{2}".format(
-                        self.name,
-                        self["TipoDeComprobante"].code,
-                        self.uuid,
-                        self["Fecha"],
-                        "Emitidas" if self["Emisor"]["Rfc"] == EMISOR.rfc else "Recibidas"
-                    )
+                    self.name,
+                    self["TipoDeComprobante"].code,
+                    self.uuid,
+                    self["Fecha"],
+                    "Emitidas" if self["Emisor"]["Rfc"] == EMISOR.rfc else "Recibidas"
+                )
             case '{http://www.sat.gob.mx/esquemas/retencionpago/1}Retenciones' | '{http://www.sat.gob.mx/esquemas/retencionpago/2}Retenciones':
                 return "retenciones/{2:%Y}/{2:%Y-%m}/{3}/{2:%Y-%m-%d}_{0}_{1}".format(
-                        self.get("FolioInt", ""),
-                        self.uuid,
-                        self["FechaExp"],
-                        "Emitidas" if self["Emisor"]["RFCEmisor"] == EMISOR.rfc else "Recibidas"
-                    )
+                    self.get("FolioInt", ""),
+                    self.uuid,
+                    self["FechaExp"],
+                    "Emitidas" if self["Emisor"]["RFCEmisor"] == EMISOR.rfc else "Recibidas"
+                )
 
     @classmethod
     def uuid_from_filename(cls, filename):

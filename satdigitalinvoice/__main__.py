@@ -19,13 +19,13 @@ from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 
-from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE, FIEL_SIGNER, PROPIETARIO_CORREO, AJUSTES_DIR, CORREO_FIRMA
+from . import EMAIL_MANAGER, FACTURAS_SOURCE, SERIE, PAC_SERVICE, FIEL_SIGNER, AJUSTES_DIR, CORREO_FIRMA
 from .client_validation import validar_client
 from .file_data_managers import FacturasManager, environment_default, generate_pdf_template
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .gui_functions import generate_ingresos, pago_factura, find_factura
 from .log_tools import LogAdapter, LogHandler, log_cfdi, log_email
-from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder, notifications
+from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder, notifications, EMISOR, LUGAR_EXPEDICION
 
 logging.basicConfig(level=logging.DEBUG)
 logger = LogAdapter(logging.getLogger())
@@ -77,7 +77,7 @@ def make_layout():
                     sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING),
                     sg.Input("", size=(12, 1), key="fecha_pago", change_submits=True),
                     sg.Text("FormaPago:", pad=TEXT_PADDING),
-                    sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", change_submits=True)
+                    sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", change_submits=True, size=(34, 1))
                 ],
                 [
                     sg.Button("Preparar Pago", key="prepare_pago"),
@@ -92,7 +92,7 @@ def make_layout():
         sg.Button("Facturas Pendientes", key="facturas_pendientes"),
         sg.Checkbox("Ver Detallado", default=False, key="detallado"),
         sg.VSeparator(),
-        sg.Button("Preparar Ajuste Anual", key="preparar_ajuste_anual"),
+        sg.Button("Ajuste Anual", key="preparar_ajuste_anual"),
         sg.Text("Año-Mes:", pad=TEXT_PADDING),
         sg.Input((date.today() + timedelta(days=31)).strftime('%Y-%m'), size=(8, 1), key="anio_mes_ajuste"),
         sg.Text("Ajuste:", pad=TEXT_PADDING),
@@ -296,20 +296,19 @@ def main_loop():
                     os.makedirs(AJUSTES_DIR, exist_ok=True)
 
                     for rfc, concepto in find_ajustes(mes_ajuste):
-                        client = clients[rfc]
+                        receptor = clients[rfc]
+                        emisor = clients[EMISOR.rfc]
                         valor_unitario_nuevo = concepto["ValorUnitario"] * (1 + ajuste_porcentaje)
 
                         data = {
-                            "Client": client,
-                            "Rfc": rfc,
+                            "Receptor": receptor,
                             "Concepto": concepto,
                             "FechaHoy": fecha(date.today()),
                             "ValorUnitarioNuevo": pesos(valor_unitario_nuevo),
                             "Ajuste": porcentaje(ajuste_porcentaje, 2),
                             "AjustePeriodo": "UN AÑO",
                             "AjusteEfectivoAl": fecha(ajuste_efectivo_al),
-                            "Propietario": EMISOR.legal_name,
-                            "PropietarioCorreo": PROPIETARIO_CORREO,
+                            "Emisor": emisor,
                         }
 
                         logger.info_yaml(data)

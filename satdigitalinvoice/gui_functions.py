@@ -1,14 +1,13 @@
 import logging
 import uuid
 from datetime import datetime
-from uuid import UUID
 
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante
 
-from . import SERIE, EMISOR, LUGAR_EXPEDICION
+from . import SERIE
 from .file_data_managers import FacturasManager
-from .mycfdi import notifications, clients, get_all_cfdi
+from .mycfdi import notifications, clients, get_all_cfdi, EMISOR, LUGAR_EXPEDICION
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger()

@@ -73,6 +73,11 @@ class NotificationsManager(LocalData):
 class ClientsManager(LocalData):
     file_source = "clients.yaml"
 
+    def __init__(self):
+        super().__init__()
+        for k in self:
+            self[k]["Rfc"] = k
+
 
 class FacturasManager(dict):
     def __init__(self, values, file_source="facturas.yaml"):
