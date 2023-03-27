@@ -8,3 +8,4 @@ EMISOR =  None
 EMAIL_MANAGER = None
 
 FACTURAS_SOURCE = "facturas.yaml"
+PROPIETARIO_CORREO = None

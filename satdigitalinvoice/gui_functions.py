@@ -45,6 +45,12 @@ def create_cfdi(factura_details, serie, folio):
         logger.error(f"{factura_details['Rfc']}: FormaPago '{invoice['FormaPago']}' is invalid, expected '99' for PPD")
         return None
 
+    for c in factura_details["Conceptos"]:
+        mes_ajuste = c.get("_MesAjusteAnual")
+        if not isinstance(mes_ajuste, int) or not (12 >= mes_ajuste >= 1):
+            logger.error(f"{factura_details['Rfc']}: No Tiene Mes de Ajuste Anual Valido")
+            return None
+
     return invoice
 
 

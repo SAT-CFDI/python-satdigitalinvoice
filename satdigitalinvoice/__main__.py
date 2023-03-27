@@ -2,11 +2,14 @@ import base64
 import io
 import itertools
 import logging
+import os
+import shutil
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from zipfile import ZipFile
 
 import PySimpleGUI as sg
-from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, ThisRow
+from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL
 from babel.dates import format_date
 from satcfdi import Code, DatePeriod
 from satcfdi.accounting import filter_invoices_by, InvoiceType
@@ -16,9 +19,10 @@ from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 
-from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE, FIEL_SIGNER
+from . import EMAIL_MANAGER, EMISOR, FACTURAS_SOURCE, SERIE, LUGAR_EXPEDICION, PAC_SERVICE, FIEL_SIGNER, PROPIETARIO_CORREO, AJUSTES_DIR, CORREO_FIRMA
 from .client_validation import validar_client
-from .file_data_managers import FacturasManager, environment_default
+from .file_data_managers import FacturasManager, environment_default, generate_pdf_template
+from .formatting_functions.common import fecha, pesos, porcentaje
 from .gui_functions import generate_ingresos, pago_factura, find_factura
 from .log_tools import LogAdapter, LogHandler, log_cfdi, log_email
 from .mycfdi import generate_invoice, get_all_cfdi, clients, cancelados_manager, MyCFDI, move_to_folder, notifications
@@ -30,6 +34,8 @@ FORMA_PAGO = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_For
 SAT_SERVICE = SAT(
     signer=FIEL_SIGNER
 )
+TEXT_PADDING = ((5, 0), 3)
+RTEXT_PADDING = ((0, 0), 3)
 
 
 def make_layout():
@@ -41,12 +47,12 @@ def make_layout():
 
     # LAYOUT
     button_column = [
-        sg.Button("Preparar Facturas", key="validate_invoices"),
-        sg.Text("Periodo:"),
+        sg.Button("Preparar Facturas", key="prepare_facturas"),
+        sg.Text("Periodo:", pad=TEXT_PADDING),
         sg.Input(format_date(date.today(), locale='es_MX', format="'Mes de' MMMM 'del' y").upper(), key="periodo", change_submits=True),
-        sg.Text("De:"),
+        sg.Text("De:", pad=TEXT_PADDING),
         sg.Input("1", key="inicio", size=(4, 1), change_submits=True),
-        sg.Text("Hasta:"),
+        sg.Text("Hasta:", pad=TEXT_PADDING),
         sg.Input(str(numero_facturas), key="final", size=(4, 1), change_submits=True),
     ]
 
@@ -54,7 +60,7 @@ def make_layout():
         sg.Column(
             [
                 [
-                    sg.Text("Factura:"),
+                    sg.Text("Factura:", pad=TEXT_PADDING),
                     sg.Input("", size=(30, 1), key="factura_pagar", change_submits=True),
                 ],
                 [
@@ -68,9 +74,9 @@ def make_layout():
         sg.Column(
             [
                 [
-                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago"),
+                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING),
                     sg.Input("", size=(12, 1), key="fecha_pago", change_submits=True),
-                    sg.Text("FormaPago:"),
+                    sg.Text("FormaPago:", pad=TEXT_PADDING),
                     sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", change_submits=True)
                 ],
                 [
@@ -86,10 +92,17 @@ def make_layout():
         sg.Button("Facturas Pendientes", key="facturas_pendientes"),
         sg.Checkbox("Ver Detallado", default=False, key="detallado"),
         sg.VSeparator(),
-        sg.Text("Recuperar:"),
+        sg.Button("Preparar Ajuste Anual", key="preparar_ajuste_anual"),
+        sg.Text("Año-Mes:", pad=TEXT_PADDING),
+        sg.Input((date.today() + timedelta(days=31)).strftime('%Y-%m'), size=(8, 1), key="anio_mes_ajuste"),
+        sg.Text("Ajuste:", pad=TEXT_PADDING),
+        sg.Input("", size=(6, 1), key="ajuste_porcentaje"),
+        sg.Text("%", pad=RTEXT_PADDING),
+        sg.VSeparator(),
+        sg.Text("Recuperar:", pad=TEXT_PADDING),
         sg.Button("Emitidas", key="recuperar_emitidas"),
         sg.Button("Recibidas", key="recuperar_recibidas"),
-        sg.Text("Dias:"),
+        sg.Text("Dias:", pad=TEXT_PADDING),
         sg.Input("40", size=(4, 1), key="recuperar_dias"),
     ]
 
@@ -205,7 +218,8 @@ def enviar_correos(invoices):
 
             message = template.render(
                 invoices=notify_invoices,
-                pending_invoices=facturas_pendientes
+                pending_invoices=facturas_pendientes,
+                CORREO_FIRMA=CORREO_FIRMA
             )
 
             s.send_email(
@@ -245,6 +259,16 @@ def unzip_cfdi(file):
             window.read(timeout=0)
 
 
+def find_ajustes(mes_ajuste):
+    facturas_manager = FacturasManager({"periodo": "INMUEBLE"})
+
+    for f in facturas_manager['Facturas']:
+        rfc = f["Rfc"]
+        for concepto in f["Conceptos"]:
+            if concepto['_MesAjusteAnual'] == mes_ajuste:
+                yield rfc, concepto
+
+
 def main_loop():
     while True:
         event, values = window.read()
@@ -258,6 +282,43 @@ def main_loop():
             emails_to_send = email_button_manager.clear()
 
             match event:
+                case "preparar_ajuste_anual":
+                    anio_ajuste, mes_ajuste = (int(x) for x in values['anio_mes_ajuste'].split("-"))
+                    ajuste_porcentaje = values['ajuste_porcentaje']
+                    if not ajuste_porcentaje:
+                        logger.error("Especificar Ajuste Porcetaje")
+                        continue
+
+                    ajuste_porcentaje = Decimal(ajuste_porcentaje) / 100
+                    ajuste_efectivo_al = date(anio_ajuste, mes_ajuste, 1)
+
+                    shutil.rmtree(AJUSTES_DIR, ignore_errors=True)
+                    os.makedirs(AJUSTES_DIR, exist_ok=True)
+
+                    for rfc, concepto in find_ajustes(mes_ajuste):
+                        client = clients[rfc]
+                        valor_unitario_nuevo = concepto["ValorUnitario"] * (1 + ajuste_porcentaje)
+
+                        data = {
+                            "Client": client,
+                            "Rfc": rfc,
+                            "Concepto": concepto,
+                            "FechaHoy": fecha(date.today()),
+                            "ValorUnitarioNuevo": pesos(valor_unitario_nuevo),
+                            "Ajuste": porcentaje(ajuste_porcentaje, 2),
+                            "AjustePeriodo": "UN AÑO",
+                            "AjusteEfectivoAl": fecha(ajuste_efectivo_al),
+                            "Propietario": EMISOR.legal_name,
+                            "PropietarioCorreo": PROPIETARIO_CORREO,
+                        }
+
+                        logger.info_yaml(data)
+                        res = generate_pdf_template(template_name='incremento_template.md', fields=data)
+                        file_name = f'{AJUSTES_DIR}/AjusteAnual_{rfc}_{concepto["CuentaPredial"]}.pdf'
+                        with open(file_name, 'wb') as f:
+                            f.write(res)
+                        window.read(timeout=0)
+
                 case "recuperar_emitidas" | "recuperar_recibidas":
                     log_line("RECUPERAR")
                     fecha_final = date.today()
@@ -305,7 +366,7 @@ def main_loop():
                     else:
                         log_item("OPERACION CANCELADA")
 
-                case "validate_invoices":
+                case "prepare_facturas":
                     log_line("PREPARAR FACTURAS")
                     facturas = generate_ingresos(values)
                     if facturas:
@@ -454,7 +515,7 @@ window = sg.Window(
     f"Serie: {SERIE}  Regimen: {EMISOR.tax_system}  LugarExpedicion: {LUGAR_EXPEDICION}",
     make_layout(),
     size=(1280, 800),
-    resizable=True
+    resizable=True,
 )
 
 ch = LogHandler(window['console'])
