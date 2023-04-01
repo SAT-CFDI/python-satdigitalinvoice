@@ -44,6 +44,14 @@ template = environment_default.get_template(
 )
 
 
+def is_uuid(s):
+    try:
+        UUID(s)
+        return True
+    except ValueError:
+        return False
+
+
 class FacturacionGUI:
     def __init__(self, pac_service, csd_signer: Signer, email_manager, fiel_signer=None, concepto_adapter=None):
         self.email_manager = email_manager
@@ -72,7 +80,7 @@ class FacturacionGUI:
         )
         self.window = window
         self.console = self.window['console']
-        
+
         self.invoice_button_manager = InvoiceButtonManager(window["crear_facturas"], window["detallado"])
         self.email_button_manager = EmailButtonManager(window["enviar_correos"])
         self.all_invoices = None
@@ -340,14 +348,6 @@ class FacturacionGUI:
                         self.window["fecha_pago_select"].update(disabled=not_ppd)
                         self.window["fecha_pago"].update(disabled=not_ppd)
                         self.window["forma_pago"].update(disabled=not_ppd)
-
-                        def is_uuid(s):
-                            try:
-                                UUID(s)
-                                return True
-                            except ValueError:
-                                return False
-
                         self.window["descarga"].update(disabled=not is_uuid(text))
 
                     case "preparar_ajuste_anual":
