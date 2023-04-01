@@ -1,4 +1,6 @@
 import logging
+import os
+import pickle
 from uuid import UUID
 
 import diskcache
@@ -16,11 +18,12 @@ config = ConfigManager()
 sat_manager = sat.SAT()
 
 logger = LogAdapter(logging.getLogger())
+DATA_DIR = '.data'
 
 
 class LocalDB:
     def __init__(self):
-        self.local_storage = diskcache.Cache('.data/local')
+        self.local_storage = diskcache.Cache(os.path.join(DATA_DIR, 'cache'))
 
     def pue_pagada(self, uuid: UUID):
         return self.local_storage.get(
@@ -112,4 +115,18 @@ class LocalDBSatCFDI(LocalDB):
             'status_sat': self.status_sat(cfdi)
         })
 
+
 local_db = LocalDBSatCFDI()
+
+
+def save_data(file, data):
+    with open(os.path.join(DATA_DIR, file), 'wb') as f:
+        pickle.dump(data, f)
+
+
+def load_data(file, default=None):
+    try:
+        with open(os.path.join(DATA_DIR, file), 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return default

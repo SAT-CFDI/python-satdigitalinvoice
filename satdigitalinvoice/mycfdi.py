@@ -1,7 +1,6 @@
 import glob
 import logging
 import os
-import pickle
 from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
@@ -10,10 +9,10 @@ from uuid import UUID
 
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
-from .local import local_db
+from .local import local_db, load_data, save_data
 
-ALL_INVOICES = b'.data/all_invoices'
-ALL_RETENCIONES = b'.data/all_retenciones'
+ALL_INVOICES = 'all_invoices'
+ALL_RETENCIONES = 'all_retenciones'
 logger = logging.getLogger()
 
 PPD = "PPD"
@@ -174,19 +173,6 @@ def move_to_folder(xml_data, pdf_data):
         logger.info("Factura ya se tenia: %s", full_name)
 
     return cfdi
-
-
-def save_data(file, data):
-    with open(file, 'wb') as f:
-        pickle.dump(data, f)
-
-
-def load_data(file, default=None):
-    try:
-        with open(file, 'rb') as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        return default
 
 
 def get_all_cfdi() -> Mapping[UUID, MyCFDI]:
