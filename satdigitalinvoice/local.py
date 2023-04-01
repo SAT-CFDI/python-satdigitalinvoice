@@ -6,8 +6,8 @@ from uuid import UUID
 import diskcache
 from satcfdi.accounting import SatCFDI
 from satcfdi.pacs import sat
-from .log_tools import LogAdapter
 from .file_data_managers import ConfigManager
+from .log_tools import print_yaml
 
 PUE_PAGADA = 0
 PPD_IGNORAR = 1
@@ -17,7 +17,7 @@ STATUS_SAT = 3
 config = ConfigManager()
 sat_manager = sat.SAT()
 
-logger = LogAdapter(logging.getLogger())
+logger = logging.getLogger()
 DATA_DIR = '.data'
 
 
@@ -108,7 +108,7 @@ class LocalDBSatCFDI(LocalDB):
             return super().status_sat(cfdi.uuid)
 
     def describe(self, cfdi: SatCFDI):
-        logger.info_yaml({
+        print_yaml({
             'pue_pagada': self.pue_pagada(cfdi),
             'ppd_ignorar': self.ppd_ignorar(cfdi),
             'email_notificada': self.email_notificada(cfdi),

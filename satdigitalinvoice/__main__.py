@@ -28,14 +28,15 @@ from .file_data_managers import environment_default, environment_bold_escaped, C
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .gui_functions import generate_ingresos, pago_factura, find_ajustes, format_concepto_desc, exportar_facturas, exportar_facturas_filename, parse_ym_date
 from .layout import make_layout, InvoiceButtonManager, EmailButtonManager
-from .log_tools import LogHandler, LogAdapter, log_line, log_item, cfdi_header
+from .log_tools import log_line, log_item, cfdi_header, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, local_db, PPD, PUE
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 
-logger = LogAdapter(logging.getLogger())
+logger = logging.getLogger()
 
 AJUSTES_DIR = "ajustes"
 template = environment_default.get_template(
@@ -70,11 +71,8 @@ class FacturacionGUI:
             resizable=True,
         )
         self.window = window
-
-        self.ch = LogHandler(self.window['console'])
-        self.ch.setLevel(logging.INFO)
-        logging.getLogger().addHandler(self.ch)
-
+        self.console = self.window['console']
+        
         self.invoice_button_manager = InvoiceButtonManager(window["crear_facturas"], window["detallado"])
         self.email_button_manager = EmailButtonManager(window["enviar_correos"])
         self.all_invoices = None
@@ -100,7 +98,7 @@ class FacturacionGUI:
                 }
 
         try:
-            logger.info_yaml({
+            print_yaml({
                 "version": __version__.__version__,
                 "facturacion": "CFDI 4.0",
                 "emisor": self.issuer_cif,
@@ -171,14 +169,14 @@ class FacturacionGUI:
         response = self.sat_service.recover_comprobante_status(
             id_solicitud=id_solicitud
         )
-        logger.info_yaml(response)
+        print_yaml(response)
         self.window.read(timeout=0)
         if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
             for id_paquete in response['IdsPaquetes']:
                 response, paquete = self.sat_service.recover_comprobante_download(
                     id_paquete=id_paquete
                 )
-                logger.info_yaml(response)
+                print_yaml(response)
                 self.window.read(timeout=0)
                 yield id_paquete, base64.b64decode(paquete) if paquete else None
 
@@ -230,14 +228,14 @@ class FacturacionGUI:
             res = None
             for i in self.get_all_invoices().values():
                 if i.name == text and i["Emisor"]["Rfc"] == emisor_rfc:
-                    logger.info(f"Factura Encontrada: {i['Receptor']['Rfc']}  {i.name}  {i.uuid}  {i['Fecha']}")
+                    print(f"Factura Encontrada: {i['Receptor']['Rfc']}  {i.name}  {i.uuid}  {i['Fecha']}")
                     if res:
-                        logger.info(f"Multiples Facturas Encontradas con el mismo nombre: {text}")
+                        print(f"Multiples Facturas Encontradas con el mismo nombre: {text}")
                         return
                     res = i
             if res:
                 return res
-        logger.info(f"Factura No Encontrada {text}")
+        print(f"Factura No Encontrada {text}")
 
     def log_cfdi(self, cfdi: CFDI):
         cfdi_copy = cfdi.copy()
@@ -292,7 +290,7 @@ class FacturacionGUI:
         if isinstance(cfdi, SatCFDI):
             cfdi_copy["_saldo_pendiente"] = cfdi.saldo_pendiente
 
-        logger.info_yaml(cfdi_copy)
+        print_yaml(cfdi_copy)
 
     def main_loop(self):
         factura_seleccionada = None  # type: MyCFDI | None
@@ -305,7 +303,7 @@ class FacturacionGUI:
                     return
 
                 if event not in ("crear_facturas", "enviar_correos", "confirm_pago_button", "ver_factura", "ver_excel"):
-                    self.ch.clear()
+                    self.console.update("")
                 invoices_to_create = self.invoice_button_manager.clear()
                 emails_to_send = self.email_button_manager.clear()
 
@@ -315,12 +313,9 @@ class FacturacionGUI:
 
                     case "factura_pagar" | "buscar_factura":
                         text = self.window["factura_pagar"].get().strip()
-                        if event == "buscar_factura":
-                            factura_seleccionada = self.factura_uuid(text)
-                            if not factura_seleccionada:
-                                factura_seleccionada = self.factura_buscar(text)
-                        else:
-                            factura_seleccionada = self.factura_uuid(text)
+                        factura_seleccionada = self.factura_uuid(text)
+                        if event == "buscar_factura" and not factura_seleccionada:
+                            factura_seleccionada = self.factura_buscar(text)
 
                         if factura_seleccionada:
                             self.log_cfdi(factura_seleccionada)
@@ -387,7 +382,7 @@ class FacturacionGUI:
                             }
 
                             log_item(f"CARTA INCREMENTO NUMERO: {i}")
-                            logger.info_yaml(data)
+                            print_yaml(data)
                             res = self.generate_pdf_template(template_name='incremento_template.md', fields=data)
                             file_name = f'{AJUSTES_DIR}/AjusteRenta_{rfc}_{concepto["CuentaPredial"]}.pdf'
                             with open(file_name, 'wb') as f:
@@ -406,7 +401,7 @@ class FacturacionGUI:
                         id_solicitud = local.config.get(event)
 
                         if not id_solicitud:
-                            logger.info("Creando Nueva Solicitud")
+                            print("Creando Nueva Solicitud")
                             self.window.read(timeout=0)
                             response = self.sat_service.recover_comprobante_request(
                                 fecha_inicial=fecha_inicial,
@@ -415,11 +410,11 @@ class FacturacionGUI:
                                 rfc_emisor=self.sat_service.signer.rfc if "recuperar_emitidas" == event else None,
                                 tipo_solicitud=TipoDescargaMasivaTerceros.CFDI,
                             )
-                            logger.info_yaml(response)
+                            print_yaml(response)
                             local.config[event] = response['IdSolicitud']
                             local.config.save()
                         else:
-                            logger.info_yaml({
+                            print_yaml({
                                 'IdSolicitud': id_solicitud
                             })
                             self.window.read(timeout=0)
@@ -486,7 +481,7 @@ class FacturacionGUI:
                         log_line("STATUS")
                         if i := factura_seleccionada:
                             estado = local_db.status_sat(i, update=True)
-                            logger.info_yaml(estado)
+                            print_yaml(estado)
                             local_db.describe(i)
 
                     case "pago_pue":
@@ -500,11 +495,11 @@ class FacturacionGUI:
                                 button_type=POPUP_BUTTONS_OK_CANCEL,
                             )
                             if res == "OK":
-                                self.ch.clear()
+                                self.console.update("")
                                 local_db.pue_pagada_set(i.uuid, not st)
                                 self.log_cfdi(i)
                                 local_db.describe(i)
-                                logger.info(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}PAGADA")
+                                print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}PAGADA")
 
                     case "ignorar_ppd":
                         if i := factura_seleccionada:
@@ -517,11 +512,11 @@ class FacturacionGUI:
                                 button_type=POPUP_BUTTONS_OK_CANCEL,
                             )
                             if res == "OK":
-                                self.ch.clear()
+                                self.console.update("")
                                 local_db.ppd_ignorar_set(i.uuid, not st)
                                 self.log_cfdi(i)
                                 local_db.describe(i)
-                                logger.info(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}IGNORADA")
+                                print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}IGNORADA")
 
                     case "email_notificada":
                         if i := factura_seleccionada:
@@ -534,11 +529,11 @@ class FacturacionGUI:
                                 button_type=POPUP_BUTTONS_OK_CANCEL,
                             )
                             if res == "OK":
-                                self.ch.clear()
+                                self.console.update("")
                                 local_db.email_notificada_set(i.uuid, not st)
                                 self.log_cfdi(i)
                                 local_db.describe(i)
-                                logger.info(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}NOTIFICADA")
+                                print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}NOTIFICADA")
 
                     case "crear_facturas":
                         log_line("CREAR FACTURAS")
@@ -552,12 +547,12 @@ class FacturacionGUI:
                             for invoice in invoices_to_create:
                                 try:
                                     cfdi = self.generate_invoice(invoice=invoice)
-                                    logger.info(f'Factura Generada: {cfdi_header(cfdi)}')
+                                    print(f'Factura Generada: {cfdi_header(cfdi)}')
                                     self.window.read(timeout=0)
                                 except ResponseError as ex:
                                     logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
                                     logger.error(f"Status Code: {ex.response.status_code}")
-                                    logger.info_yaml(ex.response.json())
+                                    print_yaml(ex.response.json())
                                     break
                             log_item("FIN")
                         else:
@@ -596,7 +591,7 @@ class FacturacionGUI:
                                 cfdi_correos
                             )
                         else:
-                            logger.info("No hay correos pendientes de enviar")
+                            print("No hay correos pendientes de enviar")
 
                     case "enviar_correos":
                         log_line("ENVIAR CORREOS")
@@ -640,7 +635,7 @@ class FacturacionGUI:
                                     for i in fac_pen
                                 ]
                             }
-                            logger.info_yaml(f)
+                            print_yaml(f)
 
                     case "descarga":
                         log_line('DESCARGADA')
@@ -650,7 +645,7 @@ class FacturacionGUI:
                             cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
                             self.log_cfdi(cfdi)
                         except DocumentNotFoundError:
-                            logger.info("Factura no encontrada")
+                            print("Factura no encontrada")
 
                     case "exportar_facturas":
                         log_line("EXPORTAR FACTURAS")

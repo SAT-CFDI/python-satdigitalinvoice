@@ -97,7 +97,7 @@ def make_layout(has_fiel):
         c_second,
         [sg.HSeparator()],
         button_column_third,
-        [sg.Output(expand_x=True, expand_y=True, key="console")],
+        [sg.Output(expand_x=True, expand_y=True, key="console", echo_stdout_stderr=False)],
         button_column_low
     ]
 

@@ -159,7 +159,7 @@ def move_to_folder(xml_data, pdf_data):
     try:
         with open(full_name + ".xml", 'xb') as fp:
             fp.write(xml_data)
-        logger.info("Factura ha sido agregada: '%s'", full_name)
+        print(f"Factura ha sido agregada: '{full_name}'")
 
         if pdf_data:
             with open(full_name + ".pdf", 'wb') as fp:
@@ -170,7 +170,7 @@ def move_to_folder(xml_data, pdf_data):
             except:
                 logger.exception("Fallo crear PDF: '%s'", full_name)
     except FileExistsError:
-        logger.info("Factura ya se tenia: %s", full_name)
+        print(f"Factura ya se tenia: '{full_name}'", full_name)
 
     return cfdi
 

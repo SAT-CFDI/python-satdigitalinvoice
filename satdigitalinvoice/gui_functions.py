@@ -294,6 +294,6 @@ def exportar_facturas(all_invoices, periodo, issuer):
 
     try:
         workbook.close()
-        logger.info(f"Archivo {archivo_excel} creado")
+        print(f"Archivo {archivo_excel} creado")
     except FileCreateError:
-        logger.info(f"No se pudo crear el archivo {archivo_excel}")
+        print(f"No se pudo crear el archivo {archivo_excel}")
