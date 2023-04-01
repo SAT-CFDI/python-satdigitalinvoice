@@ -1,24 +1,23 @@
 import glob
 import logging
 import os
+import pickle
 from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
 from typing import MutableMapping
 from uuid import UUID
 
-import diskcache
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
 from .local import local_db
 
-ALL_INVOICES = b'all_invoices'
-ALL_RETENCIONES = b'all_retenciones'
+ALL_INVOICES = b'.data/all_invoices'
+ALL_RETENCIONES = b'.data/all_retenciones'
 logger = logging.getLogger()
 
 PPD = "PPD"
 PUE = "PUE"
-cache = diskcache.Cache(".data/tmp")
 
 
 class MyCFDI(SatCFDI):
@@ -177,22 +176,35 @@ def move_to_folder(xml_data, pdf_data):
     return cfdi
 
 
+def save_data(file, data):
+    with open(file, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def load_data(file, default=None):
+    try:
+        with open(file, 'rb') as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return default
+
+
 def get_all_cfdi() -> Mapping[UUID, MyCFDI]:
-    all_invoices = cache.get(ALL_INVOICES, {})
+    all_invoices = load_data(ALL_INVOICES, {})
 
     has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path="facturas/**/*.xml")
     if has_updates:
-        cache[ALL_INVOICES] = all_invoices
+        save_data(ALL_INVOICES, all_invoices)
 
     complement_invoices_data(all_invoices)
     return all_invoices
 
 
 def get_all_retenciones() -> Mapping[UUID, MyCFDI]:
-    all_invoices = cache.get(ALL_RETENCIONES, {})
+    all_invoices = load_data(ALL_RETENCIONES, {})
 
     has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path="retenciones/**/*.xml")
     if has_updates:
-        cache[ALL_RETENCIONES] = all_invoices
+        save_data(ALL_RETENCIONES, all_invoices)
 
     return all_invoices
