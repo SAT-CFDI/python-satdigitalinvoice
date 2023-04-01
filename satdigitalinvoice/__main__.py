@@ -629,7 +629,7 @@ class FacturacionGUI:
                         ):
                             f = {
                                 'Receptor': Code(receptor_rfc, clients[receptor_rfc]['RazonSocial']),
-                                'Facturas Pendientes': [
+                                'FacturasPendientes': [
                                     {
                                         "Factura": f"{i.name} - {i.uuid}",
                                         'SaldoPendiente': i.saldo_pendiente,

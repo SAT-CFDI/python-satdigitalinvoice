@@ -34,7 +34,7 @@ def log_email(receptor, notify_invoices, facturas_pendientes):
     logger.info_yaml({
         "Rfc": Code(receptor["Rfc"], receptor["RazonSocial"]),
         "Facturas": [f"{i.name} - {i.uuid}" for i in notify_invoices],
-        "Pendientes Meses Anteriores": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
+        "PendientesMesesAnteriores": [f"{i.name} - {i.uuid}" for i in facturas_pendientes],
         "Correos": receptor["Email"]
     })
 
