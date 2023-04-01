@@ -147,6 +147,7 @@ class EmailButtonManager:
 
     def style_button(self):
         self.button.update(
+            f"Enviar {len(self._emails)} Correos" if self._emails else "Enviar Correos",
             disabled=len(self._emails) == 0
         )
 
