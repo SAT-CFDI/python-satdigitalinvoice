@@ -12,7 +12,7 @@ from zipfile import ZipFile
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI
 from markdown2 import markdown
 from satcfdi import DatePeriod, CFDI, Code, Signer
-from satcfdi.accounting import filter_invoices_by, InvoiceType
+from satcfdi.accounting import filter_invoices_by, InvoiceType, SatCFDI
 from satcfdi.create import Issuer
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
@@ -80,27 +80,40 @@ class FacturacionGUI:
         self.all_invoices = None
 
     def initial_screen(self):
-        signer = self.issuer.signer
-
         def convert_ans1_date(ans1_date):
             return datetime.strptime(ans1_date.decode('utf-8'), '%Y%m%d%H%M%SZ')
 
+        def cert_info(signer: Signer):
+            if signer:
+                return {
+                    "NoCertificado": signer.certificate_number,
+                    "Tipo": str(signer.type),
+
+                    "organizationName": signer.certificate.get_subject().O,
+                    "x500UniqueIdentifier": signer.certificate.get_subject().x500UniqueIdentifier,
+                    "serialNumber": signer.certificate.get_subject().serialNumber,
+                    "organizationUnitName": signer.certificate.get_subject().OU,
+                    "emailAddress": signer.certificate.get_subject().emailAddress,
+
+                    "notAfter": convert_ans1_date(signer.certificate.get_notAfter()),
+                    "notBefore": convert_ans1_date(signer.certificate.get_notBefore()),
+                }
+
         try:
             logger.info_yaml({
-                "Version": __version__.__version__,
-                "Facturacion": "CFDI 4.0",
-                "Emisor": self.issuer_cif,
-                "Certificado": {
-                    "No Certificado": signer.certificate_number,
-                    "Curp": str(signer.curp),
-                    "Sucursal": signer.branch_name,
-                    "Expiracion": convert_ans1_date(signer.certificate.get_notAfter()),
-                    "Creacion": convert_ans1_date(signer.certificate.get_notBefore()),
-                    "Typo": str(signer.type)
+                "version": __version__.__version__,
+                "facturacion": "CFDI 4.0",
+                "emisor": self.issuer_cif,
+                "pac_service": {
+                    "Type": type(self.pac_service).__name__,
+                    "Rfc": self.pac_service.RFC,
+                    "Environment": str(self.pac_service.environment)
                 },
-                "Config": local.config,
+                "csd_signer": cert_info(self.issuer.signer),
+                "fiel_signer": cert_info(self.sat_service.signer),
+                "config": local.config,
             })
-        except:
+        except Exception as ex:
             logger.exception("Error al obtener datos")
 
     def start(self):
@@ -235,7 +248,7 @@ class FacturacionGUI:
             del cfdi_copy["Serie"]
             del cfdi_copy["NoCertificado"]
             cfdi_copy.pop("Emisor")
-            cfdi_copy["Receptor"] = f"{cfdi_copy['Receptor']['Rfc']}, {cfdi_copy['Receptor']['Nombre']}, {cfdi_copy['Receptor']['RegimenFiscalReceptor']}"
+            cfdi_copy["Receptor"] = f"{cfdi_copy['Receptor']['Rfc']}, {cfdi_copy['Receptor']['Nombre']}, {cfdi_copy['Receptor'].get('RegimenFiscalReceptor')}"
             cfdi_copy["Conceptos"] = [x['Descripcion'] for x in cfdi_copy["Conceptos"]]  # f"<< {len(cfdi_copy['Conceptos'])} >>"
             cfdi_copy.pop("Impuestos", None)
             cfdi_copy.pop("Fecha")
@@ -276,6 +289,9 @@ class FacturacionGUI:
                 if timbre_fiscal_digital := complemento.get("TimbreFiscalDigital"):
                     cfdi_copy["Complemento"]["TimbreFiscalDigital"] = timbre_fiscal_digital['UUID']
 
+        if isinstance(cfdi, SatCFDI):
+            cfdi_copy["_saldo_pendiente"] = cfdi.saldo_pendiente
+
         logger.info_yaml(cfdi_copy)
 
     def main_loop(self):
@@ -310,23 +326,21 @@ class FacturacionGUI:
                             self.log_cfdi(factura_seleccionada)
                             local_db.describe(factura_seleccionada)
 
-                        not_ppd = not factura_seleccionada or factura_seleccionada.get("MetodoPago") != PPD or factura_seleccionada.estatus != "1" or \
-                                  factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
-                        self.window["status_sat"].update(disabled=not factura_seleccionada)
-                        self.window["pago_pue"].update(
-                            disabled=not factura_seleccionada
-                                     or factura_seleccionada.get("MetodoPago") != PUE
-                                     or factura_seleccionada.estatus != "1"
-                                     or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
-                        )
+                        not_ppd_all = not factura_seleccionada or factura_seleccionada.get("MetodoPago") != PPD or factura_seleccionada.estatus != "1"
+                        not_ppd = not_ppd_all or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
 
+                        not_pue = not factura_seleccionada or factura_seleccionada.get("MetodoPago") != PUE or factura_seleccionada.estatus != "1" or \
+                                  factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
+
+                        self.window["status_sat"].update(disabled=not factura_seleccionada)
+                        self.window["pago_pue"].update(disabled=not_pue)
                         self.window["email_notificada"].update(
                             disabled=not factura_seleccionada
                                      or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
                         )
                         self.window["ver_factura"].update(disabled=not factura_seleccionada)
 
-                        self.window["ignorar_ppd"].update(disabled=not_ppd)
+                        self.window["ignorar_ppd"].update(disabled=not_ppd_all)
                         self.window["prepare_pago"].update(disabled=not_ppd)
                         self.window["fecha_pago_select"].update(disabled=not_ppd)
                         self.window["fecha_pago"].update(disabled=not_ppd)

@@ -42,12 +42,12 @@ class MyCFDI(SatCFDI):
 
     @SatCFDI.saldo_pendiente.getter
     def saldo_pendiente(self) -> Decimal:
-        if self['TipoDeComprobante'] == "I" and self["Emisor"]["Rfc"] == self.issuer_rfc:
+        if self['TipoDeComprobante'] == "I":
             if self["MetodoPago"] == PPD:
                 if local_db.ppd_ignorar(self):
                     return Decimal()
 
-            if self["MetodoPago"] == PUE and not self.payments:
+            if self["MetodoPago"] == PUE and not self.payments and self["Emisor"]["Rfc"] == self.issuer_rfc:
                 if local_db.pue_pagada(self):
                     return Decimal()
                 else:

@@ -285,7 +285,7 @@ def exportar_facturas(all_invoices, periodo, issuer):
     payments_export(workbook, "RECIBIDAS PAGOS", recibidas_pagos)
 
     # SPECIALES
-    payments_export(workbook, f"RECIBIDAS PAGOS IVA {issuer.tax_system}", pagos_hechos_iva)
+    payments_export(workbook, f"RECIBIDAS PAGOS IVA {issuer.tax_system.code}", pagos_hechos_iva)
     if prediales:
         payments_export(workbook, "PREDIALES", prediales)
 
