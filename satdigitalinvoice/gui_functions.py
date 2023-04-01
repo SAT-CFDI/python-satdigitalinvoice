@@ -4,8 +4,8 @@ from datetime import datetime, date
 import xlsxwriter
 from babel.dates import format_date
 from satcfdi import DatePeriod
-from satcfdi.accounting import filter_invoices_by, InvoiceType, invoices_export, payments_export
-from satcfdi.accounting.process import filter_payments_by, IVA16
+from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
+from satcfdi.accounting.process import IVA16
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante
 from satcfdi.pacs import sat
@@ -254,16 +254,19 @@ def exportar_facturas_filename(periodo):
 def exportar_facturas(all_invoices, periodo, issuer):
     dp = parse_date_period(periodo)
 
-    emitidas = filter_invoices_by(invoices=all_invoices, fecha=dp, rfc_emisor=issuer.rfc)
-    emitidas_pendientes = filter_invoices_by(invoices=all_invoices, fecha=lambda x: x <= dp, rfc_emisor=issuer.rfc, estatus='1',
-                                             invoice_type=InvoiceType.PAYMENT_PENDING)
-    emitidas_pagos = filter_payments_by(invoices=all_invoices, fecha=dp, rfc_emisor=issuer.rfc)
+    emitidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_emisor=issuer.rfc)
+    emitidas_pendientes = filter_invoices_iter(
+        invoices=all_invoices.values(), fecha=lambda x: x <= dp, rfc_emisor=issuer.rfc, estatus='1',
+        invoice_type="I", pending_balance=lambda x: x > 0)
+    emitidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=issuer.rfc)
 
-    recibidas = filter_invoices_by(invoices=all_invoices, fecha=dp, rfc_receptor=issuer.rfc)
-    recibidas_pendientes = filter_invoices_by(invoices=all_invoices, fecha=lambda x: x <= dp, rfc_receptor=issuer.rfc, estatus='1',
-                                              invoice_type=InvoiceType.PAYMENT_PENDING)
-    recibidas_pagos = filter_payments_by(invoices=all_invoices, fecha=dp, rfc_receptor=issuer.rfc)
+    recibidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_receptor=issuer.rfc)
+    recibidas_pendientes = filter_invoices_iter(
+        invoices=all_invoices.values(), fecha=lambda x: x <= dp, rfc_receptor=issuer.rfc, estatus='1',
+        invoice_type="I", pending_balance=lambda x: x > 0)
+    recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=issuer.rfc)
 
+    recibidas_pagos = list(recibidas_pagos)
     pagos_hechos_iva = [
         p
         for p in recibidas_pagos
@@ -294,5 +297,3 @@ def exportar_facturas(all_invoices, periodo, issuer):
         logger.info(f"Archivo {archivo_excel} creado")
     except FileCreateError:
         logger.info(f"No se pudo crear el archivo {archivo_excel}")
-
-

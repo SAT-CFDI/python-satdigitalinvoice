@@ -12,7 +12,7 @@ from zipfile import ZipFile
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI
 from markdown2 import markdown
 from satcfdi import DatePeriod, CFDI, Code, Signer
-from satcfdi.accounting import filter_invoices_by, InvoiceType, SatCFDI
+from satcfdi.accounting import filter_invoices_iter, SatCFDI
 from satcfdi.create import Issuer
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
@@ -565,7 +565,7 @@ class FacturacionGUI:
 
                     case "prepare_correos":
                         log_line("PREPARAR CORREOS")
-                        now = datetime.now()
+                        now = date.today()
                         dp = DatePeriod(now.year, now.month)
                         clients = ClientsManager()
                         a_invoices = self.get_all_invoices()
@@ -579,16 +579,17 @@ class FacturacionGUI:
                                 lambda r: r["Receptor"]["Rfc"]
                         ):
                             notify_invoices = list(notify_invoices)
-                            fac_pen = filter_invoices_by(
-                                invoices=a_invoices,
+                            fac_pen = filter_invoices_iter(
+                                invoices=a_invoices.values(),
                                 fecha=lambda x: x < dp,
-                                invoice_type=InvoiceType.PAYMENT_PENDING,
+                                invoice_type="I",
+                                pending_balance=lambda x: x > 0,
                                 rfc_emisor=self.issuer.rfc,
                                 rfc_receptor=receptor_rfc,
                                 estatus='1'
                             )
                             receptor = clients[receptor_rfc]
-                            cfdi_correos.append((receptor, notify_invoices, fac_pen))
+                            cfdi_correos.append((receptor, notify_invoices, list(fac_pen)))
 
                         if cfdi_correos:
                             self.email_button_manager.set_emails(
@@ -614,9 +615,10 @@ class FacturacionGUI:
                         clients = ClientsManager()
                         log_line("FACTURAS PENDIENTES")
 
-                        fac_pen = filter_invoices_by(
-                            invoices=self.get_all_invoices(),
-                            invoice_type=InvoiceType.PAYMENT_PENDING,
+                        fac_pen = filter_invoices_iter(
+                            invoices=self.get_all_invoices().values(),
+                            invoice_type="I",
+                            pending_balance=lambda x: x > 0,
                             rfc_emisor=self.issuer.rfc,
                             estatus='1'
                         )
