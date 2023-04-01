@@ -13,7 +13,7 @@ from .local import local_db, load_data, save_data
 
 ALL_INVOICES = 'all_invoices'
 ALL_RETENCIONES = 'all_retenciones'
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 PPD = "PPD"
 PUE = "PUE"

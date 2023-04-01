@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from string import Template
 from urllib.parse import urlparse, parse_qs
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def _qs2kv(qs):

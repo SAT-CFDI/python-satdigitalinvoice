@@ -31,12 +31,11 @@ from .layout import make_layout, InvoiceButtonManager, EmailButtonManager
 from .log_tools import log_line, log_item, cfdi_header, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, local_db, PPD, PUE
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger().setLevel(logging.INFO)
+
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 AJUSTES_DIR = "ajustes"
 template = environment_default.get_template(

@@ -15,7 +15,7 @@ from satcfdi.transform.catalog import CATALOGS
 
 REGIMEN_FISCAL = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_RegimenFiscal']
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 sat_manager = sat.SAT()
 
 environment_default = Environment(

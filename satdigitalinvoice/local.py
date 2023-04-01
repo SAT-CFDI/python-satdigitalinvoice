@@ -17,7 +17,7 @@ STATUS_SAT = 3
 config = ConfigManager()
 sat_manager = sat.SAT()
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 DATA_DIR = '.data'
 
 

@@ -8,7 +8,7 @@ from satcfdi import csf, RFC, RFCType
 from satcfdi.pacs.sat import SAT
 
 sat_service = SAT()
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 EMAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'

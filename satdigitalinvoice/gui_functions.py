@@ -16,7 +16,7 @@ from xlsxwriter.exceptions import FileCreateError
 from .file_data_managers import FacturasManager, ClientsManager, environment_default
 from .local import config
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 sat_manager = sat.SAT()
 
 PERIODOS = {
