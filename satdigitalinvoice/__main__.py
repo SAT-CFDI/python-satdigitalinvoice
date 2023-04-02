@@ -198,6 +198,7 @@ class FacturacionGUI:
         event, values = self.window.read(timeout=0)
         if event in ("Exit", PySimpleGUI.WIN_CLOSED):
             exit(0)
+        return event, values
         
     def generate_pdf_template(self, template_name, fields):
         increment_template = environment_bold_escaped.get_template(template_name)
@@ -308,12 +309,9 @@ class FacturacionGUI:
         factura_seleccionada = None  # type: MyCFDI | None
 
         while True:
-            event, values = self.window.read()
+            event, values = self._read()
             local.config = ConfigManager()
             try:
-                if event in ("Exit", PySimpleGUI.WIN_CLOSED):
-                    return
-
                 if event not in ("crear_facturas", "enviar_correos", "confirm_pago_button", "ver_factura", "ver_excel"):
                     self.console.update("")
                 invoices_to_create = self.invoice_button_manager.clear()
