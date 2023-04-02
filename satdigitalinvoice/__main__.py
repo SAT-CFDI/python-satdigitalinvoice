@@ -52,7 +52,7 @@ def is_uuid(s):
 
 
 class FacturacionGUI:
-    def __init__(self, pac_service, csd_signer: Signer, email_manager, fiel_signer=None, concepto_adapter=None):
+    def __init__(self, pac_service, csd_signer: Signer, email_manager, fiel_signer=None, concepto_adapter=None, debug=False):
         self.email_manager = email_manager
         self.pac_service = pac_service
         self.sat_service = SAT(
@@ -73,7 +73,7 @@ class FacturacionGUI:
         window = PySimpleGUI.Window(
             f"Facturacion 4.0  RazonSocial: {self.issuer.legal_name}  RFC: {self.issuer.rfc}  "
             f"Serie: {local.config.serie()}  Regimen: {self.issuer.tax_system}  LugarExpedicion: {self.lugar_expedicion}",
-            make_layout(fiel_signer is not None),
+            make_layout(fiel_signer is not None, debug=debug),
             size=(1280, 800),
             resizable=True,
         )
@@ -198,7 +198,6 @@ class FacturacionGUI:
         event, values = self.window.read(timeout=0)
         if event in ("Exit", PySimpleGUI.WIN_CLOSED):
             exit(0)
-        return event, values
         
     def generate_pdf_template(self, template_name, fields):
         increment_template = environment_bold_escaped.get_template(template_name)
@@ -250,7 +249,7 @@ class FacturacionGUI:
                 return res
         print(f"Factura No Encontrada {text}")
 
-    def log_cfdi(self, cfdi: CFDI):
+    def log_cfdi(self, cfdi: CFDI, ver_saldo=True):
         cfdi_copy = cfdi.copy()
         del cfdi_copy["Certificado"]
         del cfdi_copy["Sello"]
@@ -300,7 +299,7 @@ class FacturacionGUI:
                 if timbre_fiscal_digital := complemento.get("TimbreFiscalDigital"):
                     cfdi_copy["Complemento"]["TimbreFiscalDigital"] = timbre_fiscal_digital['UUID']
 
-        if isinstance(cfdi, SatCFDI):
+        if isinstance(cfdi, SatCFDI) and ver_saldo:
             cfdi_copy["_saldo_pendiente"] = cfdi.saldo_pendiente
 
         print_yaml(cfdi_copy)
@@ -309,9 +308,12 @@ class FacturacionGUI:
         factura_seleccionada = None  # type: MyCFDI | None
 
         while True:
-            event, values = self._read()
+            event, values = self.window.read()
             local.config = ConfigManager()
             try:
+                if event in ("Exit", PySimpleGUI.WIN_CLOSED):
+                    return
+
                 if event not in ("crear_facturas", "enviar_correos", "confirm_pago_button", "ver_factura", "ver_excel"):
                     self.console.update("")
                 invoices_to_create = self.invoice_button_manager.clear()
@@ -645,7 +647,7 @@ class FacturacionGUI:
                             res = self.pac_service.recover(values["factura_pagar"], accept=Accept.XML_PDF)
                             self.all_invoices = None
                             cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
-                            self.log_cfdi(cfdi)
+                            self.log_cfdi(cfdi, ver_saldo=False)
                         except DocumentNotFoundError:
                             print("Factura no encontrada")
 

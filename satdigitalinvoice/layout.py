@@ -12,7 +12,7 @@ TEXT_PADDING = ((5, 0), 3)
 RTEXT_PADDING = ((0, 0), 3)
 
 
-def make_layout(has_fiel):
+def make_layout(has_fiel, debug=False):
     # LAYOUT
     button_column = [
         sg.Button("Preparar Facturas", key="prepare_facturas", border_width=0),
@@ -97,7 +97,7 @@ def make_layout(has_fiel):
         c_second,
         [sg.HSeparator()],
         button_column_third,
-        [sg.Output(expand_x=True, expand_y=True, key="console", echo_stdout_stderr=False)],
+        [sg.Output(expand_x=True, expand_y=True, key="console", echo_stdout_stderr=debug)],
         button_column_low
     ]
 

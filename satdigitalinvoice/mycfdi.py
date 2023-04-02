@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import MutableMapping
 from uuid import UUID
 
+from satcfdi import CFDI
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
 from .local import local_db, load_data, save_data
