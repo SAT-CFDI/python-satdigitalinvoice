@@ -333,21 +333,35 @@ class FacturacionGUI:
                             self.log_cfdi(factura_seleccionada)
                             local_db.describe(factura_seleccionada)
 
-                        not_ppd_all = not factura_seleccionada or factura_seleccionada.get("MetodoPago") != PPD or factura_seleccionada.estatus != "1"
-                        not_ppd = not_ppd_all or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
+                        not_ppd_all = not factura_seleccionada \
+                                      or factura_seleccionada.get("MetodoPago") != PPD \
+                                      or factura_seleccionada.estatus != "1"
+                        not_ppd = not_ppd_all \
+                                  or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
 
-                        not_pue = not factura_seleccionada or factura_seleccionada.get("MetodoPago") != PUE or factura_seleccionada.estatus != "1" or \
+                        not_pue = not factura_seleccionada \
+                                  or factura_seleccionada.get("MetodoPago") != PUE \
+                                  or factura_seleccionada.estatus != "1" or \
                                   factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
 
                         self.window["status_sat"].update(disabled=not factura_seleccionada)
-                        self.window["pago_pue"].update(disabled=not_pue)
+
+                        self.window["pago_pue"].update(
+                            disabled=not_pue
+                                     or factura_seleccionada["Fecha"] <= local.config['pue_pagada_hasta']
+                        )
                         self.window["email_notificada"].update(
                             disabled=not factura_seleccionada
                                      or factura_seleccionada["Emisor"]["Rfc"] != self.issuer.rfc
+                                     or factura_seleccionada["Fecha"] <= local.config['email_notificada_hasta']
                         )
+                        self.window["ignorar_ppd"].update(
+                            disabled=not_ppd_all
+                                     or factura_seleccionada["Fecha"] <= local.config['ppd_ignorar_hasta']
+                        )
+
                         self.window["ver_factura"].update(disabled=not factura_seleccionada)
 
-                        self.window["ignorar_ppd"].update(disabled=not_ppd_all)
                         self.window["prepare_pago"].update(disabled=not_ppd)
                         self.window["fecha_pago_select"].update(disabled=not_ppd)
                         self.window["fecha_pago"].update(disabled=not_ppd)
@@ -405,7 +419,6 @@ class FacturacionGUI:
                         id_solicitud = local.config.get(event)
 
                         if not id_solicitud:
-                            print("Creando Nueva Solicitud")
                             self._read()
                             response = self.sat_service.recover_comprobante_request(
                                 fecha_inicial=fecha_inicial,
@@ -417,6 +430,7 @@ class FacturacionGUI:
                             print_yaml(response)
                             local.config[event] = response['IdSolicitud']
                             local.config.save()
+                            print("Nueva Solicitud Creada")
                         else:
                             print_yaml({
                                 'IdSolicitud': id_solicitud

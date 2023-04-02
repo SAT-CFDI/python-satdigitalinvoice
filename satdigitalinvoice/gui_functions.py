@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime, date
 
 import xlsxwriter
@@ -276,6 +277,8 @@ def exportar_facturas(all_invoices, periodo, issuer):
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] == "TMT620101EV4"]
 
     archivo_excel = exportar_facturas_filename(periodo)
+    os.makedirs(os.path.dirname(archivo_excel), exist_ok=True)
+
     workbook = xlsxwriter.Workbook(archivo_excel)
     # EMITIDAS
     invoices_export(workbook, "EMITIDAS", emitidas)
