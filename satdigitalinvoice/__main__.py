@@ -565,7 +565,9 @@ class FacturacionGUI:
                             for invoice in invoices_to_create:
                                 try:
                                     cfdi = self.generate_invoice(invoice=invoice)
-                                    print(f'Factura Generada: {cfdi_header(cfdi)}')
+                                    print_yaml({
+                                        "FacturaGenerada": cfdi_header(cfdi),
+                                    })
                                     self._read()
                                 except ResponseError as ex:
                                     logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
