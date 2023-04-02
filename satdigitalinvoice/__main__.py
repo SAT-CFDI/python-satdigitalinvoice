@@ -167,7 +167,7 @@ class FacturacionGUI:
                     file_attachments=attachments
                 )
 
-                self.window.read(timeout=0)
+                self._read()
 
                 for r in notify_invoices:
                     r.notified = ",".join(to_addrs)
@@ -177,14 +177,14 @@ class FacturacionGUI:
             id_solicitud=id_solicitud
         )
         print_yaml(response)
-        self.window.read(timeout=0)
+        self._read()
         if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
             for id_paquete in response['IdsPaquetes']:
                 response, paquete = self.sat_service.recover_comprobante_download(
                     id_paquete=id_paquete
                 )
                 print_yaml(response)
-                self.window.read(timeout=0)
+                self._read()
                 yield id_paquete, base64.b64decode(paquete) if paquete else None
 
     def unzip_cfdi(self, file):
@@ -192,8 +192,13 @@ class FacturacionGUI:
             for fileinfo in zf.infolist():
                 xml_data = zf.read(fileinfo)
                 move_to_folder(xml_data, pdf_data=None)
-                self.window.read(timeout=0)
+                self._read()
 
+    def _read(self):
+        event, values = self.window.read(timeout=0)
+        if event in ("Exit", PySimpleGUI.WIN_CLOSED):
+            exit(0)
+        
     def generate_pdf_template(self, template_name, fields):
         increment_template = environment_bold_escaped.get_template(template_name)
         md5_document = increment_template.render(
@@ -386,7 +391,7 @@ class FacturacionGUI:
                             file_name = f'{AJUSTES_DIR}/AjusteRenta_{rfc}_{concepto["CuentaPredial"]}.pdf'
                             with open(file_name, 'wb') as f:
                                 f.write(res)
-                            self.window.read(timeout=0)
+                            self._read()
 
                         if has_ajustes:
                             os.startfile(
@@ -401,7 +406,7 @@ class FacturacionGUI:
 
                         if not id_solicitud:
                             print("Creando Nueva Solicitud")
-                            self.window.read(timeout=0)
+                            self._read()
                             response = self.sat_service.recover_comprobante_request(
                                 fecha_inicial=fecha_inicial,
                                 fecha_final=fecha_final,
@@ -416,7 +421,7 @@ class FacturacionGUI:
                             print_yaml({
                                 'IdSolicitud': id_solicitud
                             })
-                            self.window.read(timeout=0)
+                            self._read()
                             for paquete_id, data in self.recupera_comprobantes(id_solicitud):
                                 if data:
                                     self.all_invoices = None
@@ -436,7 +441,7 @@ class FacturacionGUI:
                         if res == "OK":
                             for rfc, details in clients.items():
                                 log_item(f"VALIDANDO {rfc}")
-                                self.window.read(timeout=0)
+                                self._read()
                                 validar_client(rfc, details)
                             log_item("FIN")
                         else:
@@ -547,7 +552,7 @@ class FacturacionGUI:
                                 try:
                                     cfdi = self.generate_invoice(invoice=invoice)
                                     print(f'Factura Generada: {cfdi_header(cfdi)}')
-                                    self.window.read(timeout=0)
+                                    self._read()
                                 except ResponseError as ex:
                                     logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
                                     logger.error(f"Status Code: {ex.response.status_code}")
