@@ -137,3 +137,4 @@ dmypy.json
 /tests/app_chdir/.data/
 /satdigitalinvoice/test.py
 /satdigitalinvoice/pytesting.py
+/satdigitalinvoice/printfactory/

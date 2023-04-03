@@ -465,6 +465,7 @@ class FacturacionGUI:
                                         self.unzip_cfdi(b)
                                 del self.config[event]
                                 self.config.save()
+                            log_line("FIN")
 
                     case "validate_clientes":
                         log_line("VALIDAR CLIENTES")
