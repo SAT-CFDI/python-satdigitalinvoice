@@ -8,16 +8,19 @@ from satdigitalinvoice.file_data_managers import ClientsManager, FacturasManager
 from satdigitalinvoice.gui_functions import generate_ingresos, periodo_desc
 
 csd_signer = Signer.load(
-        certificate=open('csd/cacx7605101p8.cer', 'rb').read(),
-        key=open('csd/cacx7605101p8.key', 'rb').read(),
-        password=open('csd/cacx7605101p8.txt', 'rb').read(),
-    )
-
-emisor = cfdi40.Emisor(
-    rfc=csd_signer.rfc,
-    nombre=csd_signer.legal_name,
-    regimen_fiscal="601",
+    certificate=open('csd/cacx7605101p8.cer', 'rb').read(),
+    key=open('csd/cacx7605101p8.key', 'rb').read(),
+    password=open('csd/cacx7605101p8.txt', 'rb').read(),
 )
+
+emisor = {
+    "Emisor": cfdi40.Emisor(
+        rfc=csd_signer.rfc,
+        nombre=csd_signer.legal_name,
+        regimen_fiscal="601",
+    ),
+    "LugarExpedicion": "12345",
+}
 
 clients = ClientsManager()
 
@@ -37,8 +40,7 @@ def test_generar_ingresos(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor,
-        lugar_expedicion='12345'
+        base_template=emisor
     )
 
     assert caplog.records == []
@@ -60,8 +62,7 @@ def test_generar_ingresos_error(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor,
-        lugar_expedicion='12345'
+        base_template=emisor
     )
 
     assert len(caplog.records) == 1
@@ -84,8 +85,7 @@ def test_generar_ingresos_error2(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor,
-        lugar_expedicion='12345'
+        base_template=emisor
     )
 
     assert len(caplog.records) == 1
