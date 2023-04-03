@@ -29,7 +29,7 @@ from .layout import make_layout, InvoiceButtonManager, EmailButtonManager
 from .local import LocalDBSatCFDI
 from .log_tools import log_line, log_item, cfdi_header, print_yaml, header_line
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, PPD, PUE
-from .utils import random_string, to_uuid, add_file_handler, convert_ans1_date
+from .utils import random_string, to_uuid, add_file_handler
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
