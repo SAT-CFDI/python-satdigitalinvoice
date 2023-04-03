@@ -108,7 +108,10 @@ class ConfigManager(LocalData):
 
 def load_validator(schema_file):
     with open(os.path.join(SOURCE_DIRECTORY, 'schemas', schema_file), "r", encoding="utf-8") as fs:
-        return Draft202012Validator(yaml.load(fs, SafeLoader))
+        schema = yaml.load(fs, SafeLoader)
+        validator = jsonschema.validators.validator_for(schema)
+        validator.check_schema(schema)
+        return validator(schema)
 
 
 client_validator = load_validator("client.yaml")
