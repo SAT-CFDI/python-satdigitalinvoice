@@ -146,11 +146,11 @@ class FacturacionGUI:
     def generate_invoice(self, invoice):
         ref_id = random_string()
 
-        attempts = 2
+        attempts = 3
         for i in range(attempts):
             if i:
                 print(f'Intentando de nuevo... Intento {i + 1} de {attempts}')
-                self._read(timeout=1000)
+                self._read(timeout=1000 * i)
 
             try:
                 res = self.pac_service.stamp(
