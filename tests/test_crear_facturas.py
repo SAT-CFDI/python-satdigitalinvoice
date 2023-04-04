@@ -40,7 +40,6 @@ def test_generar_ingresos(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor
     )
 
     assert caplog.records == []
@@ -62,7 +61,6 @@ def test_generar_ingresos_error(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor
     )
 
     assert len(caplog.records) == 1
@@ -85,7 +83,6 @@ def test_generar_ingresos_error2(caplog):
             'periodo': '2023-04'
         },
         csd_signer=csd_signer,
-        base_template=emisor
     )
 
     assert len(caplog.records) == 1

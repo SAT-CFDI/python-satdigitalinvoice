@@ -67,43 +67,29 @@ class FacturacionGUI:
         self.all_invoices = None
         self.config = None
         self.local_db = None
-        self.emisor_cif = None
 
         self.invoice_button_manager = InvoiceButtonManager(self.window["crear_facturas"], self.window["detallado"])
         self.email_button_manager = EmailButtonManager(self.window["enviar_correos"])
         self.console = self.window["console"]
 
-    def prepare(self):
-        clients = ClientsManager()
+    def prepare(self, emisor_cif):
         self.config = ConfigManager()
         self.local_db = LocalDBSatCFDI(self.config)
-
-        issuer_cif = clients[self.csd_signer.rfc]
-        self.emisor_cif = issuer_cif
-
-        # self.base_template = {
-        #     "Emisor": cfdi40.Emisor(
-        #         rfc=issuer_cif['Rfc'],
-        #         nombre=issuer_cif['RazonSocial'],
-        #         regimen_fiscal=issuer_cif['RegimenFiscal']
-        #     ),
-        #     "LugarExpedicion": issuer_cif['CodigoPostal']
-        # }
 
         MyCFDI.issuer_rfc = self.csd_signer.rfc
         MyCFDI.local_db = self.local_db
 
         # update window title
         self.window.set_title(
-            f"Facturacion 4.0  RFC: {self.csd_signer.rfc}  RazonSocial: {issuer_cif['RazonSocial']}  RegimenFiscal: {issuer_cif['RegimenFiscal']}  "
-            f"LugarExpedicion: {issuer_cif['CodigoPostal']}"
+            f"Facturacion 4.0  RFC: {self.csd_signer.rfc}  RazonSocial: {emisor_cif['RazonSocial']}  RegimenFiscal: {emisor_cif['RegimenFiscal']}  "
+            f"LugarExpedicion: {emisor_cif['CodigoPostal']}"
         )
 
-    def initial_screen(self):
+    def initial_screen(self, emisor_cif):
         print_yaml({
             "version": __version__.__version__,
             "facturacion": "CFDI 4.0",
-            "emisor": self.emisor_cif,
+            "emisor": emisor_cif,
             "pac_service": {
                 "Type": type(self.pac_service).__name__,
                 "Rfc": self.pac_service.RFC,
@@ -120,8 +106,10 @@ class FacturacionGUI:
         logger.addHandler(h)
 
         try:
-            self.prepare()
-            self.initial_screen()
+            clients = ClientsManager()
+            emisor_cif = clients[self.csd_signer.rfc]
+            self.prepare(emisor_cif)
+            self.initial_screen(emisor_cif)
         except Exception:
             logger.exception(header_line("ERROR"))
             for e in self.window.element_list():
@@ -167,7 +155,7 @@ class FacturacionGUI:
             self.config.inc_folio()
             return move_to_folder(res.xml, pdf_data=res.pdf)
 
-    def enviar_correos(self, emails):
+    def enviar_correos(self, emisor_cif, emails):
         with self.email_manager.sender as s:
             for receptor, notify_invoices, pendientes_meses_anteriores in emails:
                 attachments = []
@@ -183,7 +171,8 @@ class FacturacionGUI:
                         fields={
                             "facturas": notify_invoices,
                             'pendientes_meses_anteriores': pendientes_meses_anteriores,
-                        }
+                            'emisor': emisor_cif,
+                        },
                     ),
                     file_attachments=attachments
                 )
@@ -228,7 +217,6 @@ class FacturacionGUI:
     def generate_pdf_template(self, template_name, fields):
         increment_template = environment_bold_escaped.get_template(template_name)
         md5_document = increment_template.render(
-            emisor=self.emisor_cif,
             fecha_hoy=fecha(date.today()),
             **fields
         )
@@ -247,7 +235,7 @@ class FacturacionGUI:
     def generate_html_template(self, template_name, fields):
         increment_template = environment_default.get_template(template_name)
         render = increment_template.render(
-            emisor=self.emisor_cif, **fields
+            fields
         )
         return render
 
@@ -341,7 +329,8 @@ class FacturacionGUI:
 
                 match event:
                     case "about":
-                        self.initial_screen()
+                        clients = ClientsManager()
+                        self.initial_screen(clients[self.csd_signer.rfc])
 
                     case "factura_pagar" | "buscar_factura":
                         text = self.window["factura_pagar"].get().strip()
@@ -490,8 +479,7 @@ class FacturacionGUI:
                             clients=ClientsManager(),
                             facturas=FacturasManager()["Facturas"],
                             values=values,
-                            csd_signer=self.csd_signer,
-                            emisor_cif=self.emisor_cif
+                            csd_signer=self.csd_signer
                         )
                         if facturas:
                             for i, cfdi in enumerate(facturas, start=1):
@@ -646,7 +634,9 @@ class FacturacionGUI:
                             button_type=POPUP_BUTTONS_OK_CANCEL
                         )
                         if res == "OK":
-                            self.enviar_correos(emails_to_send)
+                            clients = ClientsManager()
+                            emisor_cif = clients[self.csd_signer.rfc]
+                            self.enviar_correos(emisor_cif, emails_to_send)
                             log_item("FIN")
                         else:
                             log_item("OPERACION CANCELADA")
@@ -694,7 +684,14 @@ class FacturacionGUI:
 
                     case "exportar_facturas":
                         log_line("EXPORTAR FACTURAS")
-                        exportar_facturas(self.get_all_invoices(), parse_date_period(values["periodo"]), self.csd_signer.rfc, self.emisor_cif['RegimenFiscal'])
+                        clients = ClientsManager()
+                        emisor_cif = clients[self.csd_signer.rfc]
+                        exportar_facturas(
+                            self.get_all_invoices(),
+                            parse_date_period(values["periodo"]),
+                            emisor_cif,
+                            self.config['rfc_prediales']
+                        )
 
                     case "ver_excel":
                         archivo_excel = exportar_facturas_filename(parse_date_period(values["periodo"]))

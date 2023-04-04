@@ -32,7 +32,7 @@ Constants:
   FormaPago: "99"
 
 Facturas:
-- Rfc: ABV9901115S7
+- Receptor: ABV9901115S7
   <<: *pue
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -41,7 +41,7 @@ Facturas:
     _periodo_mes_ajuste: Mensual.1
   Total: !decimal 18065.66
 
-- Rfc: ABC1511034U3 # Régimen de Personas Morales con Fines no Lucrativos
+- Receptor: ABC1511034U3 # Régimen de Personas Morales con Fines no Lucrativos
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -50,7 +50,7 @@ Facturas:
     _periodo_mes_ajuste: Mensual.1
   Total: !decimal 36570.00
 
-- Rfc: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+- Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -61,7 +61,7 @@ Facturas:
 
 
 FacturasIncorrectas:
-- Rfc: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+- Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -71,7 +71,7 @@ FacturasIncorrectas:
   Total: !decimal 41000.16
 
 FacturasIncorrectas2:
-- Rfc: XXXNOEXISTO # Régimen de Incorporacion Fiscal
+- Receptor: XXXNOEXISTO # Régimen de Incorporacion Fiscal
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'

@@ -56,7 +56,7 @@ def create_cfdi(receptor_cif, factura_details, serie, folio, csd_sginer, emisor_
     invoice = invoice.process()
 
     if factura_details['Total'] != invoice['Total']:
-        logger.info(f"{factura_details['Rfc']}: Total '{factura_details['Total']}' is invalid, expected '{invoice['Total']}'")
+        logger.info(f"{factura_details['Receptor']}: Total '{factura_details['Total']}' is invalid, expected '{invoice['Total']}'")
         return None
 
     return invoice
@@ -107,7 +107,7 @@ def validad_facturas(clients, facturas):
     for factura_details in facturas:
         cliente = clients.get(factura_details['Receptor'])
         if not cliente:
-            logger.info(f"{factura_details['Rfc']}: client not found")
+            logger.info(f"{factura_details['Receptor']}: client not found")
             is_valid = False
 
         for c in factura_details["Conceptos"]:
@@ -115,11 +115,11 @@ def validad_facturas(clients, facturas):
             try:
                 parse_periodo_mes_ajuste(periodo_mes_ajuste)
             except ValueError:
-                logger.info(f"{factura_details['Rfc']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
+                logger.info(f"{factura_details['Receptor']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
                 is_valid = False
 
         if factura_details["MetodoPago"] == "PPD" and factura_details["FormaPago"] != "99":
-            logger.info(f"{factura_details['Rfc']}: FormaPago '{factura_details['FormaPago']}' is invalid, expected '99' for PPD")
+            logger.info(f"{factura_details['Receptor']}: FormaPago '{factura_details['FormaPago']}' is invalid, expected '99' for PPD")
             is_valid = False
 
     return is_valid
@@ -146,7 +146,7 @@ def periodo_desc(ym_date, periodo_mes_ajuste):
     return None
 
 
-def generate_ingresos(config, clients, facturas, values, csd_signer, emisor_cif):
+def generate_ingresos(config, clients, facturas, values, csd_signer):
     if not validad_facturas(clients, facturas):
         return
 
@@ -163,6 +163,7 @@ def generate_ingresos(config, clients, facturas, values, csd_signer, emisor_cif)
     facturas = facturas[inicio - 1:final]
     folio = config.folio()
     serie = config.serie()
+    emisor_cif = clients[csd_signer.rfc]
 
     def prepare_concepto(concepto):
         periodo = periodo_desc(ym_date, concepto['_periodo_mes_ajuste'])
@@ -256,7 +257,10 @@ def exportar_facturas_filename(dp: DatePeriod, ext="xlsx"):
     return archivo_excel
 
 
-def exportar_facturas(all_invoices, dp: DatePeriod, emisor_rfc, emisor_regimen):
+def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
+    emisor_rfc = emisor_cif['Rfc']
+    emisor_regimen = emisor_cif['RegimenFiscal']
+
     emitidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_emisor=emisor_rfc)
     emitidas_pendientes = filter_invoices_iter(
         invoices=all_invoices.values(), fecha=lambda x: x <= dp, rfc_emisor=emisor_rfc, estatus='1',
@@ -276,7 +280,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_rfc, emisor_regimen):
         if p.impuestos.get("Traslados", {}).get(IVA16, {}).get("Importe", 0) > 0
            and p.comprobante["Receptor"].get("RegimenFiscalReceptor") in (emisor_regimen, None)
     ]
-    prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] == "TMT620101EV4"]
+    prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
     archivo_excel = exportar_facturas_filename(dp)
     os.makedirs(os.path.dirname(archivo_excel), exist_ok=True)
