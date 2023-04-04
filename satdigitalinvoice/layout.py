@@ -25,6 +25,7 @@ def make_layout(has_fiel):
         sg.Text("             ", pad=TEXT_PADDING),
         sg.Button("Exportar Excel", key="exportar_facturas", border_width=0),
         sg.Button("Ver Excel", key="ver_excel", border_width=0),
+        sg.Button("Ver HTML", key="ver_html", border_width=0),
     ]
 
     c_second = [

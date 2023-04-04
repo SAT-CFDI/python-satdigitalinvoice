@@ -16,6 +16,7 @@ from satcfdi.create.cfd import cfdi40
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
+from satcfdi.printer import Representable
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
@@ -24,7 +25,7 @@ from . import SOURCE_DIRECTORY, __version__
 from .client_validation import validar_client
 from .file_data_managers import environment_default, environment_bold_escaped, ClientsManager, ConfigManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
-from .gui_functions import generate_ingresos, pago_factura, find_ajustes, format_concepto_desc, exportar_facturas, exportar_facturas_filename, parse_ym_date
+from .gui_functions import generate_ingresos, pago_factura, find_ajustes, format_concepto_desc, exportar_facturas, exportar_facturas_filename, parse_ym_date, parse_date_period
 from .layout import make_layout, InvoiceButtonManager, EmailButtonManager
 from .local import LocalDBSatCFDI
 from .log_tools import log_line, log_item, cfdi_header, print_yaml, header_line
@@ -696,12 +697,29 @@ class FacturacionGUI:
 
                     case "exportar_facturas":
                         log_line("EXPORTAR FACTURAS")
-                        exportar_facturas(self.get_all_invoices(), values["periodo"], self.csd_signer.rfc, self.issuer_cif['RegimenFiscal'])
+                        exportar_facturas(self.get_all_invoices(), parse_date_period(values["periodo"]), self.csd_signer.rfc, self.issuer_cif['RegimenFiscal'])
 
                     case "ver_excel":
-                        archivo_excel = exportar_facturas_filename(values["periodo"])
+                        archivo_excel = exportar_facturas_filename(parse_date_period(values["periodo"]))
                         os.startfile(
                             os.path.abspath(archivo_excel)
+                        )
+
+                    case "ver_html":
+                        inv = self.get_all_invoices().values()
+                        dp = parse_date_period(values["periodo"])
+                        inv = filter_invoices_iter(
+                            invoices=inv,
+                            fecha=dp,
+                            rfc_emisor=self.csd_signer.rfc,
+                        )
+                        outfile = exportar_facturas_filename(dp, ext="html")
+                        Representable.html_write_all(
+                            objs=inv,
+                            target=outfile,
+                        )
+                        os.startfile(
+                            os.path.abspath(outfile)
                         )
 
                     case "periodo" | "inicio" | "final" | "fecha_pago" | "forma_pago":

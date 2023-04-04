@@ -245,20 +245,16 @@ def find_ajustes(facturas, mes_ajuste):
                 yield rfc, concepto
 
 
-def exportar_facturas_filename(periodo):
-    dp = parse_date_period(periodo)
-
+def exportar_facturas_filename(dp: DatePeriod, ext="xlsx"):
     if dp.month:
-        archivo_excel = f"facturas/{dp.year}/{dp}/{dp}.xlsx"
+        archivo_excel = f"facturas/{dp.year}/{dp}/{dp}.{ext}"
     else:
-        archivo_excel = f"facturas/{dp.year}/{dp}.xlsx"
+        archivo_excel = f"facturas/{dp.year}/{dp}.{ext}"
 
     return archivo_excel
 
 
-def exportar_facturas(all_invoices, periodo, emisor_rfc, emisor_regimen):
-    dp = parse_date_period(periodo)
-
+def exportar_facturas(all_invoices, dp: DatePeriod, emisor_rfc, emisor_regimen):
     emitidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_emisor=emisor_rfc)
     emitidas_pendientes = filter_invoices_iter(
         invoices=all_invoices.values(), fecha=lambda x: x <= dp, rfc_emisor=emisor_rfc, estatus='1',
@@ -280,7 +276,7 @@ def exportar_facturas(all_invoices, periodo, emisor_rfc, emisor_regimen):
     ]
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] == "TMT620101EV4"]
 
-    archivo_excel = exportar_facturas_filename(periodo)
+    archivo_excel = exportar_facturas_filename(dp)
     os.makedirs(os.path.dirname(archivo_excel), exist_ok=True)
 
     workbook = xlsxwriter.Workbook(archivo_excel)
