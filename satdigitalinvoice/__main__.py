@@ -72,7 +72,7 @@ class FacturacionGUI:
         self.email_button_manager = EmailButtonManager(self.window["enviar_correos"])
         self.console = self.window["console"]
 
-    def prepare(self, emisor_cif):
+    def prepare(self):
         self.config = ConfigManager()
         self.local_db = LocalDBSatCFDI(self.config)
 
@@ -81,8 +81,7 @@ class FacturacionGUI:
 
         # update window title
         self.window.set_title(
-            f"Facturacion 4.0  RFC: {self.csd_signer.rfc}  RazonSocial: {emisor_cif['RazonSocial']}  RegimenFiscal: {emisor_cif['RegimenFiscal']}  "
-            f"LugarExpedicion: {emisor_cif['CodigoPostal']}"
+            f"Facturacion 4.0  RFC: {self.csd_signer.rfc}"
         )
 
     def initial_screen(self, emisor_cif):
@@ -106,9 +105,9 @@ class FacturacionGUI:
         logger.addHandler(h)
 
         try:
+            self.prepare()
             clients = ClientsManager()
             emisor_cif = clients[self.csd_signer.rfc]
-            self.prepare(emisor_cif)
             self.initial_screen(emisor_cif)
         except Exception:
             logger.exception(header_line("ERROR"))

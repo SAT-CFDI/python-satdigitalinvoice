@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from decimal import Decimal
@@ -137,9 +138,22 @@ class FacturasManager(LocalData):
     def __init__(self):
         super().__init__()
 
+        seen = set()
+        dup = None
+
         for v in self["Facturas"]:
             if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
                 raise error
+
+            x = json.dumps(v, sort_keys=True, default=str)
+            if x in seen:
+                dup = x
+                break
+            else:
+                seen.add(x)
+
+        if dup:
+            raise ValueError("Factura Duplicada: {}".format(dup))
 
 
 def tag(text, tag):
