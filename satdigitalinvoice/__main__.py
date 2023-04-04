@@ -81,7 +81,7 @@ class FacturacionGUI:
 
         # update window title
         self.window.set_title(
-            f"Facturacion 4.0  RFC: {self.csd_signer.rfc}"
+            f"Facturación Masiva CFDI 4.0  RFC: {self.csd_signer.rfc}"
         )
 
     def initial_screen(self, emisor_cif):
@@ -136,7 +136,7 @@ class FacturacionGUI:
         for i in range(attempts):
             if i:
                 print(f'Intentando de nuevo... Intento {i + 1} de {attempts}')
-                self._read(timeout=1000 * i)
+                self._read(timeout=2000 * i)
 
             try:
                 res = self.pac_service.stamp(
@@ -145,7 +145,7 @@ class FacturacionGUI:
                     ref_id=ref_id
                 )
             except Exception as ex:
-                logger.error(f'Error Generando: {cfdi_header(MyCFDI(invoice))}')
+                logger.error(f"Error Generando: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}")
                 if isinstance(ex, ResponseError):
                     logger.error(f"Status Code: {ex.response.status_code}")
                     logger.error(f"Response: {ex.response.text}")

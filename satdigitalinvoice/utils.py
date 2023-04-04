@@ -15,7 +15,7 @@ def to_uuid(s):
 
 
 def random_string():
-    hash = random.randbytes(32)
+    hash = random.randbytes(24)
     res = base64.urlsafe_b64encode(hash).decode()
     return res.rstrip("=")
 

@@ -43,4 +43,4 @@ def test_duplicated_yaml_file():
 
 def test_random_string():
     a = random_string()
-    assert len(a) == 43
+    assert len(a) == 32
