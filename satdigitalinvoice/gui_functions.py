@@ -29,16 +29,22 @@ PERIODOS = {
 }
 
 
-def create_cfdi(client, factura_details, serie, folio, csd_sginer, base_template):
+def create_cfdi(receptor_cif, factura_details, serie, folio, csd_sginer, emisor_cif):
+    emisor = cfdi40.Emisor(
+        rfc=emisor_cif['Rfc'],
+        nombre=emisor_cif['RazonSocial'],
+        regimen_fiscal=emisor_cif['RegimenFiscal']
+    )
+    emisor = emisor | factura_details.get('Emisor', {})
     invoice = cfdi40.Comprobante(
-        emisor=base_template["Emisor"],
-        lugar_expedicion=base_template["LugarExpedicion"],
+        emisor=emisor,
+        lugar_expedicion=emisor_cif['CodigoPostal'],
         receptor=cfdi40.Receptor(
-            rfc=factura_details['Rfc'],
-            nombre=client['RazonSocial'],
+            rfc=factura_details['Receptor'],
+            nombre=receptor_cif['RazonSocial'],
             uso_cfdi=factura_details['UsoCFDI'],
-            domicilio_fiscal_receptor=client['CodigoPostal'],
-            regimen_fiscal_receptor=client['RegimenFiscal']
+            domicilio_fiscal_receptor=receptor_cif['CodigoPostal'],
+            regimen_fiscal_receptor=receptor_cif['RegimenFiscal']
         ),
         metodo_pago=factura_details['MetodoPago'],
         forma_pago=factura_details['FormaPago'],
@@ -99,21 +105,18 @@ def format_concepto_desc(concepto, periodo):
 def validad_facturas(clients, facturas):
     is_valid = True
     for factura_details in facturas:
-        cliente = clients.get(factura_details['Rfc'])
+        cliente = clients.get(factura_details['Receptor'])
         if not cliente:
             logger.info(f"{factura_details['Rfc']}: client not found")
             is_valid = False
 
-        if conceptos := factura_details.get("Conceptos"):
-            for c in conceptos:
-                periodo_mes_ajuste = c.get("_periodo_mes_ajuste", "")
-                try:
-                    parse_periodo_mes_ajuste(periodo_mes_ajuste)
-                except ValueError:
-                    logger.info(f"{factura_details['Rfc']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
-                    is_valid = False
-        else:
-            logger.info(f"{factura_details['Rfc']}: no tienen conceptos")
+        for c in factura_details["Conceptos"]:
+            periodo_mes_ajuste = c.get("_periodo_mes_ajuste", "")
+            try:
+                parse_periodo_mes_ajuste(periodo_mes_ajuste)
+            except ValueError:
+                logger.info(f"{factura_details['Rfc']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
+                is_valid = False
 
         if factura_details["MetodoPago"] == "PPD" and factura_details["FormaPago"] != "99":
             logger.info(f"{factura_details['Rfc']}: FormaPago '{factura_details['FormaPago']}' is invalid, expected '99' for PPD")
@@ -143,7 +146,7 @@ def periodo_desc(ym_date, periodo_mes_ajuste):
     return None
 
 
-def generate_ingresos(config, clients, facturas, values, csd_signer, base_template):
+def generate_ingresos(config, clients, facturas, values, csd_signer, emisor_cif):
     if not validad_facturas(clients, facturas):
         return
 
@@ -169,11 +172,11 @@ def generate_ingresos(config, clients, facturas, values, csd_signer, base_templa
     def facturas_iter():
         i = 0
         for f in facturas:
-            client = clients[f['Rfc']]
+            receptor_cif = clients[f['Receptor']]
             conceptos = [x for x in (prepare_concepto(c) for c in f["Conceptos"]) if x]
             if conceptos:
                 f["Conceptos"] = conceptos
-                yield create_cfdi(client, f, serie, str(folio + i), csd_signer, base_template)
+                yield create_cfdi(receptor_cif, f, serie, str(folio + i), csd_signer, emisor_cif)
                 i += 1
 
     cfdis = [i for i in facturas_iter()]
@@ -206,7 +209,7 @@ def parse_fecha_pago(fecha_pago):
     return fecha_pago
 
 
-def pago_factura(config, factura_pagar, fecha_pago, forma_pago, csd_signer, lugar_expedicion):
+def pago_factura(config, factura_pagar, fecha_pago, forma_pago, csd_signer):
     if not (fecha_pago := parse_fecha_pago(fecha_pago)):
         return
 
@@ -217,7 +220,6 @@ def pago_factura(config, factura_pagar, fecha_pago, forma_pago, csd_signer, luga
         return
 
     invoice = Comprobante.pago_comprobantes(
-        lugar_expedicion=lugar_expedicion,
         comprobantes=i,
         fecha_pago=fecha_pago,
         forma_pago=forma_pago,

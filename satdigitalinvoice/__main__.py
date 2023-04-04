@@ -12,7 +12,6 @@ from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI
 from markdown2 import markdown
 from satcfdi import DatePeriod, CFDI, Code, Signer
 from satcfdi.accounting import filter_invoices_iter, SatCFDI
-from satcfdi.create.cfd import cfdi40
 from satcfdi.exceptions import ResponseError, DocumentNotFoundError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
@@ -68,8 +67,7 @@ class FacturacionGUI:
         self.all_invoices = None
         self.config = None
         self.local_db = None
-        self.base_template = None
-        self.issuer_cif = None
+        self.emisor_cif = None
 
         self.invoice_button_manager = InvoiceButtonManager(self.window["crear_facturas"], self.window["detallado"])
         self.email_button_manager = EmailButtonManager(self.window["enviar_correos"])
@@ -81,16 +79,16 @@ class FacturacionGUI:
         self.local_db = LocalDBSatCFDI(self.config)
 
         issuer_cif = clients[self.csd_signer.rfc]
-        self.issuer_cif = issuer_cif
+        self.emisor_cif = issuer_cif
 
-        self.base_template = {
-            "Emisor": cfdi40.Emisor(
-                rfc=issuer_cif['Rfc'],
-                nombre=issuer_cif['RazonSocial'],
-                regimen_fiscal=issuer_cif['RegimenFiscal']
-            ),
-            "LugarExpedicion": issuer_cif['CodigoPostal']
-        }
+        # self.base_template = {
+        #     "Emisor": cfdi40.Emisor(
+        #         rfc=issuer_cif['Rfc'],
+        #         nombre=issuer_cif['RazonSocial'],
+        #         regimen_fiscal=issuer_cif['RegimenFiscal']
+        #     ),
+        #     "LugarExpedicion": issuer_cif['CodigoPostal']
+        # }
 
         MyCFDI.issuer_rfc = self.csd_signer.rfc
         MyCFDI.local_db = self.local_db
@@ -105,7 +103,7 @@ class FacturacionGUI:
         print_yaml({
             "version": __version__.__version__,
             "facturacion": "CFDI 4.0",
-            "emisor": self.base_template,
+            "emisor": self.emisor_cif,
             "pac_service": {
                 "Type": type(self.pac_service).__name__,
                 "Rfc": self.pac_service.RFC,
@@ -230,7 +228,7 @@ class FacturacionGUI:
     def generate_pdf_template(self, template_name, fields):
         increment_template = environment_bold_escaped.get_template(template_name)
         md5_document = increment_template.render(
-            emisor=self.issuer_cif,
+            emisor=self.emisor_cif,
             fecha_hoy=fecha(date.today()),
             **fields
         )
@@ -249,7 +247,7 @@ class FacturacionGUI:
     def generate_html_template(self, template_name, fields):
         increment_template = environment_default.get_template(template_name)
         render = increment_template.render(
-            emisor=self.issuer_cif, **fields
+            emisor=self.emisor_cif, **fields
         )
         return render
 
@@ -493,7 +491,7 @@ class FacturacionGUI:
                             facturas=FacturasManager()["Facturas"],
                             values=values,
                             csd_signer=self.csd_signer,
-                            base_template=self.base_template
+                            emisor_cif=self.emisor_cif
                         )
                         if facturas:
                             for i, cfdi in enumerate(facturas, start=1):
@@ -512,8 +510,7 @@ class FacturacionGUI:
                                 factura_pagar=i,
                                 fecha_pago=values["fecha_pago"],
                                 forma_pago=values["forma_pago"],
-                                csd_signer=self.csd_signer,
-                                lugar_expedicion=self.base_template["LugarExpedicion"]
+                                csd_signer=self.csd_signer
                             )
                             if cfdi_pago:
                                 self.log_cfdi(cfdi_pago)
@@ -697,7 +694,7 @@ class FacturacionGUI:
 
                     case "exportar_facturas":
                         log_line("EXPORTAR FACTURAS")
-                        exportar_facturas(self.get_all_invoices(), parse_date_period(values["periodo"]), self.csd_signer.rfc, self.issuer_cif['RegimenFiscal'])
+                        exportar_facturas(self.get_all_invoices(), parse_date_period(values["periodo"]), self.csd_signer.rfc, self.emisor_cif['RegimenFiscal'])
 
                     case "ver_excel":
                         archivo_excel = exportar_facturas_filename(parse_date_period(values["periodo"]))

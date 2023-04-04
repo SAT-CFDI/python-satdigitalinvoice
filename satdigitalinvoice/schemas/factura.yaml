@@ -1,7 +1,17 @@
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 type: object
 properties:
-  Rfc:
+  Emisor:
+    type: object
+    properties:
+      Rfc:
+        type: string
+      Nombre:
+        type: string
+      RegimenFiscal:
+        type: string
+    additionalProperties: false
+  Receptor:
     type: string
   UsoCFDI:
     type: string
@@ -60,7 +70,7 @@ properties:
   Total:
     type: number
 required:
-- Rfc
+- Receptor
 - UsoCFDI
 - MetodoPago
 - FormaPago
