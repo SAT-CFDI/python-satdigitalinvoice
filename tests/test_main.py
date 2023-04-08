@@ -7,7 +7,7 @@ from yaml.constructor import ConstructorError
 from satdigitalinvoice.file_data_managers import LocalData, ConfigManager, FacturasManager
 
 from satdigitalinvoice.layout import make_layout
-from satdigitalinvoice.utils import random_string
+from satdigitalinvoice.utils import random_string, add_month
 
 
 def test_layout_unique_keys():
@@ -60,9 +60,14 @@ def test_duplicated_facturas():
     assert str(e.value)[0:20] == 'Factura Duplicada: {'
 
 
+def test_increase_month():
+    d = datetime(2021, 1, 28)
+    d = add_month(d)
+    assert d == datetime(2021, 2, 28)
+
+
 def test_app_setup():
-    config  = ConfigManager()
+    config = ConfigManager()
     a = FacturacionGUI(
         config
     )
-

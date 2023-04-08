@@ -90,6 +90,12 @@ def months_between(d1, d2):
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
 
+def add_month(d):
+    m = d.month % 12 + 1
+    y = d.year + d.month // 12
+    return d.replace(year=y, month=m)
+
+
 def load_certificate(data):
     if 'data' in data:
         return Signer.load_pkcs12(

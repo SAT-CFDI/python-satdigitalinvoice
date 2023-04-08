@@ -5,7 +5,6 @@ from decimal import Decimal
 
 import xlsxwriter
 from babel.dates import format_date
-from dateutil.relativedelta import relativedelta
 from markdown2 import markdown
 from satcfdi import DatePeriod
 from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
@@ -23,7 +22,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .log_tools import print_yaml
-from .utils import clear_directory, find_best_match, months_between
+from .utils import clear_directory, find_best_match, months_between, add_month
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -407,7 +406,7 @@ def ajustes_directory(ym_date):
 
 
 def ajustes(emisor_rfc, ym_date):
-    ym_date_effective = ym_date + relativedelta(months=1)
+    ym_date_effective = add_month(ym_date)
 
     # clear directory
     ajustes_dir = ajustes_directory(ym_date)

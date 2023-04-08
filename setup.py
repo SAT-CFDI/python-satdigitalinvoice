@@ -69,9 +69,7 @@ setuptools.setup(
         'num2words',
         'PyYAML',
         'babel',
-        'azure-keyvault',
         'markdown2',
-        'python-dateutil',
         'PySimpleGUI',
         'XlsxWriter',
         'jsonschema'

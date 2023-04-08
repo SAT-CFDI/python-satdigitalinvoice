@@ -1,5 +1,4 @@
 from babel.dates import format_date
-from dateutil import rrule
 from num2words import num2words
 
 
@@ -36,10 +35,10 @@ def fecha(date):
     return format_date(date, locale='es_MX', format="d 'de' MMMM 'del' y").upper()
 
 
-def data_range_length_months(start, end):
-    months = len(list(rrule.rrule(rrule.MONTHLY, dtstart=start, until=end)))
-    months_text = number_to_text(months).upper()
-    return "{0} ({1} MESES)".format(months, months_text)
+# def data_range_length_months(start, end):
+#     months = len(list(rrule.rrule(rrule.MONTHLY, dtstart=start, until=end)))
+#     months_text = number_to_text(months).upper()
+#     return "{0} ({1} MESES)".format(months, months_text)
 
 
 def meses(count):
