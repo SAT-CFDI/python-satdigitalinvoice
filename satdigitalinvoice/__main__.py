@@ -558,7 +558,7 @@ class FacturacionGUI:
                             st = self.local_db.saldar_flip(i)
                             self.console.update("")
                             self.header(self.window[event].ButtonText.upper())
-                            self.set_selected_satcfdi(i)
+                            self.print_satcfdis([i])
                             print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}SALDADA")
 
                     case "email_notificada":
@@ -566,7 +566,7 @@ class FacturacionGUI:
                             st = self.local_db.notificar_flip(i)
                             self.console.update("")
                             self.header(self.window[event].ButtonText.upper())
-                            self.set_selected_satcfdi(i)
+                            self.print_satcfdis([i])
                             print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}NOTIFICADA")
 
                     case "prepare_correos":
@@ -644,6 +644,7 @@ class FacturacionGUI:
 
                     case "facturas_pendientes":
                         self.header("FACTURAS PENDIENTES")
+
                         def fac_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
@@ -651,6 +652,7 @@ class FacturacionGUI:
                                         and i.estatus == '1' \
                                         and self.local_db.saldar(i):
                                     yield i
+
                         self.print_satcfdis(fac_iter())
 
                     case "descarga":
@@ -660,7 +662,7 @@ class FacturacionGUI:
                             self.all_invoices = None
                             cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
                             cfdi = self.get_all_invoices()[to_uuid(cfdi["Complemento"]["TimbreFiscalDigital"]["UUID"])]
-                            self.set_selected_satcfdi(cfdi)
+                            self.print_satcfdis([cfdi])
                         except DocumentNotFoundError:
                             logger.info("Factura no encontrada")
 
