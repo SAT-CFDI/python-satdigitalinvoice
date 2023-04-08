@@ -527,7 +527,7 @@ class FacturacionGUI:
                     case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter":
                         self.header("COMPROBANTE PAGO")
                         if i := self.selected_satcfdi:
-                            cfdi = pago_factura(
+                            if cfdi := pago_factura(
                                 serie=self.serie,
                                 folio=int(values["folio"]),
                                 factura_pagar=i,
@@ -535,8 +535,7 @@ class FacturacionGUI:
                                 forma_pago=values["forma_pago"],
                                 importe_pago=values["importe_pago"],
                                 csd_signer=self.csd_signer
-                            )
-                            if cfdi:
+                            ):
                                 self.print_prepared_cfdis([cfdi])
                                 print_cfdi_details(cfdi)
 
