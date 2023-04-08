@@ -19,7 +19,6 @@ from tabulate import tabulate
 
 from . import __version__
 from .client_validation import validar_client
-from .environments import environment_default
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
     periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
@@ -39,10 +38,6 @@ ACTION_FACTURAS = "facturas"
 ACTION_EMAILS = "emails"
 ACTION_CLIENTS = "clients"
 ACTION_AJUSTES = "ajustes"
-
-template = environment_default.get_template(
-    'mail_facturas_template.html'
-)
 
 
 def open_launch_window():

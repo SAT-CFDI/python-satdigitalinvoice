@@ -19,7 +19,7 @@ from weasyprint import HTML, CSS
 from xlsxwriter.exceptions import FileCreateError
 
 from . import SOURCE_DIRECTORY
-from .environments import environment_default, environment_bold_escaped
+from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .log_tools import print_yaml
@@ -96,7 +96,7 @@ def parse_periodo_mes_ajuste(periodo_mes_ajuste: str):
 
 def format_concepto_desc(concepto, periodo):
     concepto = concepto.copy()
-    template = environment_default.from_string(concepto["Descripcion"])
+    template = facturacion_environment.from_string(concepto["Descripcion"])
     concepto["Descripcion"] = template.render(
         periodo=periodo
     )
@@ -290,7 +290,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
 
 def generate_pdf_template(template_name, fields):
-    increment_template = environment_bold_escaped.get_template(template_name)
+    increment_template = facturacion_environment.get_template(template_name)
     md5_document = increment_template.render(
         fields
     )
@@ -308,7 +308,7 @@ def generate_pdf_template(template_name, fields):
 
 
 def generate_html_template(template_name, fields):
-    increment_template = environment_default.get_template(template_name)
+    increment_template = facturacion_environment.get_template(template_name)
     render = increment_template.render(
         fields
     )

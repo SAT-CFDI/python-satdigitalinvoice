@@ -6,6 +6,8 @@ from uuid import UUID
 import diskcache
 from satcfdi.accounting import SatCFDI
 from satcfdi.pacs import sat
+
+from . import DATA_DIRECTORY
 from .log_tools import print_yaml
 
 EMAIL_NOTIFICADA = 2
@@ -16,12 +18,11 @@ FOLIO = 5
 sat_manager = sat.SAT()
 
 logger = logging.getLogger(__name__)
-DATA_DIR = '.data'
 
 
 class LocalDB(diskcache.Cache):
     def __init__(self):
-        super().__init__(directory=os.path.join(DATA_DIR, 'cache'))
+        super().__init__(directory=os.path.join(DATA_DIRECTORY, 'cache'))
 
     def folio(self):
         return self.get(FOLIO, 1)

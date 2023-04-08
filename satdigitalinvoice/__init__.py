@@ -4,11 +4,13 @@ import traceback
 import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
+DATA_DIRECTORY = ".data"
 
 
 def add_file_handler():
+    os.makedirs(DATA_DIRECTORY, exist_ok=True)
     fh = logging.FileHandler(
-        f'.data/errors.log',
+        os.path.join(DATA_DIRECTORY, 'errors.log'),
         mode='a',
         encoding='utf-8',
     )

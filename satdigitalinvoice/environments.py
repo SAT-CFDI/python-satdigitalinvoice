@@ -10,6 +10,14 @@ from satcfdi.transform.helpers import iterate as h_iterate
 
 class FacturacionEnvironment(Environment):
     @property
+    def filter(self):
+        def sub(f):
+            self.filters[f.__name__] = f
+            return f
+
+        return sub
+
+    @property
     def glob(self):
         def sub(f):
             self.globals[f.__name__] = f
@@ -32,19 +40,15 @@ class FacturacionEnvironment(Environment):
                 return v
             return h_iterate(v)
 
+        @self.filter
+        def bold(k):
+            return do_mark_safe(
+                tag(html_escape(k), "b")
+            )
 
-environment_default = FacturacionEnvironment()
+
+facturacion_environment = FacturacionEnvironment()
 
 
 def tag(text, tag):
     return '<' + tag + '>' + text + '</' + tag + '>'
-
-
-def finalize_html(val):
-    return do_mark_safe(
-        tag(html_escape(val), "b")
-    )
-
-
-environment_bold_escaped = FacturacionEnvironment()
-environment_bold_escaped.finalize = finalize_html
