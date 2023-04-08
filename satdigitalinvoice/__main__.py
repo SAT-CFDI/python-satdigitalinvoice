@@ -550,8 +550,8 @@ class FacturacionGUI:
                         self.header("STATUS")
                         if i := self.selected_satcfdi:
                             estado = self.local_db.status_sat(i, update=True)
+                            self.print_satcfdis([i])
                             print_yaml(estado)
-                            self.local_db.describe(i)
 
                     case "pendiente_pago":
                         if i := self.selected_satcfdi:
