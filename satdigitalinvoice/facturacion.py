@@ -187,13 +187,10 @@ class FacturacionGUI:
                     file_attachments=attachments
                 )
                 for r in notify_invoices:
-                    r.notified = True
-
+                    self.local_db.notificar_set(r.uuid, False)
                 print_yaml({
-                    "correo_enviado": subject,
-                    'facturas': [f"{i.name} - {i.uuid}" for i in notify_invoices],
-                    'pendientes_meses_anteriores': [f"{i.name} - {i.uuid}" for i in pendientes_meses_anteriores],
-                    "correos": receptor["Email"]
+                    "correo": subject,
+                    "para": receptor["Email"]
                 })
                 self._read()
 
@@ -317,10 +314,11 @@ class FacturacionGUI:
                     [
                         [
                             e,
-                            i['Receptor']['Nombre'][0:36],
+                            i['Receptor'].get('Nombre', '')[0:36],
                             i['Receptor']['Rfc'],
                             i.name,
                             i["Fecha"].strftime("%Y-%m-%d"),
+                            i["Total"],
                             self.local_db.saldar(i),
                             mf_pago_fmt(i),
                             i.uuid,
@@ -447,7 +445,8 @@ class FacturacionGUI:
                                             client["Rfc"],
                                             client["RegimenFiscal"].code,
                                             client["CodigoPostal"],
-                                            sum(1 for f in facturas if f["Receptor"] == k) or None
+                                            sum(1 for f in facturas if f["Receptor"] == k) or None,
+                                            "; ".join(client["Email"])[0:72],
                                         ]
                                         for i, (k, client) in enumerate(clients.items(), start=1)
                                     ],
@@ -457,7 +456,8 @@ class FacturacionGUI:
                                         "Rfc",
                                         "Reg",
                                         "CP",
-                                        "Facturas"
+                                        "#",
+                                        "Email",
                                     ),
                                     colalign=("right", "left", "left", "left", "left", "right"),
                                 )
@@ -470,19 +470,18 @@ class FacturacionGUI:
                         ym_date = parse_ym_date(values["periodo"])
                         self.header(f"PREPARAR FACTURAS {values['periodo']}")
                         print('Periodo:', periodo_desc(ym_date, 'Mensual.1'), '[AL ...]')
+                        inicio = int(values["inicio"])
 
-                        cfdis = generate_ingresos(
+                        if cfdis := generate_ingresos(
                             folio=int(values["folio"]),
                             serie=self.serie,
                             clients=ClientsManager(),
                             facturas=FacturasManager(ym_date)["Facturas"],
                             ym_date=ym_date,
                             csd_signer=self.csd_signer
-                        )
-
-                        inicio = int(values["inicio"])
-                        final = to_int(values["final"]) or len(cfdis)
-                        cfdis = cfdis[max(inicio - 1, 0):max(final, 0)]
+                        ):
+                            final = to_int(values["final"]) or len(cfdis)
+                            cfdis = cfdis[max(inicio - 1, 0):max(final, 0)]
 
                         self.print_prepared_cfdis(cfdis, start=inicio)
 

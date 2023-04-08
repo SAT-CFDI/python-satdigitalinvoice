@@ -332,13 +332,14 @@ def print_invoices(invoices):
                 'Recep. Rfc',
                 'Factura',
                 "Fecha",
+                "Total",
                 "Saldar",
                 "Tipo",
                 "Folio Fiscal",
                 "Info"
             ),
             disable_numparse=True,
-            colalign=("right", "left", "left", "left", "left", "right", "left", "left")
+            colalign=("right", "left", "left", "left", "left", "right", "right", "left", "left", "left")
         )
     )
 

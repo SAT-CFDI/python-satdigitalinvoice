@@ -1,18 +1,43 @@
 from html import escape as html_escape
 
 import jinja2
-from jinja2 import Environment
+from jinja2 import Environment, Undefined
 from jinja2.filters import do_mark_safe
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
+from satcfdi.transform.helpers import iterate as h_iterate
 
-environment_default = Environment(
-    loader=jinja2.FileSystemLoader(searchpath=['templates']),
-    autoescape=False,
-    trim_blocks=True,
-    lstrip_blocks=True,
-    undefined=jinja2.StrictUndefined,
-)
+
+class FacturacionEnvironment(Environment):
+    @property
+    def glob(self):
+        def sub(f):
+            self.globals[f.__name__] = f
+            return f
+
+        return sub
+
+    def __init__(self):
+        super().__init__(
+            loader=jinja2.FileSystemLoader(searchpath=['templates']),
+            autoescape=True,
+            trim_blocks=True,
+            lstrip_blocks=True,
+            undefined=jinja2.StrictUndefined,
+        )
+
+        @self.glob
+        def iterate(v):
+            if isinstance(v, Undefined):
+                return v
+            return h_iterate(v)
+
+
+environment_default = FacturacionEnvironment()
+
+
+def tag(text, tag):
+    return '<' + tag + '>' + text + '</' + tag + '>'
 
 
 def finalize_html(val):
@@ -21,15 +46,5 @@ def finalize_html(val):
     )
 
 
-environment_bold_escaped = Environment(
-    loader=jinja2.FileSystemLoader(searchpath=['templates']),
-    autoescape=True,
-    trim_blocks=True,
-    lstrip_blocks=True,
-    undefined=jinja2.StrictUndefined,
-    finalize=finalize_html
-)
-
-
-def tag(text, tag):
-    return '<' + tag + '>' + text + '</' + tag + '>'
+environment_bold_escaped = FacturacionEnvironment()
+environment_bold_escaped.finalize = finalize_html
