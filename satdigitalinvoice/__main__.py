@@ -1,734 +1,82 @@
-import base64
-import io
-import itertools
 import logging
 import os
-from datetime import timedelta, date
-from zipfile import ZipFile
-
-from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI
-from satcfdi import DatePeriod
-from satcfdi.accounting import EmailManager
-from satcfdi.exceptions import ResponseError, DocumentNotFoundError
-from satcfdi.pacs import Accept
-from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
-from satcfdi.printer import Representable
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
-from tabulate import tabulate
-
-from . import __version__
-from .client_validation import validar_client
-from .environments import environment_default
-from .file_data_managers import ClientsManager, ConfigManager, FacturasManager
-from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
-    periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
-from .layout import make_layout, ActionButtonManager
-from .local import LocalDBSatCFDI
-from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
-from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, PPD, PUE
-from .utils import random_string, to_uuid, add_file_handler, parse_date_period, parse_ym_date, load_certificate, to_int
-
-logging.getLogger("weasyprint").setLevel(logging.ERROR)
-logging.getLogger("fontTools").setLevel(logging.ERROR)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-ACTION_FACTURAS = "facturas"
-ACTION_EMAILS = "emails"
-ACTION_CLIENTS = "clients"
-ACTION_AJUSTES = "ajustes"
-
-template = environment_default.get_template(
-    'mail_facturas_template.html'
-)
+import traceback
+import PySimpleGUI as sg
+from satdigitalinvoice import SOURCE_DIRECTORY
 
 
-def open_launch_window():
-    layout = [[PySimpleGUI.Text("New Window", key="new")]]
-    window = PySimpleGUI.Window("Launch Window", layout, modal=True, size=(300, 300))
-    window.read(timeout=1000)
+def add_file_handler():
+    fh = logging.FileHandler(
+        f'.data/errors.log',
+        mode='a',
+        encoding='utf-8',
+    )
+    fh.setLevel(logging.ERROR)
+    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    fh.setFormatter(formatter)
+    logging.root.addHandler(fh)
 
-    return window
 
+class FacturacionLauncher:
 
-class FacturacionGUI:
     def __init__(self, debug=False):
         # set up logging
         if debug:
             logging.basicConfig(level=logging.ERROR)
         add_file_handler()
 
-        self.email_manager = None
-        self.pac_service = None
-        self.fiel_signer = None  # SAT(signer=fiel_signer )
-        self.csd_signer = None
-        self.sat_service = None
-        self.rfc_prediales = None
+        layout = [
+            [sg.Column([[
+                sg.Image(source=os.path.join(SOURCE_DIRECTORY, "images", "logo.png"), pad=2),
+            ]], justification='center', pad=0, background_color='black')],
+            [
+                sg.Multiline(
+                    "Cargando Aplicación...",
+                    expand_x=True,
+                    expand_y=True,
+                    key="console",
+                    background_color=sg.theme_background_color(), # '#a0dbd9',
+                    no_scrollbar=True,
+                    border_width=0,
+                    write_only=True,
+                    disabled=True,
+                )
+            ]
+        ]
 
-        self.window = PySimpleGUI.Window(
+        self.window = sg.Window(
             f"Facturación Masiva CFDI 4.0",  # {self.csd_signer.rfc}
-            make_layout(True),
-            size=(1280, 800),
+            layout,
+            size=(640, 560),
             resizable=True,
             font=("Courier New", 10, "bold"),
+            no_titlebar=True,
+            modal=True,
+            background_color=sg.theme_background_color(),
+
         )
-
-        self.all_invoices = None
-        self.serie = None
-
-        # noinspection PyTypeChecker
-        self.local_db = None  # type: LocalDBSatCFDI
-        # noinspection PyTypeChecker
-        self.selected_satcfdi = None  # type: MyCFDI
-
-        self.action_button_manager = ActionButtonManager(self.window["crear_facturas"])
-        self.console = self.window["console"]
 
     @staticmethod
     def read_config():
+        from satdigitalinvoice.file_data_managers import ConfigManager
         return ConfigManager()
-
-    def prepare(self, config):
-        self.local_db = LocalDBSatCFDI(
-            enviar_a_partir=config['enviar_a_partir'],
-            saldar_a_partir=config['saldar_a_partir']
-        )
-        self.email_manager = EmailManager(
-            **config['email']
-        )
-        if csd := config.get('csd'):
-            self.csd_signer = load_certificate(csd)
-
-        if fiel := config.get('fiel'):
-            self.fiel_signer = load_certificate(fiel)
-
-        self.sat_service = SAT(signer=self.fiel_signer)
-
-        pac = config['pac']
-        pac_module, pac_class = pac['type'].split(".")
-        mod = __import__(f"satcfdi.pacs.{pac_module}", fromlist=[pac_class])
-        self.pac_service = getattr(mod, pac_class)(
-            **pac['args']
-        )
-        self.serie = config['serie']
-
-        self.window['serie'].update(self.serie)
-        self.set_folio()
-
-        MyCFDI.local_db = self.local_db
-
-    def initial_screen(self, emisor_cif):
-        log_line("Acerca De")
-        print_yaml({
-            "version": __version__.__version__,
-            "facturacion": "CFDI 4.0",
-            "emisor": emisor_cif,
-            "pac_service": {
-                "Type": type(self.pac_service).__name__,
-                "Rfc": self.pac_service.RFC,
-                "Environment": str(self.pac_service.environment)
-            }
-        })
 
     def run(self):
         self.window.finalize()
-
-        # Add logging to the window
-        h = logging.StreamHandler(self.window['console'])
-        h.setLevel(logging.INFO)
-        logging.root.addHandler(h)
+        self.window.read(timeout=0)
 
         try:
+            from satdigitalinvoice.facturacion import FacturacionGUI
             config = self.read_config()
-            self.prepare(config)
-        except Exception:
-            logger.exception(header_line("ERROR"))
-            for e in self.window.element_list():
-                if isinstance(e, PySimpleGUI.Button):
-                    e.update(disabled=True)
-                if isinstance(e, PySimpleGUI.Input):
-                    e.update("", disabled=True)
+            app = FacturacionGUI(config)
+        except Exception as ex:
+            logging.exception(ex)
+            self.window['console'].update(
+                traceback.format_exc()
+            )
             self.window.read()
             self.window.close()
             return
 
-        self.window['factura_pagar'].bind("<Return>", "_enter")
-        self.window['periodo'].bind("<Return>", "_enter")
-        self.window['importe_pago'].bind("<Return>", "_enter")
-        self.window['fecha_pago'].bind("<Return>", "_enter")
-        self.window['inicio'].bind("<Return>", "_enter")
-        self.window['final'].bind("<Return>", "_enter")
-        self.window['forma_pago'].bind("<Return>", "_enter")
-        # self.window['console'].bind('<Button-3>', '_double_click')
-
-        self.main_loop()
         self.window.close()
-
-    def get_all_invoices(self):
-        if self.all_invoices:
-            return self.all_invoices
-        self.all_invoices = get_all_cfdi()
-        return self.all_invoices
-
-    def generate_invoice(self, invoice):
-        ref_id = random_string()
-        attempts = 3
-        for i in range(attempts):
-            if i:
-                print(f'Intentando de nuevo... Intento {i + 1} de {attempts}')
-                self._read(timeout=2000 * i)
-
-            try:
-                res = self.pac_service.stamp(
-                    cfdi=invoice,
-                    accept=Accept.XML_PDF,
-                    ref_id=ref_id
-                )
-            except Exception as ex:
-                logger.error(f"Error Generando: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}")
-                if isinstance(ex, ResponseError):
-                    logger.error(f"Status Code: {ex.response.status_code}")
-                    logger.error(f"Response: {ex.response.text}")
-                continue
-
-            self.set_folio(int(res['Folio']) + 1)
-            return move_to_folder(res.xml, pdf_data=res.pdf)
-
-    def set_folio(self, folio: int = None):
-        if folio:
-            self.local_db.folio_set(folio)
-            self.window['folio'].update(folio)
-        else:
-            self.window['folio'].update(self.local_db.folio())
-
-    def enviar_correos(self, emisor_cif, emails):
-        with self.email_manager.sender as s:
-            for receptor, notify_invoices, pendientes_meses_anteriores in emails:
-                attachments = []
-                for r in notify_invoices:
-                    attachments += [r.filename + ".xml", r.filename + ".pdf"]
-
-                subject = f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}"
-                s.send_email(
-                    subject=subject,
-                    to_addrs=receptor["Email"],
-                    html=generate_html_template(
-                        'mail_facturas_template.html',
-                        fields={
-                            "facturas": notify_invoices,
-                            'pendientes_meses_anteriores': pendientes_meses_anteriores,
-                            'emisor': emisor_cif,
-                        },
-                    ),
-                    file_attachments=attachments
-                )
-                for r in notify_invoices:
-                    r.notified = True
-
-                print_yaml({
-                    "correo_enviado": subject,
-                    'facturas': [f"{i.name} - {i.uuid}" for i in notify_invoices],
-                    'pendientes_meses_anteriores': [f"{i.name} - {i.uuid}" for i in pendientes_meses_anteriores],
-                    "correos": receptor["Email"]
-                })
-                self._read()
-
-    def recupera_comprobantes(self, id_solicitud):
-        response = self.sat_service.recover_comprobante_status(
-            id_solicitud=id_solicitud
-        )
-        print_yaml(response)
-        self._read()
-        if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
-            for id_paquete in response['IdsPaquetes']:
-                response, paquete = self.sat_service.recover_comprobante_download(
-                    id_paquete=id_paquete
-                )
-                print_yaml(response)
-                self._read()
-                yield id_paquete, base64.b64decode(paquete) if paquete else None
-
-    def unzip_cfdi(self, file):
-        with ZipFile(file, "r") as zf:
-            for fileinfo in zf.infolist():
-                xml_data = zf.read(fileinfo)
-                move_to_folder(xml_data, pdf_data=None)
-                self._read()
-
-    def _read(self, timeout=0):
-        event, values = self.window.read(timeout=timeout)
-        if event in ("Exit", PySimpleGUI.WIN_CLOSED):
-            exit(0)
-
-    def action_button(self, action_name, action_items):
-        if action_name == ACTION_FACTURAS:
-            self.all_invoices = None
-            for invoice in action_items:
-                cfdi = self.generate_invoice(invoice=invoice)
-                if cfdi is None:
-                    break
-                print_yaml({
-                    "FacturaGenerada": cfdi_header(cfdi),
-                })
-                self._read()
-        elif action_name == ACTION_EMAILS:
-            clients = ClientsManager()
-            emisor_cif = clients[self.csd_signer.rfc]
-            self.enviar_correos(emisor_cif, action_items)
-        elif action_name == ACTION_CLIENTS:
-            for rfc, details in action_items.items():
-                print(f"Validando: {rfc}")
-                self._read()
-                validar_client(rfc, details)
-
-    def set_selected_satcfdi(self, factura):
-        i = factura
-        self.selected_satcfdi = i
-        self.window["ver_factura"].update(disabled=not i)
-        if i:
-            estado = self.local_db.status_sat(i).get('Estado', 'Vigente')
-            self.window["status_sat"].update(
-                estado,
-                visible=True,
-                button_color="red4" if estado != "Vigente" else "green",
-            )
-        else:
-            self.window["status_sat"].update(
-                visible=False
-            )
-
-        # Email
-        is_enviable = i \
-                      and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                      and i["Fecha"] >= self.local_db.enviar_a_partir \
-                      and i.estatus == "1"
-        if is_enviable:
-            self.window["email_notificada"].update(
-                "Por Enviar" if self.local_db.notificar(i) else " Enviada  ",
-                visible=True,
-                button_color="red4" if self.local_db.notificar(i) else "green",
-            )
-        else:
-            self.window["email_notificada"].update("", visible=False)
-
-        # Pendiente de Pago
-        is_pendientable = i \
-                          and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                          and i["TipoDeComprobante"] == "I" \
-                          and i["Fecha"] >= self.local_db.saldar_a_partir[i['MetodoPago']] \
-                          and i.estatus == "1" \
-                          and (i["MetodoPago"] == PUE or i.saldo_pendiente) \
-                          and i["Total"]
-        if is_pendientable:
-            self.window["pendiente_pago"].update(
-                "Por Saldar" if self.local_db.saldar(i) else " Saldada  ",
-                visible=True,
-                button_color="red4" if self.local_db.saldar(i) else "green",
-            )
-        else:
-            self.window["pendiente_pago"].update("", visible=False)
-
-        # PPD
-        is_ppd_active = i \
-                        and i.get("MetodoPago") == PPD \
-                        and i.estatus == "1" \
-                        and i["Emisor"]["Rfc"] == self.csd_signer.rfc
-        self.window["prepare_pago"].update(disabled=not is_ppd_active)
-        self.window["fecha_pago_select"].update(disabled=not is_ppd_active)
-        self.window["fecha_pago"].update(disabled=not is_ppd_active)
-        self.window["importe_pago"].update(disabled=not is_ppd_active)
-        self.window["forma_pago"].update(disabled=not is_ppd_active)
-
-    def print_satcfdis(self, cfdis):
-        def info_fmt(i):
-            return "🗙" if i.estatus == '0' else ("📧" if self.local_db.notificar(i) else "")
-
-        if cfdis := sorted(cfdis, key=lambda i: (i["Fecha"], i.name), reverse=True):
-            if self.window['detallado'].get():
-                for i in cfdis:
-                    print_yaml(i)
-                    self.local_db.describe(i)
-            else:
-                print_invoices(
-                    [
-                        [
-                            e,
-                            i['Receptor']['Nombre'][0:36],
-                            i['Receptor']['Rfc'],
-                            i.name,
-                            i["Fecha"].strftime("%Y-%m-%d"),
-                            self.local_db.saldar(i),
-                            mf_pago_fmt(i),
-                            i.uuid,
-                            info_fmt(i)
-                        ]
-                        for e, i in enumerate(cfdis, start=1)
-                    ]
-                )
-            if len(cfdis) == 1:
-                print_cfdi_details(cfdis[0])
-                self.set_selected_satcfdi(cfdis[0])
-            else:
-                self.set_selected_satcfdi(None)
-        else:
-            print("No hay resultados")
-            self.set_selected_satcfdi(None)
-
-    def print_prepared_cfdis(self, cfdis, start=1):
-        if cfdis:
-            if self.window['detallado'].get():
-                for i, cfdi in enumerate(cfdis, start=start):
-                    log_item(f"FACTURA NUMERO: {i}")
-                    print_yaml(cfdi)
-            else:
-                print_cfdis(cfdis, start=start)
-            self.action_button_manager.set_items(ACTION_FACTURAS, cfdis)
-        else:
-            print("No hay facturas para este mes")
-
-    def header(self, name, clear=True):
-        if clear:
-            self.console.update("")
-        log_line(name)
-
-    def main_loop(self):
-        while True:
-            event, values = self.window.read()
-            try:
-                if event in ("Exit", PySimpleGUI.WIN_CLOSED):
-                    return
-
-                action_name, action_items = self.action_button_manager.clear()
-
-                match event:
-                    case "folio":
-                        self.set_folio(to_int(values["folio"]))
-
-                    case "about":
-                        clients = ClientsManager()
-                        self.initial_screen(clients[self.csd_signer.rfc])
-
-                    case "buscar_factura" | 'factura_pagar_enter':
-                        self.header("Buscar Factura")
-
-                        if search_text := values["factura_pagar"].strip().upper():
-                            if len(search_text) < 3:
-                                self.console.update("El texto de búsqueda debe tener al menos 3 caracteres")
-                                continue
-
-                            if search_uuid := to_uuid(search_text):
-                                def fac_iter():
-                                    if v := self.get_all_invoices().get(search_uuid):
-                                        yield v
-                            else:
-                                def fac_iter():
-                                    for i in self.get_all_invoices().values():
-                                        if i["Emisor"]["Rfc"] == self.csd_signer.rfc and \
-                                                (i.name == search_text or i["Receptor"]["Rfc"] == search_text or search_text in i["Receptor"].get("Nombre", "")):
-                                            yield i
-
-                            self.print_satcfdis(fac_iter())
-                            self.window["descarga"].update(disabled=not search_uuid)
-
-                    case "preparar_ajuste_anual":
-                        self.header(f"AJUSTES")
-                        ajustes(
-                            emisor_rfc=self.csd_signer.rfc,
-                            ym_date=parse_ym_date(values['periodo'])
-                        )
-
-                    case "recuperar_emitidas" | "recuperar_recibidas":
-                        self.header("RECUPERAR")
-                        fecha_final = date.today()
-                        fecha_inicial = fecha_final - timedelta(days=int(values["recuperar_dias"]))
-                        id_solicitud = self.local_db.get(event)
-
-                        if not id_solicitud:
-                            self._read()
-                            response = self.sat_service.recover_comprobante_request(
-                                fecha_inicial=fecha_inicial,
-                                fecha_final=fecha_final,
-                                rfc_receptor=self.sat_service.signer.rfc if "recuperar_recibidas" == event else None,
-                                rfc_emisor=self.sat_service.signer.rfc if "recuperar_emitidas" == event else None,
-                                tipo_solicitud=TipoDescargaMasivaTerceros.CFDI,
-                            )
-                            print_yaml(response)
-                            self.local_db[event] = response['IdSolicitud']
-                            print("Nueva Solicitud Creada")
-                        else:
-                            print_yaml({
-                                'IdSolicitud': id_solicitud
-                            })
-                            self._read()
-                            for paquete_id, data in self.recupera_comprobantes(id_solicitud):
-                                if data:
-                                    self.all_invoices = None
-                                    with io.BytesIO(data) as b:
-                                        self.unzip_cfdi(b)
-                                del self.local_db[event]
-                            log_line("FIN")
-
-                    case "prepare_clientes":
-                        self.header("CLIENTES")
-                        clients = ClientsManager()
-                        ym_date = parse_ym_date(values['periodo'])
-                        if clients:
-                            facturas = FacturasManager(ym_date)["Facturas"]
-                            print(
-                                tabulate(
-                                    [
-                                        [
-                                            i,
-                                            client["RazonSocial"][:36],
-                                            client["Rfc"],
-                                            client["RegimenFiscal"].code,
-                                            client["CodigoPostal"],
-                                            sum(1 for f in facturas if f["Receptor"] == k) or None
-                                        ]
-                                        for i, (k, client) in enumerate(clients.items(), start=1)
-                                    ],
-                                    headers=(
-                                        "",
-                                        "Razon Social",
-                                        "Rfc",
-                                        "Reg",
-                                        "CP",
-                                        "Facturas"
-                                    ),
-                                    colalign=("right", "left", "left", "left", "left", "right"),
-                                )
-                            )
-                            self.action_button_manager.set_items(ACTION_CLIENTS, clients)
-                        else:
-                            print("No hay clientes")
-
-                    case "prepare_facturas" | "inicio_enter" | "final_enter":
-                        ym_date = parse_ym_date(values["periodo"])
-                        self.header(f"PREPARAR FACTURAS {values['periodo']}")
-                        print('Periodo:', periodo_desc(ym_date, 'Mensual.1'), '[AL ...]')
-
-                        cfdis = generate_ingresos(
-                            folio=int(values["folio"]),
-                            serie=self.serie,
-                            clients=ClientsManager(),
-                            facturas=FacturasManager(ym_date)["Facturas"],
-                            ym_date=ym_date,
-                            csd_signer=self.csd_signer
-                        )
-
-                        inicio = int(values["inicio"])
-                        final = to_int(values["final"]) or len(cfdis)
-                        cfdis = cfdis[max(inicio - 1, 0):max(final, 0)]
-
-                        self.print_prepared_cfdis(cfdis, start=inicio)
-
-                    case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter":
-                        self.header("COMPROBANTE PAGO")
-                        if i := self.selected_satcfdi:
-                            if cfdi := pago_factura(
-                                serie=self.serie,
-                                folio=int(values["folio"]),
-                                factura_pagar=i,
-                                fecha_pago=values["fecha_pago"],
-                                forma_pago=values["forma_pago"],
-                                importe_pago=values["importe_pago"],
-                                csd_signer=self.csd_signer
-                            ):
-                                self.print_prepared_cfdis([cfdi])
-                                print_cfdi_details(cfdi)
-
-                    case "ver_factura":
-                        if i := self.selected_satcfdi:
-                            os.startfile(
-                                os.path.abspath(i.filename + ".pdf")
-                            )
-
-                    case "status_sat":
-                        self.header("STATUS")
-                        if i := self.selected_satcfdi:
-                            estado = self.local_db.status_sat(i, update=True)
-                            self.print_satcfdis([i])
-                            print_yaml(estado)
-
-                    case "pendiente_pago":
-                        if i := self.selected_satcfdi:
-                            st = self.local_db.saldar_flip(i)
-                            self.console.update("")
-                            self.header(self.window[event].ButtonText.upper())
-                            self.print_satcfdis([i])
-                            print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}SALDADA")
-
-                    case "email_notificada":
-                        if i := self.selected_satcfdi:
-                            st = self.local_db.notificar_flip(i)
-                            self.console.update("")
-                            self.header(self.window[event].ButtonText.upper())
-                            self.print_satcfdis([i])
-                            print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}NOTIFICADA")
-
-                    case "prepare_correos":
-                        self.header("CORREOS")
-                        now = date.today()
-                        dp = DatePeriod(now.year, now.month)
-                        clients = ClientsManager()
-                        a_invoices = self.get_all_invoices()
-
-                        cfdi_correos = []
-                        for receptor_rfc, notify_invoices in itertools.groupby(
-                                sorted(
-                                    (i for i in a_invoices.values() if i.estatus == "1" and self.local_db.notificar(i)),
-                                    key=lambda r: r["Receptor"]["Rfc"]
-                                ),
-                                lambda r: r["Receptor"]["Rfc"]
-                        ):
-                            notify_invoices = list(notify_invoices)
-
-                            def fac_iter():
-                                for i in self.get_all_invoices().values():
-                                    if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                            and i["TipoDeComprobante"] == "I" \
-                                            and i.estatus == '1' \
-                                            and self.local_db.saldar(i) \
-                                            and i["Fecha"] < dp \
-                                            and i["Receptor"]["Rfc"] == receptor_rfc:
-                                        yield i
-
-                            fac_pen = sorted(
-                                fac_iter(),
-                                key=lambda r: r["Fecha"]
-                            )
-                            receptor = clients[receptor_rfc]
-                            cfdi_correos.append((receptor, notify_invoices, fac_pen))
-
-                        if cfdi_correos:
-                            print(tabulate(
-                                [
-                                    [
-                                        i,
-                                        receptor["RazonSocial"][0:36],
-                                        receptor["Rfc"],
-                                        ",".join(n.name for n in notify_invoices),
-                                        ",".join(n.name for n in facturas_pendientes)
-                                    ] for i, (receptor, notify_invoices, facturas_pendientes) in enumerate(cfdi_correos, start=1)
-                                ],
-                                headers=(
-                                    '',
-                                    'Receptor Razon Social',
-                                    'Recep. Rfc',
-                                    'Facturas',
-                                    'Pendientes Emitidas Meses Anteriores'
-                                ),
-                                disable_numparse=True,
-                                colalign=("right", "left", "left", "left", "left")
-                            ))
-
-                            self.action_button_manager.set_items(ACTION_EMAILS, cfdi_correos)
-                        else:
-                            print("No hay correos pendientes de enviar")
-
-                    case "crear_facturas":
-                        self.header(f"PROCESAR {action_name.upper()}", clear=False)
-                        res = PySimpleGUI.popup(
-                            f"Estas seguro que quieres crear {len(action_items)} {action_name}?",
-                            title=self.window[event].ButtonText,
-                            button_type=POPUP_BUTTONS_OK_CANCEL,
-                        )
-                        if res == "OK":
-                            self.action_button(action_name, action_items)
-                            print("FIN")
-                        else:
-                            print("OPERACION CANCELADA")
-
-                    case "facturas_pendientes":
-                        self.header("FACTURAS PENDIENTES")
-
-                        def fac_iter():
-                            for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["TipoDeComprobante"] == "I" \
-                                        and i.estatus == '1' \
-                                        and self.local_db.saldar(i):
-                                    yield i
-
-                        self.print_satcfdis(fac_iter())
-
-                    case "descarga":
-                        self.header('DESCARGADA')
-                        try:
-                            res = self.pac_service.recover(values["factura_pagar"], accept=Accept.XML_PDF)
-                            self.all_invoices = None
-                            cfdi = move_to_folder(res.xml, pdf_data=res.pdf)
-                            cfdi = self.get_all_invoices()[to_uuid(cfdi["Complemento"]["TimbreFiscalDigital"]["UUID"])]
-                            self.print_satcfdis([cfdi])
-                        except DocumentNotFoundError:
-                            logger.info("Factura no encontrada")
-
-                    case "ver_excel":
-                        self.header("EXCEL")
-                        clients = ClientsManager()
-                        emisor_cif = clients[self.csd_signer.rfc]
-                        exportar_facturas(
-                            self.get_all_invoices(),
-                            parse_date_period(values["periodo"]),
-                            emisor_cif,
-                            self.rfc_prediales
-                        )
-
-                        archivo_excel = facturas_filename(parse_date_period(values["periodo"]))
-                        os.startfile(
-                            os.path.abspath(archivo_excel)
-                        )
-
-                    case "facturas_emitidas" | "periodo_enter":
-                        self.header(f"FACTURAS EMITIDAS {values['periodo']}")
-                        dp = parse_date_period(values["periodo"])
-
-                        def fact_iter():
-                            for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["Fecha"] == dp:
-                                    yield i
-
-                        self.print_satcfdis(fact_iter())
-
-                    case "ver_html":
-                        self.header("HTML")
-                        dp = parse_date_period(values["periodo"])
-
-                        def fact_iter():
-                            for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["Fecha"] == dp:
-                                    yield i
-
-                        outfile = facturas_filename(dp, ext="html")
-                        Representable.html_write_all(
-                            objs=fact_iter(),
-                            target=outfile,
-                        )
-                        os.startfile(
-                            os.path.abspath(outfile)
-                        )
-
-                    case "ver_carpeta":
-                        archivo = facturas_filename(parse_date_period(values["periodo"]))
-                        os.startfile(
-                            os.path.abspath(os.path.dirname(archivo))
-                        )
-
-                    case "ver_carpeta_ajustes":
-                        ajustes_dir = ajustes_directory(parse_ym_date(values['periodo']))
-                        os.startfile(
-                            os.path.abspath(ajustes_dir)
-                        )
-
-                    case "periodo" | "inicio" | "final" | "fecha_pago" | "forma_pago" | "importe_pago" | ' ':
-                        pass
-
-                    case _:
-                        logger.error(f"Unknown event '{event}'")
-
-            except Exception as ex:
-                logger.exception(header_line("ERROR"))
+        app.run()

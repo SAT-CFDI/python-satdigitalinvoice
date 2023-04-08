@@ -1,4 +1,3 @@
-import logging
 import os
 import random
 import shutil
@@ -48,18 +47,6 @@ def to_int(s):
 def random_string():
     chars = "0123456789abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXZY"
     return "".join(random.choice(chars) for _ in range(32))
-
-
-def add_file_handler():
-    fh = logging.FileHandler(
-        f'.data/errors.log',
-        mode='a',
-        encoding='utf-8',
-    )
-    fh.setLevel(logging.ERROR)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
-    fh.setFormatter(formatter)
-    logging.root.addHandler(fh)
 
 
 def convert_ans1_date(ans1_date):

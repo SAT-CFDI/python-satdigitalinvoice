@@ -60,6 +60,7 @@ setuptools.setup(
         package: [
             "markdown_styles/*",
             "schemas/*",
+            'images/*',
         ],
     },
     install_requires=[
