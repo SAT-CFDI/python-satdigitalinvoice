@@ -23,7 +23,7 @@ from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
     periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
 from .layout import make_layout, ActionButtonManager
-from .local import LocalDBSatCFDI
+from .localdb import LocalDBSatCFDI
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, PPD, PUE
 from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int

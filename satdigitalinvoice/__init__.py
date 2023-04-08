@@ -1,6 +1,6 @@
 import logging
 import os
-import traceback
+
 import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)

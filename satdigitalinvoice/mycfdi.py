@@ -8,7 +8,7 @@ from uuid import UUID
 
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
-from .local import load_data, save_data
+from .localdb import load_data, save_data
 from .utils import to_uuid
 
 ALL_INVOICES = 'all_invoices'

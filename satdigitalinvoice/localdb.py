@@ -125,13 +125,13 @@ class LocalDBSatCFDI(LocalDB):
 
 
 def save_data(file, data):
-    with open(os.path.join(DATA_DIR, file), 'wb') as f:
+    with open(os.path.join(DATA_DIRECTORY, file), 'wb') as f:
         pickle.dump(data, f)
 
 
 def load_data(file, default=None):
     try:
-        with open(os.path.join(DATA_DIR, file), 'rb') as f:
+        with open(os.path.join(DATA_DIRECTORY, file), 'rb') as f:
             return pickle.load(f)
     except FileNotFoundError:
         return default
