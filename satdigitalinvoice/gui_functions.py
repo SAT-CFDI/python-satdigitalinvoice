@@ -336,7 +336,7 @@ def print_invoices(invoices):
                 "Saldar",
                 "Tipo",
                 "Folio Fiscal",
-                "Info"
+                "🛈"
             ),
             disable_numparse=True,
             colalign=("right", "left", "left", "left", "left", "right", "right", "left", "left", "left")
