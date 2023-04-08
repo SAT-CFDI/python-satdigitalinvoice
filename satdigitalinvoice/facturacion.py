@@ -20,7 +20,7 @@ from tabulate import tabulate
 from . import __version__
 from .client_validation import validar_client
 from .environments import environment_default
-from .file_data_managers import ClientsManager, ConfigManager, FacturasManager
+from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
     periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
 from .layout import make_layout, ActionButtonManager

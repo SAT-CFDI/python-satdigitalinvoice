@@ -1,8 +1,8 @@
 import pytest
-from satdigitalinvoice.__main__ import FacturacionGUI
+from satdigitalinvoice.facturacion import FacturacionGUI
 from yaml.constructor import ConstructorError
 
-from satdigitalinvoice.file_data_managers import LocalData
+from satdigitalinvoice.file_data_managers import LocalData, ConfigManager
 
 from satdigitalinvoice.layout import make_layout
 from satdigitalinvoice.utils import random_string
@@ -48,7 +48,8 @@ def test_random_string():
 
 
 def test_app_setup():
+    config  = ConfigManager()
     a = FacturacionGUI(
-
+        config
     )
 

@@ -27,8 +27,6 @@ def test_generar_ingresos(caplog):
         folio=1000,
         clients=clients,
         facturas=facturas,
-        inicio=1,
-        final=None,
         ym_date=date(year=2023, month=4, day=1),
         csd_signer=csd_signer,
     )
@@ -48,8 +46,6 @@ def test_generar_ingresos_error(caplog):
         folio=1000,
         clients=clients,
         facturas=facturas,
-        inicio=1,
-        final=None,
         ym_date=date(year=2023, month=4, day=1),
         csd_signer=csd_signer,
     )
@@ -70,8 +66,6 @@ def test_generar_ingresos_error2(caplog):
         folio=1000,
         clients=ClientsManager(),
         facturas=facturas,
-        inicio=1,
-        final=None,
         ym_date=date(year=2023, month=4, day=1),
         csd_signer=csd_signer,
     )
