@@ -110,15 +110,13 @@ class FacturasManager(LocalData):
 
         DuplicateKeySafeLoader.add_constructor("!case", loading_function)
         super().__init__()
-        if emission_date is None:
-            return
-
         if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
             raise ValueError("Factura Duplicada: {}".format(dup))
 
-        for v in self["Facturas"]:
-            if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
-                raise error
+        if emission_date:
+            for v in self["Facturas"]:
+                if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
+                    raise error
 
 
 DuplicateKeySafeLoader.add_constructor("!decimal", lambda loader, node: Decimal(loader.construct_scalar(node)))

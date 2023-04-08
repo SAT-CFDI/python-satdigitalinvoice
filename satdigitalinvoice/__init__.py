@@ -50,13 +50,12 @@ class FacturacionLauncher:
         self.window = sg.Window(
             f"Facturación Masiva CFDI 4.0",  # {self.csd_signer.rfc}
             layout,
-            size=(640, 560),
+            size=(640, 480),
             resizable=True,
             font=("Courier New", 10, "bold"),
             no_titlebar=True,
             modal=True,
             background_color=sg.theme_background_color(),
-
         )
 
     @staticmethod
@@ -75,7 +74,7 @@ class FacturacionLauncher:
         except Exception as ex:
             logging.exception(ex)
             self.window['console'].update(
-                traceback.format_exc()
+                str(ex)
             )
             self.window.read()
             self.window.close()

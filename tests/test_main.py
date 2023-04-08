@@ -1,8 +1,10 @@
+from datetime import date, datetime
+
 import pytest
 from satdigitalinvoice.facturacion import FacturacionGUI
 from yaml.constructor import ConstructorError
 
-from satdigitalinvoice.file_data_managers import LocalData, ConfigManager
+from satdigitalinvoice.file_data_managers import LocalData, ConfigManager, FacturasManager
 
 from satdigitalinvoice.layout import make_layout
 from satdigitalinvoice.utils import random_string
@@ -33,8 +35,8 @@ def test_layout_unique_keys():
 
 
 def test_duplicated_yaml_file():
-    class MyConfigManager(LocalData):
-        file_source = "duplicated_config.yaml"
+    class MyConfigManager(ConfigManager):
+        file_source = "config_duplicated.yaml"
 
     # expect exception thrown
     with pytest.raises(ConstructorError) as e:
@@ -45,6 +47,17 @@ def test_duplicated_yaml_file():
 def test_random_string():
     a = random_string()
     assert len(a) == 32
+
+
+def test_duplicated_facturas():
+    class MyFacturasManager(FacturasManager):
+        file_source = "facturas_duplicated.yaml"
+
+    # expect exception thrown
+
+    with pytest.raises(ValueError) as e:
+        MyFacturasManager(datetime(2021, 1, 1))
+    assert str(e.value)[0:20] == 'Factura Duplicada: {'
 
 
 def test_app_setup():
