@@ -80,7 +80,7 @@ def make_layout(has_fiel):
             [
                 [
                     sg.Button(image_data=SEARCH_ICON, key="buscar_factura", border_width=0, pad=TEXT_PADDING, button_color=BUTTON_COLOR),
-                    sg.Input("", size=(40, 1), key="factura_pagar", enable_events=True),
+                    sg.Input("", size=(40, 1), key="factura_pagar"),
                     sg.Button(image_data=DOWNLOAD_ICON, key="descarga", border_width=0, disabled=True, button_color=BUTTON_COLOR),
                     sg.Button(image_data=PDF_ICON, key="ver_factura", border_width=0, disabled=True, button_color=BUTTON_COLOR),
                 ],
@@ -140,7 +140,7 @@ def make_layout(has_fiel):
         c_second,
         [sg.HSeparator()],
         button_column_third,
-        [sg.Multiline(expand_x=True, expand_y=True, key="console", write_only=True, autoscroll=True, reroute_stdout=True)],
+        [sg.Multiline(expand_x=True, expand_y=True, key="console", write_only=True, autoscroll=False, reroute_stdout=True)],
         button_column_low
     ]
 

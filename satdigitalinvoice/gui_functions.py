@@ -147,12 +147,9 @@ def periodo_desc(ym_date, periodo_mes_ajuste):
     return None
 
 
-def generate_ingresos(folio, serie, clients, facturas, inicio, final, ym_date, csd_signer):
+def generate_ingresos(folio, serie, clients, facturas, ym_date, csd_signer):
     if not validad_facturas(clients, facturas):
         return
-
-    if inicio <= 0:
-        logger.info("Inicio no Valido")
 
     emisor_cif = clients[csd_signer.rfc]
 
@@ -176,10 +173,7 @@ def generate_ingresos(folio, serie, clients, facturas, inicio, final, ym_date, c
     if None in cfdis:
         return
 
-    if final is None:
-        final = len(cfdis)
-
-    return cfdis[max(inicio - 1, 0):max(final, 0)]
+    return cfdis
 
 
 def parse_fecha_pago(fecha_pago):
