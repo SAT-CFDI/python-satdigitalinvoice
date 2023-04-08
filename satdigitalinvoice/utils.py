@@ -38,6 +38,13 @@ def to_uuid(s):
         return None
 
 
+def to_int(s):
+    try:
+        return int(s)
+    except ValueError:
+        return None
+
+
 def random_string():
     chars = "0123456789abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXZY"
     return "".join(random.choice(chars) for _ in range(32))

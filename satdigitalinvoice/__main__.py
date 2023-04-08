@@ -27,7 +27,7 @@ from .layout import make_layout, ActionButtonManager
 from .local import LocalDBSatCFDI
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, PPD, PUE
-from .utils import random_string, to_uuid, add_file_handler, parse_date_period, parse_ym_date, load_certificate
+from .utils import random_string, to_uuid, add_file_handler, parse_date_period, parse_ym_date, load_certificate, to_int
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -96,15 +96,14 @@ class FacturacionGUI:
         self.email_manager = EmailManager(
             **config['email']
         )
-        self.csd_signer = load_certificate(
-            config['csd'],
-        ) if 'csd' in config else None
+        if csd := config.get('csd'):
+            self.csd_signer = load_certificate(csd)
 
-        self.fiel_signer = load_certificate(
-            config['fiel'],
-        ) if 'fiel' in config else None
+        if fiel := config.get('fiel'):
+            self.fiel_signer = load_certificate(fiel)
 
         self.sat_service = SAT(signer=self.fiel_signer)
+
         pac = config['pac']
         pac_module, pac_class = pac['type'].split(".")
         mod = __import__(f"satcfdi.pacs.{pac_module}", fromlist=[pac_class])
@@ -112,7 +111,10 @@ class FacturacionGUI:
             **pac['args']
         )
         self.serie = config['serie']
+
         self.window['serie'].update(self.serie)
+        self.set_folio()
+
         MyCFDI.local_db = self.local_db
 
     def initial_screen(self, emisor_cif):
@@ -192,9 +194,12 @@ class FacturacionGUI:
             self.set_folio(int(res['Folio']) + 1)
             return move_to_folder(res.xml, pdf_data=res.pdf)
 
-    def set_folio(self, folio: int):
-        self.local_db.folio_set(folio)
-        self.window['folio'].update(folio)
+    def set_folio(self, folio: int = None):
+        if folio:
+            self.local_db.folio_set(folio)
+            self.window['folio'].update(folio)
+        else:
+            self.window['folio'].update(self.local_db.folio())
 
     def enviar_correos(self, emisor_cif, emails):
         with self.email_manager.sender as s:
@@ -381,7 +386,6 @@ class FacturacionGUI:
 
     def main_loop(self):
         factura_seleccionada = None  # type: MyCFDI | None
-        self.set_folio(self.local_db.folio())
 
         while True:
             event, values = self.window.read()
@@ -390,11 +394,7 @@ class FacturacionGUI:
                     return
 
                 if event == "folio":
-                    try:
-                        self.set_folio(int(values["folio"]))
-                    except ValueError:
-                        print("El folio debe ser un número entero")
-                        self.set_folio(self.local_db.folio())
+                    self.set_folio(to_int(values["folio"]))
                     continue
 
                 if event not in ("crear_facturas", "enviar_correos", "confirm_pago_button", "ver_factura", "ver_excel", "pendiente_pago", "ver_carpeta_ajustes"):

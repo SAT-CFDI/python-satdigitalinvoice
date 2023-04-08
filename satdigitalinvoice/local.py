@@ -24,7 +24,7 @@ class LocalDB(diskcache.Cache):
         super().__init__(directory=os.path.join(DATA_DIR, 'cache'))
 
     def folio(self):
-        return self.get(FOLIO)
+        return self.get(FOLIO, 1)
 
     def folio_set(self, value: int):
         self[FOLIO] = value

@@ -13,10 +13,10 @@ csd:
   key: !read csd/cacx7605101p8.key
   password: !read csd/cacx7605101p8.txt
 
-fiel:
-  certificate: !read csd/cacx7605101p8.cer
-  key: !read csd/cacx7605101p8.key
-  password: !read csd/cacx7605101p8.txt
+#fiel:
+#  certificate: !read csd/cacx7605101p8.cer
+#  key: !read csd/cacx7605101p8.key
+#  password: !read csd/cacx7605101p8.txt
 
 email:
   stmp_host: email.test.stmp
