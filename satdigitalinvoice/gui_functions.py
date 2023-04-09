@@ -428,7 +428,7 @@ def ajustes(emisor_rfc, ym_date):
             else:
                 vu = valor_unitario_raw
                 vun = None
-                meses = 12
+                meses = None
                 ajuste_porcentaje = None
 
             concepto = format_concepto_desc(concepto, periodo="INMUEBLE")

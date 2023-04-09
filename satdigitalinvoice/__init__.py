@@ -57,7 +57,7 @@ class FacturacionLauncher:
             modal=True,
             background_color=sg.theme_background_color(),
             auto_close=True,
-            auto_close_duration=6, # seconds
+            auto_close_duration=6,  # seconds
         )
 
     @staticmethod
