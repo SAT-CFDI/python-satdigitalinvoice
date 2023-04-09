@@ -277,7 +277,7 @@ class FacturacionGUI:
                           and i["Total"]
         if is_pendientable:
             self.window["pendiente_pago"].update(
-                " Saldada  " if self.local_db.liquidated(i) else "Por Saldar",
+                (" Pagada  " if i["MetodoPago"] == PUE else "Ignorada ") if self.local_db.liquidated(i) else "Por Pagar",
                 visible=True,
                 button_color="green" if self.local_db.liquidated(i) else "red4",
             )
@@ -316,7 +316,7 @@ class FacturacionGUI:
                             cfdi.name,
                             cfdi["Fecha"].strftime("%Y-%m-%d"),
                             cfdi["Total"],
-                            self.local_db.liquidated(cfdi),
+                            "Si" if self.local_db.liquidated(cfdi) else None,
                             mf_pago_fmt(cfdi),
                             cfdi.uuid,
                             info_fmt(cfdi)
@@ -520,7 +520,10 @@ class FacturacionGUI:
                             self.console.update("")
                             self.header(self.window[event].ButtonText.upper())
                             self.print_satcfdis([i])
-                            print(f"FACTURA MARCADA COMO {'' if st else '-NO- '}SALDADA")
+                            if i["MetodoPago"] == PUE:
+                                print(f"FACTURA MARCADA COMO {'' if st else '-NO- '}PAGADA")
+                            else:
+                                print(f"FACTURA MARCADA COMO {'' if st else '-NO- '}IGNORADA")
 
                     case "email_notificada":
                         if i := self.selected_satcfdi:

@@ -91,7 +91,7 @@ class LocalDBSatCFDI(LocalDB):
 
     def liquidated(self, cfdi: SatCFDI):
         if cfdi["TipoDeComprobante"] != "I":
-            return True
+            return None
         if cfdi["MetodoPago"] == "PPD" and cfdi.saldo_pendiente == 0:
             return True
         if cfdi["Fecha"] >= self.saldar_a_partir[cfdi["MetodoPago"]]:

@@ -332,7 +332,7 @@ def print_invoices(invoices):
                 'Factura',
                 "Fecha",
                 "Total",
-                "Saldar",
+                "Pagada",
                 "Tipo",
                 "Folio Fiscal",
                 "🛈"
