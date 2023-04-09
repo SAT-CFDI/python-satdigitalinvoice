@@ -68,7 +68,7 @@ class FacturacionGUI:
 
         self.window = PySimpleGUI.Window(
             f"Facturación Masiva CFDI 4.0 {self.csd_signer.rfc}",
-            make_layout(True),
+            make_layout(bool(self.fiel_signer)),
             size=(1280, 800),
             resizable=True,
             font=("Courier New", 10, "bold"),
