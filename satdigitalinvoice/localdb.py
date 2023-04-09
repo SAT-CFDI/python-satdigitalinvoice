@@ -10,9 +10,9 @@ from satcfdi.pacs import sat
 from . import DATA_DIRECTORY
 from .log_tools import print_yaml
 
-EMAIL_NOTIFICADA = 2
+LIQUIDATED = 0
+NOTIFIED = 2
 STATUS_SAT = 3
-PENDIENTE = 4
 FOLIO = 5
 
 sat_manager = sat.SAT()
@@ -30,33 +30,33 @@ class LocalDB(diskcache.Cache):
     def folio_set(self, value: int):
         self[FOLIO] = value
 
-    def saldar(self, uuid: UUID):
+    def liquidated(self, uuid: UUID):
         return self.get(
-            (PENDIENTE, uuid), True
+            (LIQUIDATED, uuid), False
         )
 
-    def saldar_set(self, uuid: UUID, value: bool):
+    def liquidated_set(self, uuid: UUID, value: bool):
         if value:
+            self[(LIQUIDATED, uuid)] = value
+        else:
             try:
-                del self[(PENDIENTE, uuid)]
+                del self[(LIQUIDATED, uuid)]
             except KeyError:
                 pass
-        else:
-            self[(PENDIENTE, uuid)] = value
 
-    def notificar(self, uuid: UUID):
+    def notified(self, uuid: UUID):
         return self.get(
-            (EMAIL_NOTIFICADA, uuid), True
+            (NOTIFIED, uuid), False
         )
 
-    def notificar_set(self, uuid: UUID, value: bool):
+    def notified_set(self, uuid: UUID, value: bool):
         if value:
+            self[(NOTIFIED, uuid)] = value
+        else:
             try:
-                del self[(EMAIL_NOTIFICADA, uuid)]
+                del self[(NOTIFIED, uuid)]
             except KeyError:
                 pass
-        else:
-            self[(EMAIL_NOTIFICADA, uuid)] = value
 
     def status_sat(self, uuid: UUID):
         return self.get(
@@ -79,32 +79,28 @@ class LocalDBSatCFDI(LocalDB):
         self.enviar_a_partir = enviar_a_partir
         self.saldar_a_partir = saldar_a_partir
 
-    def notificar(self, cfdi: SatCFDI):
+    def notified(self, cfdi: SatCFDI):
         if cfdi["Fecha"] >= self.enviar_a_partir:
-            return super().notificar(cfdi.uuid)
+            return super().notified(cfdi.uuid)
         return False
 
-    def notificar_flip(self, cfdi: SatCFDI):
-        v = not self.notificar(cfdi)
-        self.notificar_set(cfdi.uuid, v)
+    def notified_flip(self, cfdi: SatCFDI):
+        v = not self.notified(cfdi)
+        self.notified_set(cfdi.uuid, v)
         return v
 
-    def saldar(self, cfdi: SatCFDI):
+    def liquidated(self, cfdi: SatCFDI):
         if cfdi["TipoDeComprobante"] != "I":
-            return None
+            return True
         if cfdi["MetodoPago"] == "PPD" and cfdi.saldo_pendiente == 0:
-            return 0
+            return True
         if cfdi["Fecha"] >= self.saldar_a_partir[cfdi["MetodoPago"]]:
-            if super().saldar(cfdi.uuid):
-                if cfdi["MetodoPago"] == "PPD":
-                    return cfdi.saldo_pendiente
-                else:
-                    return cfdi["Total"]
-        return 0
+            return super().liquidated(cfdi.uuid)
+        return True
 
-    def saldar_flip(self, cfdi: SatCFDI):
-        v = not self.saldar(cfdi)
-        self.saldar_set(cfdi.uuid, v)
+    def liquidated_flip(self, cfdi: SatCFDI):
+        v = not self.liquidated(cfdi)
+        self.liquidated_set(cfdi.uuid, v)
         return v
 
     def status_sat(self, cfdi: SatCFDI, update=False):
@@ -118,8 +114,8 @@ class LocalDBSatCFDI(LocalDB):
 
     def describe(self, cfdi: SatCFDI):
         print_yaml({
-            'saldar': self.saldar(cfdi),
-            'enviar': self.notificar(cfdi),
+            'saldada': self.liquidated(cfdi),
+            'enviada': self.notified(cfdi),
             'status_sat': self.status_sat(cfdi)
         })
 

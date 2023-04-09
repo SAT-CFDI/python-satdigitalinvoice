@@ -182,7 +182,7 @@ class FacturacionGUI:
                     file_attachments=attachments
                 )
                 for r in notify_invoices:
-                    self.local_db.notificar_set(r.uuid, False)
+                    self.local_db.notified_set(r.uuid, True)
                 print_yaml({
                     "correo": subject,
                     "para": receptor["Email"]
@@ -260,9 +260,9 @@ class FacturacionGUI:
                       and i.estatus == "1"
         if is_enviable:
             self.window["email_notificada"].update(
-                "Por Enviar" if self.local_db.notificar(i) else " Enviada  ",
+                " Enviada  " if self.local_db.notified(i) else "Por Enviar",
                 visible=True,
-                button_color="red4" if self.local_db.notificar(i) else "green",
+                button_color="green" if self.local_db.notified(i) else "red4",
             )
         else:
             self.window["email_notificada"].update("", visible=False)
@@ -277,9 +277,9 @@ class FacturacionGUI:
                           and i["Total"]
         if is_pendientable:
             self.window["pendiente_pago"].update(
-                "Por Saldar" if self.local_db.saldar(i) else " Saldada  ",
+                " Saldada  " if self.local_db.liquidated(i) else "Por Saldar",
                 visible=True,
-                button_color="red4" if self.local_db.saldar(i) else "green",
+                button_color="green" if self.local_db.liquidated(i) else "red4",
             )
         else:
             self.window["pendiente_pago"].update("", visible=False)
@@ -298,7 +298,7 @@ class FacturacionGUI:
 
     def print_satcfdis(self, cfdis):
         def info_fmt(i):
-            return "🗙" if i.estatus == '0' else ("📧" if self.local_db.notificar(i) else "")
+            return "🗙" if i.estatus == '0' else ("📧" if self.local_db.notified(i) else "")
 
         if cfdis := sorted(cfdis, key=lambda i: (i["Fecha"], i.name), reverse=True):
             if self.window['detallado'].get():
@@ -316,7 +316,7 @@ class FacturacionGUI:
                             cfdi.name,
                             cfdi["Fecha"].strftime("%Y-%m-%d"),
                             cfdi["Total"],
-                            self.local_db.saldar(cfdi),
+                            self.local_db.liquidated(cfdi),
                             mf_pago_fmt(cfdi),
                             cfdi.uuid,
                             info_fmt(cfdi)
@@ -516,19 +516,19 @@ class FacturacionGUI:
 
                     case "pendiente_pago":
                         if i := self.selected_satcfdi:
-                            st = self.local_db.saldar_flip(i)
+                            st = self.local_db.liquidated_flip(i)
                             self.console.update("")
                             self.header(self.window[event].ButtonText.upper())
                             self.print_satcfdis([i])
-                            print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}SALDADA")
+                            print(f"FACTURA MARCADA COMO {'' if st else '-NO- '}SALDADA")
 
                     case "email_notificada":
                         if i := self.selected_satcfdi:
-                            st = self.local_db.notificar_flip(i)
+                            st = self.local_db.notified_flip(i)
                             self.console.update("")
                             self.header(self.window[event].ButtonText.upper())
                             self.print_satcfdis([i])
-                            print(f"FACTURA MARCADA COMO {'-NO- ' if st else ''}NOTIFICADA")
+                            print(f"FACTURA MARCADA COMO {'' if st else '-NO- '}NOTIFICADA")
 
                     case "prepare_correos":
                         self.header("CORREOS")
@@ -540,7 +540,7 @@ class FacturacionGUI:
                         cfdi_correos = []
                         for receptor_rfc, notify_invoices in itertools.groupby(
                                 sorted(
-                                    (i for i in a_invoices.values() if i.estatus == "1" and self.local_db.notificar(i)),
+                                    (i for i in a_invoices.values() if i.estatus == "1" and not self.local_db.notified(i)),
                                     key=lambda r: r["Receptor"]["Rfc"]
                                 ),
                                 lambda r: r["Receptor"]["Rfc"]
@@ -552,7 +552,7 @@ class FacturacionGUI:
                                     if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                                             and i["TipoDeComprobante"] == "I" \
                                             and i.estatus == '1' \
-                                            and self.local_db.saldar(i) \
+                                            and not self.local_db.liquidated(i) \
                                             and i["Fecha"] < dp \
                                             and i["Receptor"]["Rfc"] == receptor_rfc:
                                         yield i
@@ -613,7 +613,7 @@ class FacturacionGUI:
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                                         and i["TipoDeComprobante"] == "I" \
                                         and i.estatus == '1' \
-                                        and self.local_db.saldar(i):
+                                        and not self.local_db.liquidated(i):
                                     yield i
 
                         self.print_satcfdis(fac_iter())
