@@ -22,9 +22,6 @@ PUE = "PUE"
 class MyCFDI(SatCFDI):
     local_db = None
 
-    def consulta_estado(self):
-        return self.local_db.status_sat(self)
-
     @SatCFDI.estatus.getter
     def estatus(self) -> str:
         Estatus = {

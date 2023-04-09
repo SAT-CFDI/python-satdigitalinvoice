@@ -286,9 +286,10 @@ class FacturacionGUI:
 
         # PPD
         is_ppd_active = i \
+                        and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                         and i.get("MetodoPago") == PPD \
                         and i.estatus == "1" \
-                        and i["Emisor"]["Rfc"] == self.csd_signer.rfc
+                        and i.saldo_pendiente
         self.window["prepare_pago"].update(disabled=not is_ppd_active)
         self.window["fecha_pago_select"].update(disabled=not is_ppd_active)
         self.window["fecha_pago"].update(disabled=not is_ppd_active)
@@ -301,25 +302,26 @@ class FacturacionGUI:
 
         if cfdis := sorted(cfdis, key=lambda i: (i["Fecha"], i.name), reverse=True):
             if self.window['detallado'].get():
-                for i in cfdis:
-                    print_yaml(i)
-                    self.local_db.describe(i)
+                for i, cfdi in enumerate(cfdis, start=1):
+                    log_item(f"FACTURA NUMERO: {i}")
+                    print_yaml(cfdi)
+                    self.local_db.describe(cfdi)
             else:
                 print_invoices(
                     [
                         [
-                            e,
-                            i['Receptor'].get('Nombre', '')[0:36],
-                            i['Receptor']['Rfc'],
-                            i.name,
-                            i["Fecha"].strftime("%Y-%m-%d"),
-                            i["Total"],
-                            self.local_db.saldar(i),
-                            mf_pago_fmt(i),
-                            i.uuid,
-                            info_fmt(i)
+                            i,
+                            cfdi['Receptor'].get('Nombre', '')[0:36],
+                            cfdi['Receptor']['Rfc'],
+                            cfdi.name,
+                            cfdi["Fecha"].strftime("%Y-%m-%d"),
+                            cfdi["Total"],
+                            self.local_db.saldar(cfdi),
+                            mf_pago_fmt(cfdi),
+                            cfdi.uuid,
+                            info_fmt(cfdi)
                         ]
-                        for e, i in enumerate(cfdis, start=1)
+                        for i, cfdi in enumerate(cfdis, start=1)
                     ]
                 )
             if len(cfdis) == 1:
@@ -356,6 +358,10 @@ class FacturacionGUI:
                     return
 
                 action_name, action_items = self.action_button_manager.clear()
+
+                if event in ("prepare_correos", "prepare_clientes", "prepare_facturas", "crear_facturas",
+                             "inicio_enter", "final_enter", "preparar_ajuste_anual", "recuperar_emitidas", "recuperar_recibidas"):
+                    self.set_selected_satcfdi([])
 
                 match event:
                     case "folio":
@@ -502,7 +508,7 @@ class FacturacionGUI:
                             )
 
                     case "status_sat":
-                        self.header("STATUS")
+                        self.header("STATUS SAT")
                         if i := self.selected_satcfdi:
                             estado = self.local_db.status_sat(i, update=True)
                             self.print_satcfdis([i])
@@ -585,6 +591,7 @@ class FacturacionGUI:
                             print("No hay correos pendientes de enviar")
 
                     case "crear_facturas":
+                        self.console.update(autoscroll=True)
                         self.header(f"PROCESAR {action_name.upper()}", clear=False)
                         res = PySimpleGUI.popup(
                             f"Estas seguro que quieres crear {len(action_items)} {action_name}?",
@@ -596,6 +603,7 @@ class FacturacionGUI:
                             print("FIN")
                         else:
                             print("OPERACION CANCELADA")
+                        self.console.update(autoscroll=False)
 
                     case "facturas_pendientes":
                         self.header("FACTURAS PENDIENTES")
