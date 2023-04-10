@@ -1,6 +1,7 @@
 import logging
 import os
 import pickle
+from enum import Enum
 from uuid import UUID
 
 import diskcache
@@ -9,6 +10,7 @@ from satcfdi.pacs import sat
 
 from . import DATA_DIRECTORY
 from .log_tools import print_yaml
+from . import PPD
 
 LIQUIDATED = 0
 NOTIFIED = 2
@@ -73,6 +75,26 @@ class LocalDB(diskcache.Cache):
                 pass
 
 
+class LiquidatedState(Enum):
+    NONE = 1
+    YES = 2
+    NO = 3
+    IGNORED = 4
+    CANCELLED = 5
+
+    def __str__(self):
+        if self.name == "NONE":
+            return ""
+        if self.name == "IGNORED":
+            return "Ignorada"
+        if self.name == "YES":
+            return "Si"
+        if self.name == "NO":
+            return "No"
+        if self.name == "CANCELLED":
+            return "Cancelada"
+
+
 class LocalDBSatCFDI(LocalDB):
     def __init__(self, enviar_a_partir, saldar_a_partir):
         super().__init__()
@@ -82,7 +104,7 @@ class LocalDBSatCFDI(LocalDB):
     def notified(self, cfdi: SatCFDI):
         if cfdi["Fecha"] >= self.enviar_a_partir:
             return super().notified(cfdi.uuid)
-        return False
+        return True
 
     def notified_flip(self, cfdi: SatCFDI):
         v = not self.notified(cfdi)
@@ -90,10 +112,6 @@ class LocalDBSatCFDI(LocalDB):
         return v
 
     def liquidated(self, cfdi: SatCFDI):
-        if cfdi["TipoDeComprobante"] != "I":
-            return None
-        if cfdi["MetodoPago"] == "PPD" and cfdi.saldo_pendiente == 0:
-            return True
         if cfdi["Fecha"] >= self.saldar_a_partir[cfdi["MetodoPago"]]:
             return super().liquidated(cfdi.uuid)
         return True
@@ -111,6 +129,24 @@ class LocalDBSatCFDI(LocalDB):
             return res
         else:
             return super().status_sat(cfdi.uuid)
+
+    def liquidated_state(self, cfdi: SatCFDI):
+        if cfdi.estatus == '0':
+            return LiquidatedState.CANCELLED
+
+        if cfdi["TipoDeComprobante"] != "I":
+            return LiquidatedState.NONE
+
+        mpago = cfdi["MetodoPago"]
+        if mpago == PPD and cfdi.saldo_pendiente == 0:
+            return LiquidatedState.YES
+
+        if self.liquidated(cfdi):
+            if mpago == PPD:
+                return LiquidatedState.IGNORED
+            return LiquidatedState.YES
+
+        return LiquidatedState.NO
 
     def describe(self, cfdi: SatCFDI):
         print_yaml({

@@ -17,15 +17,15 @@ from satcfdi.printer import Representable
 from satcfdi.transform.catalog import CATALOGS
 from tabulate import tabulate
 
-from . import __version__
+from . import __version__, PPD, PUE
 from .client_validation import validar_client
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
     periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
 from .layout import make_layout, ActionButtonManager
-from .localdb import LocalDBSatCFDI
+from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
-from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder, PPD, PUE
+from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder
 from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
@@ -298,7 +298,7 @@ class FacturacionGUI:
 
     def print_satcfdis(self, cfdis):
         def info_fmt(i):
-            return "🗙" if i.estatus == '0' else ("📧" if self.local_db.notified(i) else "")
+            return "" if self.local_db.notified(i) else "📧"
 
         if cfdis := sorted(cfdis, key=lambda i: (i["Fecha"], i.name), reverse=True):
             if self.window['detallado'].get():
@@ -316,7 +316,7 @@ class FacturacionGUI:
                             cfdi.name,
                             cfdi["Fecha"].strftime("%Y-%m-%d"),
                             cfdi["Total"],
-                            "Si" if self.local_db.liquidated(cfdi) else None,
+                            self.local_db.liquidated_state(cfdi),
                             mf_pago_fmt(cfdi),
                             cfdi.uuid,
                             info_fmt(cfdi)
@@ -553,9 +553,7 @@ class FacturacionGUI:
                             def fac_iter():
                                 for i in self.get_all_invoices().values():
                                     if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                            and i["TipoDeComprobante"] == "I" \
-                                            and i.estatus == '1' \
-                                            and not self.local_db.liquidated(i) \
+                                            and self.local_db.liquidated_state(i) == LiquidatedState.NO \
                                             and i["Fecha"] < dp \
                                             and i["Receptor"]["Rfc"] == receptor_rfc:
                                         yield i
@@ -614,9 +612,7 @@ class FacturacionGUI:
                         def fac_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["TipoDeComprobante"] == "I" \
-                                        and i.estatus == '1' \
-                                        and not self.local_db.liquidated(i):
+                                        and self.local_db.liquidated_state(i) == LiquidatedState.NO:
                                     yield i
 
                         self.print_satcfdis(fac_iter())

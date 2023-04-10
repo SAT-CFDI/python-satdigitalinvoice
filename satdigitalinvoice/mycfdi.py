@@ -15,9 +15,6 @@ ALL_INVOICES = 'all_invoices'
 ALL_RETENCIONES = 'all_retenciones'
 logger = logging.getLogger(__name__)
 
-PPD = "PPD"
-PUE = "PUE"
-
 
 class MyCFDI(SatCFDI):
     local_db = None

@@ -5,6 +5,8 @@ import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
 DATA_DIRECTORY = ".data"
+PPD = "PPD"
+PUE = "PUE"
 
 
 def add_file_handler():
