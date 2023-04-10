@@ -36,7 +36,10 @@ Facturas:
   <<: *pue
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
-    ValorUnitario: !decimal 18950.00
+    ValorUnitario: !case
+      '2021-01': !decimal 16950.00
+      '2023-01': !decimal 18950.00
+      '2025-01': !decimal 23950.00
     <<: [*product, *moral]
     _periodo_mes_ajuste: Mensual.1
   Total: !decimal 18065.66

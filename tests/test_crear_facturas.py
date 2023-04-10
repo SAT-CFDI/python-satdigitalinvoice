@@ -33,6 +33,7 @@ def test_generar_ingresos(caplog):
 
     assert caplog.records == []
     assert len(facturas) == 3
+    assert facturas[0]["Total"] == Decimal('18065.66')
 
 
 def test_generar_ingresos_error(caplog):
