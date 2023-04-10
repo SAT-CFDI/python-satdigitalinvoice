@@ -400,6 +400,7 @@ def print_cfdi_details(cfdi):
             print_yaml({
                 "Conceptos": [x['Descripcion'] for x in i["Conceptos"]],
                 "Pendiente": cfdi.saldo_pendiente,
+                "Pagos": [f"{c.comprobante.name} - {c.comprobante.uuid}" for c in cfdi.payments if c.comprobante.estatus != '0']
             })
         else:
             print_yaml({
