@@ -256,7 +256,6 @@ class FacturacionGUI:
         # Email
         is_enviable = i \
                       and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                      and i["Fecha"] >= self.local_db.enviar_a_partir \
                       and i.estatus == "1"
         if is_enviable:
             self.window["email_notificada"].update(
@@ -271,7 +270,6 @@ class FacturacionGUI:
         is_pendientable = i \
                           and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                           and i["TipoDeComprobante"] == "I" \
-                          and i["Fecha"] >= self.local_db.pagar_a_partir[i['MetodoPago']] \
                           and i.estatus == "1" \
                           and (i["MetodoPago"] == PUE or i.saldo_pendiente) \
                           and i["Total"]
@@ -429,7 +427,7 @@ class FacturacionGUI:
                                     with io.BytesIO(data) as b:
                                         self.unzip_cfdi(b)
                                 del self.local_db[event]
-                            log_line("FIN")
+                            print("FIN")
 
                     case "prepare_clientes":
                         self.header("CLIENTES")
@@ -595,7 +593,7 @@ class FacturacionGUI:
                         self.console.update(autoscroll=True)
                         self.header(f"PROCESAR {action_name.upper()}", clear=False)
                         res = PySimpleGUI.popup(
-                            f"Estas seguro que quieres crear {len(action_items)} {action_name}?",
+                            f"Estas seguro que quieres procesar {len(action_items)} {action_name}?",
                             title=self.window[event].ButtonText,
                             button_type=POPUP_BUTTONS_OK_CANCEL,
                         )

@@ -33,37 +33,19 @@ class LocalDB(diskcache.Cache):
         self[FOLIO] = value
 
     def liquidated(self, uuid: UUID):
-        return self.get(
-            (LIQUIDATED, uuid), False
-        )
+        return self.get((LIQUIDATED, uuid))
 
     def liquidated_set(self, uuid: UUID, value: bool):
-        if value:
-            self[(LIQUIDATED, uuid)] = value
-        else:
-            try:
-                del self[(LIQUIDATED, uuid)]
-            except KeyError:
-                pass
+        self[(LIQUIDATED, uuid)] = value
 
     def notified(self, uuid: UUID):
-        return self.get(
-            (NOTIFIED, uuid), False
-        )
+        return self.get((NOTIFIED, uuid))
 
     def notified_set(self, uuid: UUID, value: bool):
-        if value:
-            self[(NOTIFIED, uuid)] = value
-        else:
-            try:
-                del self[(NOTIFIED, uuid)]
-            except KeyError:
-                pass
+        self[(NOTIFIED, uuid)] = value
 
     def status_sat(self, uuid: UUID):
-        return self.get(
-            (STATUS_SAT, uuid), {}
-        )
+        return self.get((STATUS_SAT, uuid), {})
 
     def status_sat_set(self, uuid: UUID, value: dict):
         if value:
@@ -102,9 +84,10 @@ class LocalDBSatCFDI(LocalDB):
         self.pagar_a_partir = pagar_a_partir
 
     def notified(self, cfdi: SatCFDI):
-        if cfdi["Fecha"] >= self.enviar_a_partir:
-            return super().notified(cfdi.uuid)
-        return True
+        v = super().notified(cfdi.uuid)
+        if v is None and cfdi["Fecha"] < self.enviar_a_partir:
+            return True
+        return v
 
     def notified_flip(self, cfdi: SatCFDI):
         v = not self.notified(cfdi)
@@ -112,9 +95,10 @@ class LocalDBSatCFDI(LocalDB):
         return v
 
     def liquidated(self, cfdi: SatCFDI):
-        if cfdi["Fecha"] >= self.pagar_a_partir[cfdi["MetodoPago"]]:
-            return super().liquidated(cfdi.uuid)
-        return True
+        v = super().liquidated(cfdi.uuid)
+        if v is None and cfdi["Fecha"] < self.pagar_a_partir[cfdi["MetodoPago"]]:
+            return True
+        return v
 
     def liquidated_flip(self, cfdi: SatCFDI):
         v = not self.liquidated(cfdi)
