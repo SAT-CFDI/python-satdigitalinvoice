@@ -701,8 +701,7 @@ class FacturacionGUI:
 
                         def fact_iter():
                             for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["Fecha"] == dp:
+                                if i["Fecha"] == dp:
                                     yield i
 
                         for cfdi in fact_iter():
