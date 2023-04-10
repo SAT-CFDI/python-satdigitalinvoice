@@ -237,8 +237,8 @@ def find_ajustes(facturas, mes_ajuste):
 
 def facturas_folder(dp: DatePeriod):
     if dp.month:
-        return f"facturas/{dp.year}/{dp}"
-    return f"facturas/{dp.year}/{dp}"
+        return os.path.join("facturas", str(dp.year), str(dp.year) + "-{:02d}".format(dp.month))
+    return os.path.join("facturas", str(dp.year))
 
 
 def facturas_filename(dp: DatePeriod, ext="xlsx"):
@@ -283,9 +283,9 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
     try:
         workbook.close()
-        print(f"Archivo {archivo_excel} creado")
+        return archivo_excel
     except FileCreateError:
-        print(f"No se pudo crear el archivo {archivo_excel}")
+        return None
 
 
 def generate_pdf_template(template_name, fields):
@@ -408,15 +408,15 @@ def print_cfdi_details(cfdi):
             })
 
 
-def ajustes_directory(ym_date):
-    return os.path.join(facturas_folder(DatePeriod(year=ym_date.year, month=ym_date.month)), 'ajustes')
+def ajustes_directory(dp: DatePeriod):
+    return os.path.join(facturas_folder(dp), 'ajustes')
 
 
 def ajustes(emisor_rfc, ym_date):
     ym_date_effective = add_month(ym_date)
 
     # clear directory
-    ajustes_dir = ajustes_directory(ym_date)
+    ajustes_dir = ajustes_directory(DatePeriod(ym_date.year, ym_date.month))
     clear_directory(ajustes_dir)
 
     clients = ClientsManager()

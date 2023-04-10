@@ -25,8 +25,11 @@ class MyCFDI(SatCFDI):
             "Cancelado": "0",
             "Vigente": "1"
         }
-        estado = self.local_db.status_sat(self).get('Estado')
+        estado = self.consulta_estado().get('Estado')
         return Estatus.get(estado, "1")
+
+    def consulta_estado(self):
+        return self.local_db.status_sat(self)
 
     @SatCFDI.fecha_cancelacion.getter
     def fecha_cancelacion(self) -> datetime:

@@ -21,7 +21,7 @@ from . import __version__, PPD, PUE
 from .client_validation import validar_client
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
-    periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory
+    periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory, facturas_folder
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
@@ -628,22 +628,6 @@ class FacturacionGUI:
                         except DocumentNotFoundError:
                             logger.info("Factura no encontrada")
 
-                    case "ver_excel":
-                        self.header("EXCEL")
-                        clients = ClientsManager()
-                        emisor_cif = clients[self.csd_signer.rfc]
-                        exportar_facturas(
-                            self.get_all_invoices(),
-                            parse_date_period(values["periodo"]),
-                            emisor_cif,
-                            self.rfc_prediales
-                        )
-
-                        archivo_excel = facturas_filename(parse_date_period(values["periodo"]))
-                        os.startfile(
-                            os.path.abspath(archivo_excel)
-                        )
-
                     case "facturas_emitidas" | "periodo_enter":
                         self.header(f"FACTURAS EMITIDAS {values['periodo']}")
                         dp = parse_date_period(values["periodo"])
@@ -656,6 +640,23 @@ class FacturacionGUI:
 
                         self.print_satcfdis(fact_iter())
 
+                    case "ver_excel":
+                        self.header("EXCEL")
+                        clients = ClientsManager()
+                        emisor_cif = clients[self.csd_signer.rfc]
+                        if archivo_excel := exportar_facturas(
+                            self.get_all_invoices(),
+                            parse_date_period(values["periodo"]),
+                            emisor_cif,
+                            self.rfc_prediales
+                        ):
+                            print("Archivo generado: " + archivo_excel)
+                            os.startfile(
+                                os.path.abspath(archivo_excel)
+                            )
+                        else:
+                            print("No se pudo crear el archivo, cierra el archivo si se tiene abierto")
+
                     case "ver_html":
                         self.header("HTML")
                         dp = parse_date_period(values["periodo"])
@@ -666,23 +667,29 @@ class FacturacionGUI:
                                         and i["Fecha"] == dp:
                                     yield i
 
-                        outfile = facturas_filename(dp, ext="html")
-                        Representable.html_write_all(
-                            objs=fact_iter(),
-                            target=outfile,
-                        )
-                        os.startfile(
-                            os.path.abspath(outfile)
-                        )
+                        if cfdis := list(fact_iter()):
+                            outfile = facturas_filename(dp, ext="html")
+                            Representable.html_write_all(
+                                objs=cfdis,
+                                target=outfile,
+                            )
+                            print("Archivo generado: " + outfile)
+                            os.startfile(
+                                os.path.abspath(outfile)
+                            )
+                        else:
+                            print("No hay facturas para periodo seleccionado")
 
                     case "ver_carpeta":
-                        archivo = facturas_filename(parse_date_period(values["periodo"]))
+                        dp = parse_date_period(values["periodo"])
+                        directory = facturas_folder(dp)
                         os.startfile(
-                            os.path.abspath(os.path.dirname(archivo))
+                            os.path.abspath(directory)
                         )
 
                     case "ver_carpeta_ajustes":
-                        ajustes_dir = ajustes_directory(parse_ym_date(values['periodo']))
+                        dp = parse_date_period(values["periodo"])
+                        ajustes_dir = ajustes_directory(dp)
                         os.startfile(
                             os.path.abspath(ajustes_dir)
                         )
