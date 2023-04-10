@@ -78,7 +78,7 @@ class FacturacionLauncher:
         except Exception as ex:
             logging.exception(ex)
             self.window['console'].update(
-                str(ex)
+               f"Error al cargar la aplicación. {ex.__class__.__name__}: {ex}"
             )
             self.window.read()
             self.window.close()
