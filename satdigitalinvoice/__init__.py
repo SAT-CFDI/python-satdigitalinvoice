@@ -40,7 +40,7 @@ class FacturacionLauncher:
                     expand_x=True,
                     expand_y=True,
                     key="console",
-                    background_color=sg.theme_background_color(),  # '#a0dbd9',
+                    background_color='#a0dbd9',
                     no_scrollbar=True,
                     border_width=0,
                     write_only=True,
@@ -54,12 +54,12 @@ class FacturacionLauncher:
             layout,
             size=(640, 480),
             resizable=True,
-            font=("Courier New", 10, "bold"),
+            font=("Courier New", 11, "bold"),
             no_titlebar=True,
             modal=True,
-            background_color=sg.theme_background_color(),
+            background_color='#a0dbd9', # sg.theme_background_color(),
             auto_close=True,
-            auto_close_duration=6,  # seconds
+            auto_close_duration=10,  # seconds
         )
 
     @staticmethod
@@ -78,7 +78,8 @@ class FacturacionLauncher:
         except Exception as ex:
             logging.exception(ex)
             self.window['console'].update(
-               f"Error al cargar la aplicación. {ex.__class__.__name__}: {ex}"
+               f"Error al cargar la aplicación. {ex.__class__.__name__}: {ex}",
+                text_color='red4',
             )
             self.window.read()
             self.window.close()
