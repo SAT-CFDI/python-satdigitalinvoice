@@ -26,7 +26,7 @@ from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder
-from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int
+from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int, cert_info
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -111,7 +111,7 @@ class FacturacionGUI:
         self.window.close()
 
     def initial_screen(self, emisor_cif):
-        log_line("Acerca De")
+        self.header("ACERCA DE")
         print_yaml({
             "version": __version__.__version__,
             "facturacion": "CFDI 4.0",
@@ -120,7 +120,9 @@ class FacturacionGUI:
                 "Type": type(self.pac_service).__name__,
                 "Rfc": self.pac_service.RFC,
                 "Environment": str(self.pac_service.environment)
-            }
+            },
+            "fiel": cert_info(self.fiel_signer),
+            "csd": cert_info(self.csd_signer),
         })
 
     def get_all_invoices(self):

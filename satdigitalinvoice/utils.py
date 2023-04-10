@@ -57,16 +57,16 @@ def cert_info(signer: Signer):
     if signer:
         return {
             "NoCertificado": signer.certificate_number,
-            "Tipo": str(signer.type),
-
-            "organizationName": signer.certificate.get_subject().O,
-            "x500UniqueIdentifier": signer.certificate.get_subject().x500UniqueIdentifier,
-            "serialNumber": signer.certificate.get_subject().serialNumber,
-            "organizationUnitName": signer.certificate.get_subject().OU,
-            "emailAddress": signer.certificate.get_subject().emailAddress,
-
-            "notAfter": convert_ans1_date(signer.certificate.get_notAfter()),
-            "notBefore": convert_ans1_date(signer.certificate.get_notBefore()),
+            # "Tipo": str(signer.type),
+            #
+            # "organizationName": signer.certificate.get_subject().O,
+            # "x500UniqueIdentifier": signer.certificate.get_subject().x500UniqueIdentifier,
+            # "serialNumber": signer.certificate.get_subject().serialNumber,
+            # "organizationUnitName": signer.certificate.get_subject().OU,
+            # "emailAddress": signer.certificate.get_subject().emailAddress,
+            #
+            "Expira": convert_ans1_date(signer.certificate.get_notAfter()),
+            "Creado": convert_ans1_date(signer.certificate.get_notBefore()),
         }
 
 
