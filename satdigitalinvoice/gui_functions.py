@@ -7,7 +7,7 @@ import xlsxwriter
 from babel.dates import format_date
 from markdown2 import markdown
 from satcfdi import DatePeriod
-from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
+from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export, SatCFDI
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.pacs import sat
@@ -17,7 +17,7 @@ from tabulate import tabulate
 from weasyprint import HTML, CSS
 from xlsxwriter.exceptions import FileCreateError
 
-from . import SOURCE_DIRECTORY
+from . import SOURCE_DIRECTORY, PPD
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
@@ -396,9 +396,15 @@ def print_cfdi_details(cfdi):
             } for p in pagos]
         })
     else:
-        print_yaml({
-            "Conceptos": [x['Descripcion'] for x in i["Conceptos"]]
-        })
+        if isinstance(cfdi, SatCFDI) and cfdi.get("MetodoPago") == PPD:
+            print_yaml({
+                "Conceptos": [x['Descripcion'] for x in i["Conceptos"]],
+                "Pendiente": cfdi.saldo_pendiente,
+            })
+        else:
+            print_yaml({
+                "Conceptos": [x['Descripcion'] for x in i["Conceptos"]]
+            })
 
 
 def ajustes_directory(ym_date):
