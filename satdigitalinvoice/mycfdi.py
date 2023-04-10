@@ -8,7 +8,7 @@ from uuid import UUID
 
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
-from .localdb import load_data, save_data
+from .localdb import load_data, save_data, LocalDBSatCFDI
 from .utils import to_uuid
 
 ALL_INVOICES = 'all_invoices'
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class MyCFDI(SatCFDI):
-    local_db = None
+    local_db = None  # type: LocalDBSatCFDI
 
     @SatCFDI.estatus.getter
     def estatus(self) -> str:

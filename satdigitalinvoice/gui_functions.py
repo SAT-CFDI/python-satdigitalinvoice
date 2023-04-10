@@ -8,6 +8,7 @@ from babel.dates import format_date
 from markdown2 import markdown
 from satcfdi import DatePeriod
 from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export, SatCFDI
+from satcfdi.accounting.process import payments_groupby_receptor, payments_retentions_export
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.pacs import sat
@@ -251,6 +252,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
     emitidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_emisor=emisor_rfc)
     emitidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc)
+    emitidas_pagos=list(emitidas_pagos)
 
     recibidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_receptor=emisor_rfc)
     recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
@@ -280,6 +282,12 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     payments_export(workbook, f"RECIBIDAS PAGOS IVA {emisor_regimen.code}", pagos_hechos_iva)
     if prediales:
         payments_export(workbook, "PREDIALES", prediales)
+
+    # RETENCIONES
+    if dp.month is None:
+        archivo_retenciones = facturas_filename(dp, ext="retenciones.txt")
+        pagos_agrupados = payments_groupby_receptor(emitidas_pagos)
+        payments_retentions_export(archivo_retenciones, pagos_agrupados)
 
     try:
         workbook.close()
@@ -392,7 +400,7 @@ def print_cfdi_details(cfdi):
                     "ImpSaldoAnt": d.get("ImpSaldoAnt"),
                     "ImpPagado": d.get("ImpPagado"),
                     "ImpSaldoInsoluto": d.get("ImpSaldoInsoluto"),
-                } for d in p["DoctoRelacionado"]]
+                } for d in p.get("DoctoRelacionado", [])]
             } for p in pagos]
         })
     else:

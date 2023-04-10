@@ -64,7 +64,7 @@ setuptools.setup(
         ],
     },
     install_requires=[
-        'satcfdi==4.0.6',
+        'satcfdi==4.0.8',
         'diskcache',
         'num2words',
         'PyYAML',
