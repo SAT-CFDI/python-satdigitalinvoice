@@ -474,12 +474,12 @@ class FacturacionGUI:
                         inicio = int(values["inicio"])
 
                         if cfdis := generate_ingresos(
-                            folio=int(values["folio"]),
-                            serie=self.serie,
-                            clients=ClientsManager(),
-                            facturas=FacturasManager(ym_date)["Facturas"],
-                            ym_date=ym_date,
-                            csd_signer=self.csd_signer
+                                folio=int(values["folio"]),
+                                serie=self.serie,
+                                clients=ClientsManager(),
+                                facturas=FacturasManager(ym_date)["Facturas"],
+                                ym_date=ym_date,
+                                csd_signer=self.csd_signer
                         ):
                             final = to_int(values["final"]) or len(cfdis)
                             cfdis = cfdis[max(inicio - 1, 0):max(final, 0)]
@@ -645,10 +645,10 @@ class FacturacionGUI:
                         clients = ClientsManager()
                         emisor_cif = clients[self.csd_signer.rfc]
                         if archivo_excel := exportar_facturas(
-                            self.get_all_invoices(),
-                            parse_date_period(values["periodo"]),
-                            emisor_cif,
-                            self.rfc_prediales
+                                self.get_all_invoices(),
+                                parse_date_period(values["periodo"]),
+                                emisor_cif,
+                                self.rfc_prediales
                         ):
                             print("Archivo generado: " + archivo_excel)
                             os.startfile(
@@ -693,6 +693,26 @@ class FacturacionGUI:
                         os.startfile(
                             os.path.abspath(ajustes_dir)
                         )
+
+                    case "sat_status_todas":
+                        self.console.update(autoscroll=True)
+                        self.header("SAT STATUS")
+                        dp = parse_date_period(values["periodo"])
+
+                        def fact_iter():
+                            for i in self.get_all_invoices().values():
+                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                                        and i["Fecha"] == dp:
+                                    yield i
+
+                        for cfdi in fact_iter():
+                            print(f"Estado SAT: {cfdi.name} - {cfdi.uuid}")
+                            self._read()
+                            estado = self.local_db.status_sat(cfdi, update=True)
+                            print_yaml(estado)
+
+                        print("FIN")
+                        self.console.update(autoscroll=False)
 
                     case "periodo" | "inicio" | "final" | "fecha_pago" | "forma_pago" | "importe_pago" | ' ':
                         pass
