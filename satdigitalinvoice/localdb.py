@@ -96,10 +96,10 @@ class LiquidatedState(Enum):
 
 
 class LocalDBSatCFDI(LocalDB):
-    def __init__(self, enviar_a_partir, saldar_a_partir):
+    def __init__(self, enviar_a_partir, pagar_a_partir):
         super().__init__()
         self.enviar_a_partir = enviar_a_partir
-        self.saldar_a_partir = saldar_a_partir
+        self.pagar_a_partir = pagar_a_partir
 
     def notified(self, cfdi: SatCFDI):
         if cfdi["Fecha"] >= self.enviar_a_partir:
@@ -112,7 +112,7 @@ class LocalDBSatCFDI(LocalDB):
         return v
 
     def liquidated(self, cfdi: SatCFDI):
-        if cfdi["Fecha"] >= self.saldar_a_partir[cfdi["MetodoPago"]]:
+        if cfdi["Fecha"] >= self.pagar_a_partir[cfdi["MetodoPago"]]:
             return super().liquidated(cfdi.uuid)
         return True
 

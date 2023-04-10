@@ -3,7 +3,7 @@ type: object
 properties:
   serie:
     type: string
-  saldar_a_partir:
+  pagar_a_partir:
     type: object
   rfc_prediales:
     type: array
@@ -18,7 +18,7 @@ properties:
 required:
 - serie
 - enviar_a_partir
-- saldar_a_partir
+- pagar_a_partir
 - csd
 - pac
 

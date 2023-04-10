@@ -77,7 +77,7 @@ class FacturacionGUI:
         self.all_invoices = None
         self.local_db = LocalDBSatCFDI(
             enviar_a_partir=config['enviar_a_partir'],
-            saldar_a_partir=config['saldar_a_partir']
+            pagar_a_partir=config['pagar_a_partir']
         )
         # noinspection PyTypeChecker
         self.selected_satcfdi = None  # type: MyCFDI
@@ -271,7 +271,7 @@ class FacturacionGUI:
         is_pendientable = i \
                           and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                           and i["TipoDeComprobante"] == "I" \
-                          and i["Fecha"] >= self.local_db.saldar_a_partir[i['MetodoPago']] \
+                          and i["Fecha"] >= self.local_db.pagar_a_partir[i['MetodoPago']] \
                           and i.estatus == "1" \
                           and (i["MetodoPago"] == PUE or i.saldo_pendiente) \
                           and i["Total"]

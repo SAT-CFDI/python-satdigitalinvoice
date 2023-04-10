@@ -7,7 +7,7 @@ from satdigitalinvoice.utils import random_string
 def test_localdb():
     db = LocalDBSatCFDI(
         enviar_a_partir=datetime(2020, 1, 1),
-        saldar_a_partir={
+        pagar_a_partir={
             "PUE": datetime(2020, 1, 1),
             "PPD": datetime(2020, 1, 1),
         }

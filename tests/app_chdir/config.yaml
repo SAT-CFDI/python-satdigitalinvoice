@@ -2,7 +2,7 @@
 serie: K
 
 enviar_a_partir: 2023-04-04 00:00:00
-saldar_a_partir:
+pagar_a_partir:
   PUE: 2023-04-01 00:00:00
   PPD: 2023-03-01 00:00:00
 
