@@ -1,12 +1,15 @@
 import logging
 from datetime import date, datetime
 from decimal import Decimal
+from unittest import mock
 
 from satcfdi import Signer
 
+from satdigitalinvoice.__version__ import __package__
 from satdigitalinvoice.file_data_managers import ClientsManager, FacturasManager, ConfigManager
 from satdigitalinvoice.gui_functions import generate_ingresos, periodo_desc
 from satdigitalinvoice.utils import find_best_match
+from tests.utils import verify_result, XElementPrettyPrinter
 
 csd_signer = Signer.load(
     certificate=open('csd/cacx7605101p8.cer', 'rb').read(),
@@ -15,6 +18,7 @@ csd_signer = Signer.load(
 )
 ym_date = datetime(year=2023, month=4, day=1)
 clients = ClientsManager()
+module = __package__
 
 
 def test_generar_ingresos(caplog):
@@ -22,18 +26,27 @@ def test_generar_ingresos(caplog):
     config = ConfigManager()
     facturas = FacturasManager(ym_date)["Facturas"]
 
-    facturas = generate_ingresos(
-        serie=config["serie"],
-        folio=1000,
-        clients=clients,
-        facturas=facturas,
-        ym_date=date(year=2023, month=4, day=1),
-        csd_signer=csd_signer,
-    )
+    with mock.patch(f'satcfdi.create.cfd.cfdi40.datetime') as m:
+        m.now = mock.Mock(return_value=datetime(2022, 1, 1))
 
-    assert caplog.records == []
-    assert len(facturas) == 3
-    assert facturas[0]["Total"] == Decimal('18065.66')
+        facturas = generate_ingresos(
+            serie=config["serie"],
+            folio=1000,
+            clients=clients,
+            facturas=facturas,
+            ym_date=date(year=2023, month=4, day=1),
+            csd_signer=csd_signer,
+        )
+
+        assert caplog.records == []
+        assert len(facturas) == 3
+
+        pp = XElementPrettyPrinter()
+        verify = verify_result(data=pp.pformat(facturas), filename=f"facturas.pretty.py")
+        assert verify
+
+    # assert facturas[0]["Total"] == Decimal('18065.66')
+    # assert facturas[0]["Conceptos"][0]["Descripcion"] == 1000
 
 
 def test_generar_ingresos_error(caplog):
@@ -77,19 +90,33 @@ def test_generar_ingresos_error2(caplog):
 
 
 def test_periodo_desc():
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Mensual.1') == 'MES DE ENERO DEL 2021'
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Bimestral.2') is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Trimestral.3') is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Cuatrimestral.4') is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Semestral.5') is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Anual.6') is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Mensual.1', offset=0) == 'MES DE ENERO DEL 2021'
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Bimestral.2', offset=0) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Trimestral.3', offset=0) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Cuatrimestral.4', offset=0) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Semestral.5', offset=0) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Anual.6', offset=0) is None
 
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Mensual.7') == 'MES DE DICIEMBRE DEL 2021'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Bimestral.8') == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Trimestral.9') == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Cuatrimestral.8') == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Semestral.6') == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Anual.12') == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Mensual.7', offset=0) == 'MES DE DICIEMBRE DEL 2021'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Bimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Trimestral.9', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Cuatrimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Semestral.6', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Anual.12', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
+
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Mensual.1', offset=1) == 'MES DE FEBRERO DEL 2021'
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Bimestral.2', offset=1) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Trimestral.3', offset=1) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Cuatrimestral.4', offset=1) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Semestral.5', offset=1) is None
+    assert periodo_desc(date(year=2021, month=1, day=1), 'Anual.6', offset=1) is None
+
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Mensual.7', offset=1) == 'MES DE ENERO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Bimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE FEBRERO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Trimestral.9', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE MARZO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Cuatrimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE ABRIL DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Semestral.6', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE JUNIO DEL 2022'
+    assert periodo_desc(date(year=2021, month=12, day=1), 'Anual.12', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE DICIEMBRE DEL 2022'
 
 
 def test_find_best_match():

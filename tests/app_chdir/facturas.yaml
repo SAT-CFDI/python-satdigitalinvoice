@@ -52,6 +52,7 @@ Facturas:
       '2023-04': !decimal 34500.00
     <<: [*product, *moral_no_lucrativa]
     _periodo_mes_ajuste: Mensual.1
+    _desfase: 1
   Total: !decimal 36570.00
 
 - Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal

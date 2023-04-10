@@ -126,21 +126,24 @@ def validad_facturas(clients, facturas):
     return is_valid
 
 
-def year_month_desc(year, month):
+def year_month_desc(year, month, offset=0):
+    year, month = divmod(year * 12 + month + offset - 1, 12)
+    month += 1
     return format_date(date(year=year, month=month, day=1), locale='es_MX', format="'Mes de' MMMM 'del' y").upper()
 
 
-def periodo_desc(ym_date, periodo_mes_ajuste):
+def periodo_desc(ym_date, periodo_mes_ajuste, offset):
     periodo, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
     periodo_meses = PERIODOS[periodo]
 
     if (ym_date.month - mes_ajuste) % periodo_meses == 0:
-        periodo = year_month_desc(ym_date.year, ym_date.month)
+        periodo = year_month_desc(ym_date.year, ym_date.month, offset)
         if periodo_meses > 1:
             mes_final = (ym_date.month + periodo_meses - 2) % 12 + 1
             periodo += " AL " + year_month_desc(
                 year=ym_date.year + int(mes_final < ym_date.month),
-                month=mes_final
+                month=mes_final,
+                offset=offset
             )
 
         return periodo
@@ -154,7 +157,8 @@ def generate_ingresos(folio, serie, clients, facturas, ym_date, csd_signer):
     emisor_cif = clients[csd_signer.rfc]
 
     def prepare_concepto(concepto):
-        periodo = periodo_desc(ym_date, concepto['_periodo_mes_ajuste'])
+        offset = concepto.get('_desfase', 0)
+        periodo = periodo_desc(ym_date, concepto['_periodo_mes_ajuste'], offset)
         if periodo and concepto['ValorUnitario'] is not None:
             return format_concepto_desc(concepto, periodo=periodo)
 

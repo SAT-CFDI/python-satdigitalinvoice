@@ -36,6 +36,8 @@ properties:
           type: string
         _periodo_mes_ajuste:
           type: string
+        _desfase:
+          type: integer
         ValorUnitario:
           type:
           - number
