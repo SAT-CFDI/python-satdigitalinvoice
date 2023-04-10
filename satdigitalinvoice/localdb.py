@@ -122,7 +122,7 @@ class LocalDBSatCFDI(LocalDB):
             return LiquidatedState.NONE
 
         mpago = cfdi["MetodoPago"]
-        if mpago == PPD and cfdi.saldo_pendiente == 0:
+        if cfdi['Total'] == 0 or (mpago == PPD and cfdi.saldo_pendiente == 0):
             return LiquidatedState.YES
 
         if self.liquidated(cfdi):
