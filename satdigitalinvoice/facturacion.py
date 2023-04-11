@@ -26,7 +26,7 @@ from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder
-from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int, cert_info
+from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int, cert_info, parse_rango
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -97,8 +97,7 @@ class FacturacionGUI:
         self.window['periodo'].bind("<Return>", "_enter")
         self.window['importe_pago'].bind("<Return>", "_enter")
         self.window['fecha_pago'].bind("<Return>", "_enter")
-        self.window['inicio'].bind("<Return>", "_enter")
-        self.window['final'].bind("<Return>", "_enter")
+        self.window['rango'].bind("<Return>", "_enter")
         self.window['forma_pago'].bind("<Return>", "_enter")
         # self.window['console'].bind('<Button-3>', '_double_click')
 
@@ -364,7 +363,7 @@ class FacturacionGUI:
                 action_name, action_items = self.action_button_manager.clear()
 
                 if event in ("prepare_correos", "prepare_clientes", "prepare_facturas", "crear_facturas",
-                             "inicio_enter", "final_enter", "preparar_ajuste_anual", "recuperar_emitidas", "recuperar_recibidas"):
+                             "rango_enter", "preparar_ajuste_anual", "recuperar_emitidas", "recuperar_recibidas"):
                     self.set_selected_satcfdi([])
 
                 match event:
@@ -471,11 +470,11 @@ class FacturacionGUI:
                         else:
                             print("No hay clientes")
 
-                    case "prepare_facturas" | "inicio_enter" | "final_enter":
+                    case "prepare_facturas" | "rango_enter":
                         ym_date = parse_ym_date(values["periodo"])
                         self.header(f"PREPARAR FACTURAS {values['periodo']}")
                         print('Periodo:', periodo_desc(ym_date, 'Mensual.1', offset=0), '[AL ...]')
-                        inicio = int(values["inicio"] or 1)
+                        inicio, final = parse_rango(values["rango"])
 
                         if cfdis := generate_ingresos(
                                 folio=int(values["folio"]),
@@ -485,7 +484,7 @@ class FacturacionGUI:
                                 ym_date=ym_date,
                                 csd_signer=self.csd_signer
                         ):
-                            final = to_int(values["final"]) or len(cfdis)
+                            final = final or len(cfdis)
                             cfdis = cfdis[max(inicio - 1, 0):max(final, 0)]
 
                         self.print_prepared_cfdis(cfdis, start=inicio)

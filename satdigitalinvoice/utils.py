@@ -114,3 +114,13 @@ def first_duplicate(seq):
             return x
         seen.add(x)
     return None
+
+
+def parse_rango(rango):
+    if rango == "":
+        return 1, None
+    if rango.isdigit():
+        return int(rango), int(rango)
+    if "-" in rango:
+        start, end = rango.split("-")
+        return int(start), int(end)

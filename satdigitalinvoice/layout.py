@@ -60,10 +60,8 @@ def make_layout(has_fiel):
 
         sg.VSeparator(),
         sg.Button("Preparar", key="prepare_facturas", border_width=0),
-        sg.Text("De La:", pad=TEXT_PADDING),
-        sg.Input("1", key="inicio", size=(4, 1)),
-        sg.Text("Hasta:", pad=TEXT_PADDING),
-        sg.Input("", key="final", size=(4, 1)),
+        sg.Text("Rango:", pad=TEXT_PADDING),
+        sg.Input("", key="rango", size=(8, 1)),
 
         sg.VSeparator(),
         sg.Button("Ajustes", key="preparar_ajuste_anual", border_width=0),
