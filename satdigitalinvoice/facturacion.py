@@ -290,11 +290,15 @@ class FacturacionGUI:
                         and i.get("MetodoPago") == PPD \
                         and i.estatus == "1" \
                         and i.saldo_pendiente
-        self.window["prepare_pago"].update(disabled=not is_ppd_active)
-        self.window["fecha_pago_select"].update(disabled=not is_ppd_active)
-        self.window["fecha_pago"].update(disabled=not is_ppd_active)
-        self.window["importe_pago"].update(disabled=not is_ppd_active)
-        self.window["forma_pago"].update(disabled=not is_ppd_active)
+        is_ppd_active = bool(is_ppd_active)
+        self.window["fecha_pago_select"].update(visible=is_ppd_active)
+        self.window["fecha_pago"].update(visible=is_ppd_active)
+        self.window["forma_pago_text"].update(visible=is_ppd_active)
+        self.window["forma_pago"].update(visible=is_ppd_active)
+
+        self.window["prepare_pago"].update(visible=is_ppd_active)
+        self.window["imp_pagado_text"].update(visible=is_ppd_active)
+        self.window["importe_pago"].update(visible=is_ppd_active)
 
     def print_satcfdis(self, cfdis):
         def info_fmt(i):

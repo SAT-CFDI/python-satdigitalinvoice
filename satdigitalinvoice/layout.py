@@ -98,16 +98,16 @@ def make_layout(has_fiel):
             [
                 [
                     sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING, border_width=0,
-                                      key="fecha_pago_select", disabled=True),
-                    sg.Input("", size=(12, 1), key="fecha_pago", disabled=True),
-                    sg.Text("FormaPago:", pad=TEXT_PADDING),
+                                      key="fecha_pago_select", visible=False),
+                    sg.Input("", size=(12, 1), key="fecha_pago", visible=False),
+                    sg.Text("FormaPago:", pad=TEXT_PADDING, visible=False, key="forma_pago_text"),
                     sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", size=(34, 1),
-                             disabled=True),
+                             visible=False),
                 ],
                 [
-                    sg.Button("Comprobante Pago", key="prepare_pago", border_width=0, disabled=True),
-                    sg.Text("       ImpPagado:", pad=TEXT_PADDING),
-                    sg.Input("", size=(12, 1), key="importe_pago", disabled=True),
+                    sg.Button("Comprobante Pago", key="prepare_pago", border_width=0, visible=False),
+                    sg.Text("       ImpPagado:", pad=TEXT_PADDING, visible=False, key="imp_pagado_text"),
+                    sg.Input("", size=(12, 1), key="importe_pago", visible=False),
                 ]
             ],
             pad=0
