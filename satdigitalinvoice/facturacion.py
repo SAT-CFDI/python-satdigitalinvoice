@@ -471,7 +471,7 @@ class FacturacionGUI:
                         ym_date = parse_ym_date(values["periodo"])
                         self.header(f"PREPARAR FACTURAS {values['periodo']}")
                         print('Periodo:', periodo_desc(ym_date, 'Mensual.1', offset=0), '[AL ...]')
-                        inicio = int(values["inicio"])
+                        inicio = int(values["inicio"] or 1)
 
                         if cfdis := generate_ingresos(
                                 folio=int(values["folio"]),
