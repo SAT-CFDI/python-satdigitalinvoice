@@ -51,16 +51,15 @@ BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 def make_layout(has_fiel):
     # LAYOUT
     button_column = [
-        sg.Button("Emitidas", key="facturas_emitidas", border_width=0),
-        sg.Text("Año-Mes:", pad=TEXT_PADDING),
+        sg.Button(" Año-Mes:", key="facturas_emitidas", border_width=0, pad=TEXT_PADDING),
+        # sg.Text("Año-Mes:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
         sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
         sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
         sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
 
         sg.VSeparator(),
-        sg.Button("Preparar", key="prepare_facturas", border_width=0),
-        sg.Text("Rango:", pad=TEXT_PADDING),
+        sg.Button("Preparar:", key="prepare_facturas", border_width=0, pad=TEXT_PADDING),
         sg.Input("", key="rango", size=(8, 1)),
 
         sg.VSeparator(),
@@ -69,7 +68,7 @@ def make_layout(has_fiel):
 
         sg.Push(),
         sg.Text("Serie:", pad=TEXT_PADDING),
-        sg.Text("", key="serie", pad=TEXT_PADDING),
+        sg.Text("", key="serie", pad=TEXT_PADDING, text_color="black"),
         sg.Text("Folio:", pad=TEXT_PADDING),
         sg.Input("", key="folio", size=(10, 1), enable_events=True),
     ]
@@ -113,13 +112,13 @@ def make_layout(has_fiel):
     ]
 
     button_column_third = [
-        sg.Button("Correos", key="prepare_correos", border_width=0),
+        sg.Button(" Correos ", key="prepare_correos", border_width=0),
         sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
-        sg.Button("Clientes", key="prepare_clientes", border_width=0),
+        sg.Button(" Clientes ", key="prepare_clientes", border_width=0),
         sg.VSeparator(),
         sg.Button("SAT Status", key="sat_status_todas", border_width=0),
         sg.Text("Recuperar:", pad=TEXT_PADDING, visible=has_fiel),
-        sg.Button("Emitidas", key="recuperar_emitidas", border_width=0, visible=has_fiel),
+        sg.Button("Emitidas ", key="recuperar_emitidas", border_width=0, visible=has_fiel),
         sg.Button("Recibidas", key="recuperar_recibidas", border_width=0, visible=has_fiel),
         sg.Text("Dias:", pad=TEXT_PADDING, visible=has_fiel),
         sg.Input("40", size=(4, 1), key="recuperar_dias", visible=has_fiel),
@@ -128,7 +127,7 @@ def make_layout(has_fiel):
     button_column_low = [
         sg.Button("Procesar ", disabled=True, key="crear_facturas", border_width=0),
         sg.Push(),
-        sg.Checkbox("Ver Detallado", default=False, key="detallado"),
+        sg.Checkbox("Detallado", default=False, key="detallado"),
         sg.Button(image_data=ABOUT_ICON, key="about", border_width=0, button_color=BUTTON_COLOR),
     ]
 
