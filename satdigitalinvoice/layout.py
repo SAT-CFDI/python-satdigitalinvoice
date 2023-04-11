@@ -54,7 +54,7 @@ BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 def make_layout(has_fiel):
     # LAYOUT
     button_column = [
-        sg.Button(" Año-Mes:", key="facturas_emitidas", border_width=0, pad=TEXT_PADDING),
+        sg.Button("Emitidas:", key="facturas_emitidas", border_width=0, pad=TEXT_PADDING),
         # sg.Text("Año-Mes:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
 
