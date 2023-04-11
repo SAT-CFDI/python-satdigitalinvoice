@@ -690,12 +690,12 @@ class FacturacionGUI:
                             os.path.abspath(directory)
                         )
 
-                    case "ver_carpeta_ajustes":
-                        dp = parse_date_period(values["periodo"])
-                        ajustes_dir = ajustes_directory(dp)
-                        os.startfile(
-                            os.path.abspath(ajustes_dir)
-                        )
+                    # case "ver_carpeta_ajustes":
+                    #     dp = parse_date_period(values["periodo"])
+                    #     ajustes_dir = ajustes_directory(dp)
+                    #     os.startfile(
+                    #         os.path.abspath(ajustes_dir)
+                    #     )
 
                     case "sat_status_todas":
                         self.console.update(autoscroll=True)

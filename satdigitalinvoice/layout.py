@@ -45,6 +45,9 @@ ABOUT_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEw
              "+uNSGjche6z8YlhGLHI4hGzaAi8dyVWHReiePPsmNprMXeAdeOprUZWwQB2yaKUfNM1Y4Eoa17EyLTIWeIiVqbOp0aXx4U7hw0S565RWsevRKnYpreJ3sxsniE8kntTsHObaTaN" \
              "/MvNwZvK8ETdZ3GGocnMPjom8KeofD846xZYYBuotJmQ31MK+bSzryfwb+AbymF7gpXVM1QAAAABJRU5ErkJggg=="
 
+INCREASE_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAf0lEQVR4nO2QwQmAMAwAbwkX8CXiGM7iBA6Qp+s4gduITqEUKpQiNLUVH/Ug0Ed6B4GfhyzA4Y0o" \
+                "/ondDTIAEzC/FTC0wGYne6ABVmAHukDAlaoCvpycAfcs5n3RAzUZAuONPEaqOlEVWiAxwFcBUUgLDEiktJCAJEiljMAPLieZDXZ8v71fBQAAAABJRU5ErkJggg=="
+
 BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 
 
@@ -54,17 +57,17 @@ def make_layout(has_fiel):
         sg.Button(" Año-Mes:", key="facturas_emitidas", border_width=0, pad=TEXT_PADDING),
         # sg.Text("Año-Mes:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
-        sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
-        sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
-        sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
 
-        sg.VSeparator(),
         sg.Button("Preparar:", key="prepare_facturas", border_width=0, pad=TEXT_PADDING),
         sg.Input("", key="rango", size=(8, 1)),
 
         sg.VSeparator(),
-        sg.Button("Ajustes", key="preparar_ajuste_anual", border_width=0),
-        sg.Button(image_data=FOLDER_ICON, key="ver_carpeta_ajustes", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=INCREASE_ICON, key="preparar_ajuste_anual", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
+
+        # sg.Button(image_data=FOLDER_ICON, key="ver_carpeta_ajustes", border_width=0, button_color=BUTTON_COLOR),
 
         sg.Push(),
         sg.Text("Serie:", pad=TEXT_PADDING),
