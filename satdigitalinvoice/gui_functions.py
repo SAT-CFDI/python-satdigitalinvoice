@@ -461,7 +461,7 @@ def ajustes(emisor_rfc, ym_date):
                 "valor_unitario_nuevo": pesos(vun) if vun else "",
                 "ajuste_porcentaje": porcentaje(ajuste_porcentaje, 2) if ajuste_porcentaje is not None else "",
                 "ajuste_periodo": f"{meses} MESES",
-                "ajuste_efectivo_al": fecha(ym_date_effective),
+                "efectivo_periodo_desc": periodo_desc(ym_date_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase', 0)),  # fecha(ym_date_effective),
                 "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
                 "fecha_hoy": fecha(date.today()),
                 'file_name': file_name

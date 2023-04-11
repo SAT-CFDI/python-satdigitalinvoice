@@ -470,7 +470,7 @@ class FacturacionGUI:
                     case "prepare_facturas" | "inicio_enter" | "final_enter":
                         ym_date = parse_ym_date(values["periodo"])
                         self.header(f"PREPARAR FACTURAS {values['periodo']}")
-                        print('Periodo:', periodo_desc(ym_date, 'Mensual.1'), '[AL ...]')
+                        print('Periodo:', periodo_desc(ym_date, 'Mensual.1', offset=0), '[AL ...]')
                         inicio = int(values["inicio"])
 
                         if cfdis := generate_ingresos(
