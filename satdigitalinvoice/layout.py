@@ -119,7 +119,7 @@ def make_layout(has_fiel):
         sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
         sg.Button(" Clientes ", key="prepare_clientes", border_width=0),
         sg.VSeparator(),
-        sg.Button("SAT Status", key="sat_status_todas", border_width=0),
+        sg.Button("SAT Status", key="sat_status_todas", border_width=0, visible=has_fiel),
         sg.Text("Recuperar:", pad=TEXT_PADDING, visible=has_fiel),
         sg.Button("Emitidas ", key="recuperar_emitidas", border_width=0, visible=has_fiel),
         sg.Button("Recibidas", key="recuperar_recibidas", border_width=0, visible=has_fiel),
