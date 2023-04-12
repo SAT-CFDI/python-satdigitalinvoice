@@ -633,6 +633,7 @@ class FacturacionGUI:
 
                     case "facturas_emitidas" | "periodo_enter":
                         self.header(f"FACTURAS EMITIDAS {values['periodo']}")
+
                         def fact_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
@@ -660,6 +661,7 @@ class FacturacionGUI:
 
                     case "ver_html":
                         self.header("HTML")
+
                         def fact_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
