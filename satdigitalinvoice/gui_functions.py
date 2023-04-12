@@ -18,7 +18,7 @@ from tabulate import tabulate
 from weasyprint import HTML, CSS
 from xlsxwriter.exceptions import FileCreateError
 
-from . import SOURCE_DIRECTORY, PPD
+from . import SOURCE_DIRECTORY, PPD, ARCHIVOS_DIRECTORY
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
@@ -242,8 +242,8 @@ def find_ajustes(facturas, mes_ajuste):
 
 def facturas_folder(dp: DatePeriod):
     if dp.month:
-        return os.path.join("facturas", str(dp.year), str(dp.year) + "-{:02d}".format(dp.month))
-    return os.path.join("facturas", str(dp.year))
+        return os.path.join(ARCHIVOS_DIRECTORY, str(dp.year), str(dp.year) + "-{:02d}".format(dp.month))
+    return os.path.join(ARCHIVOS_DIRECTORY, str(dp.year))
 
 
 def facturas_filename(dp: DatePeriod, ext="xlsx"):

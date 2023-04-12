@@ -8,6 +8,7 @@ from uuid import UUID
 
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 
+from . import ARCHIVOS_DIRECTORY
 from .localdb import load_data, save_data, LocalDBSatCFDI
 from .utils import to_uuid
 
@@ -76,7 +77,7 @@ class MyCFDI(SatCFDI):
     def filename(self):
         match self.tag:
             case '{http://www.sat.gob.mx/cfd/3}Comprobante' | '{http://www.sat.gob.mx/cfd/4}Comprobante':
-                return "facturas/{3:%Y}/{3:%Y-%m}/{4}_{0}_[{1}]_{2}".format(
+                path = "{3:%Y}/{3:%Y-%m}/facturas/{4}_{0}_[{1}]_{2}".format(
                     self.name,
                     self["TipoDeComprobante"].code,
                     self.uuid,
@@ -84,12 +85,16 @@ class MyCFDI(SatCFDI):
                     self["Emisor"]["Rfc"],
                 )
             case '{http://www.sat.gob.mx/esquemas/retencionpago/1}Retenciones' | '{http://www.sat.gob.mx/esquemas/retencionpago/2}Retenciones':
-                return "retenciones/{2:%Y}/{2:%Y-%m}/{3}_{0}_{1}".format(
+                path = "{2:%Y}/{2:%Y-%m}/retenciones/{3}_{0}_{1}".format(
                     self.get("FolioInt", ""),
                     self.uuid,
                     self["FechaExp"],
                     self["Emisor"].get('RFCEmisor') or self["Emisor"].get('RfcE')
                 )
+            case _:
+                raise Exception("Unknown Tag", self.tag)
+
+        return os.path.join(ARCHIVOS_DIRECTORY, path)
 
     @classmethod
     def uuid_from_filename(cls, filename):
@@ -148,7 +153,7 @@ def move_to_folder(xml_data, pdf_data):
 def get_all_cfdi() -> Mapping[UUID, MyCFDI]:
     all_invoices = load_data(ALL_INVOICES, {})
 
-    has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path="facturas/**/*.xml")
+    has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path=os.path.join(ARCHIVOS_DIRECTORY, "**/facturas/*.xml"))
     if has_updates:
         save_data(ALL_INVOICES, all_invoices)
 
@@ -159,7 +164,7 @@ def get_all_cfdi() -> Mapping[UUID, MyCFDI]:
 def get_all_retenciones() -> Mapping[UUID, MyCFDI]:
     all_invoices = load_data(ALL_RETENCIONES, {})
 
-    has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path="retenciones/**/*.xml")
+    has_updates = MyCFDI.get_all_invoices(invoices=all_invoices, search_path=os.path.join(ARCHIVOS_DIRECTORY, "**/retenciones/*.xml"))
     if has_updates:
         save_data(ALL_RETENCIONES, all_invoices)
 

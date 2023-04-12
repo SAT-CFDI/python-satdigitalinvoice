@@ -5,6 +5,9 @@ import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
 DATA_DIRECTORY = ".data"
+ARCHIVOS_DIRECTORY = "archivos"
+TEMPLATES_DIRECTORY = "templates"
+
 PPD = "PPD"
 PUE = "PUE"
 

@@ -7,6 +7,8 @@ from jinja2.filters import do_mark_safe
 from satcfdi.transform.catalog import CATALOGS
 from satcfdi.transform.helpers import iterate as h_iterate
 
+from satdigitalinvoice import TEMPLATES_DIRECTORY
+
 
 class FacturacionEnvironment(Environment):
     @property
@@ -27,7 +29,7 @@ class FacturacionEnvironment(Environment):
 
     def __init__(self):
         super().__init__(
-            loader=jinja2.FileSystemLoader(searchpath=['templates']),
+            loader=jinja2.FileSystemLoader(searchpath=[TEMPLATES_DIRECTORY]),
             autoescape=True,
             trim_blocks=True,
             lstrip_blocks=True,
