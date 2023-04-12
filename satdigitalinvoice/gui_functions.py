@@ -155,8 +155,11 @@ def generate_ingresos(folio, serie, clients, facturas, dp, csd_signer):
     emisor_cif = clients[csd_signer.rfc]
 
     def prepare_concepto(concepto):
-        offset = concepto.get('_desfase_mes', 0)
-        periodo = periodo_desc(dp, concepto['_periodo_mes_ajuste'], offset)
+        periodo = periodo_desc(
+            dp,
+            concepto['_periodo_mes_ajuste'],
+            concepto.get('_desfase_mes')
+        )
         if periodo and concepto['ValorUnitario'] is not None:
             return format_concepto_desc(concepto, periodo=periodo)
 
@@ -459,7 +462,7 @@ def ajustes(emisor_rfc, dp: DatePeriod):
                 "valor_unitario_nuevo": pesos(vun) if vun else "",
                 "ajuste_porcentaje": porcentaje(ajuste_porcentaje, 2) if ajuste_porcentaje is not None else "",
                 "ajuste_periodo": f"{meses} MESES",
-                "efectivo_periodo_desc": periodo_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes', 0)),  # fecha(ym_date_effective),
+                "efectivo_periodo_desc": periodo_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),  # fecha(ym_date_effective),
                 "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
                 "fecha_hoy": fecha(date.today()),
                 'file_name': file_name
