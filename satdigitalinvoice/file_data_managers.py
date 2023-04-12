@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import jsonschema as jsonschema
 import yaml
-from satcfdi import Code
+from satcfdi import Code, DatePeriod
 from satcfdi.pacs import sat
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
@@ -98,14 +98,14 @@ class ClientsManager(LocalData):
 class FacturasManager(LocalData):
     file_source = "facturas.yaml"
 
-    def __init__(self, emission_date: date | None):
+    def __init__(self, dp: DatePeriod | None):
         def loading_function(loader, node):
             cases = loader.construct_mapping(node, deep=True)
-            if emission_date is None:
+            if dp is None:
                 return cases
             return find_best_match(
                 cases,
-                emission_date
+                dp
             )[1]
 
         DuplicateKeySafeLoader.add_constructor("!case", loading_function)
@@ -113,7 +113,7 @@ class FacturasManager(LocalData):
         if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
             raise ValueError("Factura Duplicada: {}".format(dup))
 
-        if emission_date:
+        if dp:
             for v in self["Facturas"]:
                 if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
                     raise error

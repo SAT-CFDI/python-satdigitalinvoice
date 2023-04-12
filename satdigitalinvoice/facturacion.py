@@ -21,12 +21,12 @@ from . import __version__, PPD, PUE
 from .client_validation import validar_client
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, facturas_filename, \
-    periodo_desc, generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, ajustes_directory, facturas_folder
+    generate_html_template, mf_pago_fmt, print_invoices, print_cfdis, print_cfdi_details, ajustes, facturas_folder, year_month_desc
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, log_item, cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder
-from .utils import random_string, to_uuid, parse_date_period, parse_ym_date, load_certificate, to_int, cert_info, parse_rango
+from .utils import random_string, to_uuid, parse_date_period, load_certificate, to_int, cert_info, parse_rango
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -356,6 +356,8 @@ class FacturacionGUI:
     def main_loop(self):
         while True:
             event, values = self.window.read()
+            dp = parse_date_period(values["periodo"])
+
             try:
                 if event in ("Exit", PySimpleGUI.WIN_CLOSED):
                     return
@@ -400,7 +402,7 @@ class FacturacionGUI:
                         self.header(f"AJUSTES")
                         ajustes(
                             emisor_rfc=self.csd_signer.rfc,
-                            ym_date=parse_ym_date(values['periodo'])
+                            dp=dp
                         )
 
                     case "recuperar_emitidas" | "recuperar_recibidas":
@@ -437,9 +439,8 @@ class FacturacionGUI:
                     case "prepare_clientes":
                         self.header("CLIENTES")
                         clients = ClientsManager()
-                        ym_date = parse_ym_date(values['periodo'])
                         if clients:
-                            facturas = FacturasManager(ym_date)["Facturas"]
+                            facturas = FacturasManager(dp)["Facturas"]
                             print(
                                 tabulate(
                                     [
@@ -471,17 +472,16 @@ class FacturacionGUI:
                             print("No hay clientes")
 
                     case "prepare_facturas" | "rango_enter":
-                        ym_date = parse_ym_date(values["periodo"])
                         self.header(f"PREPARAR FACTURAS {values['periodo']}")
-                        print('Periodo:', periodo_desc(ym_date, 'Mensual.1', offset=0), '[AL ...]')
+                        print('Periodo:', year_month_desc(dp), '[AL ...]')
                         inicio, final = parse_rango(values["rango"])
 
                         if cfdis := generate_ingresos(
                                 folio=int(values["folio"]),
                                 serie=self.serie,
                                 clients=ClientsManager(),
-                                facturas=FacturasManager(ym_date)["Facturas"],
-                                ym_date=ym_date,
+                                facturas=FacturasManager(dp)["Facturas"],
+                                dp=dp,
                                 csd_signer=self.csd_signer
                         ):
                             final = final or len(cfdis)
@@ -539,7 +539,7 @@ class FacturacionGUI:
                     case "prepare_correos":
                         self.header("CORREOS")
                         now = date.today()
-                        dp = DatePeriod(now.year, now.month)
+                        dp_now = DatePeriod(now.year, now.month)
                         clients = ClientsManager()
                         a_invoices = self.get_all_invoices()
 
@@ -553,16 +553,16 @@ class FacturacionGUI:
                         ):
                             notify_invoices = list(notify_invoices)
 
-                            def fac_iter():
+                            def fac_pen_iter():
                                 for i in self.get_all_invoices().values():
                                     if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                                             and self.local_db.liquidated_state(i) == LiquidatedState.NO \
-                                            and i["Fecha"] < dp \
+                                            and i["Fecha"] < dp_now \
                                             and i["Receptor"]["Rfc"] == receptor_rfc:
                                         yield i
 
                             fac_pen = sorted(
-                                fac_iter(),
+                                fac_pen_iter(),
                                 key=lambda r: r["Fecha"]
                             )
                             receptor = clients[receptor_rfc]
@@ -633,8 +633,6 @@ class FacturacionGUI:
 
                     case "facturas_emitidas" | "periodo_enter":
                         self.header(f"FACTURAS EMITIDAS {values['periodo']}")
-                        dp = parse_date_period(values["periodo"])
-
                         def fact_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
@@ -649,7 +647,7 @@ class FacturacionGUI:
                         emisor_cif = clients[self.csd_signer.rfc]
                         if archivo_excel := exportar_facturas(
                                 self.get_all_invoices(),
-                                parse_date_period(values["periodo"]),
+                                dp,
                                 emisor_cif,
                                 self.rfc_prediales
                         ):
@@ -662,8 +660,6 @@ class FacturacionGUI:
 
                     case "ver_html":
                         self.header("HTML")
-                        dp = parse_date_period(values["periodo"])
-
                         def fact_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
@@ -684,23 +680,14 @@ class FacturacionGUI:
                             print("No hay facturas para periodo seleccionado")
 
                     case "ver_carpeta":
-                        dp = parse_date_period(values["periodo"])
                         directory = facturas_folder(dp)
                         os.startfile(
                             os.path.abspath(directory)
                         )
 
-                    # case "ver_carpeta_ajustes":
-                    #     dp = parse_date_period(values["periodo"])
-                    #     ajustes_dir = ajustes_directory(dp)
-                    #     os.startfile(
-                    #         os.path.abspath(ajustes_dir)
-                    #     )
-
                     case "sat_status_todas":
                         self.console.update(autoscroll=True)
                         self.header("SAT STATUS")
-                        dp = parse_date_period(values["periodo"])
 
                         def fact_iter():
                             for i in self.get_all_invoices().values():

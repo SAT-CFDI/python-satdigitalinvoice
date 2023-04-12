@@ -1,6 +1,8 @@
 from datetime import date, datetime
 
 import pytest
+from satcfdi import DatePeriod
+
 from satdigitalinvoice.facturacion import FacturacionGUI
 from yaml.constructor import ConstructorError
 
@@ -56,14 +58,14 @@ def test_duplicated_facturas():
     # expect exception thrown
 
     with pytest.raises(ValueError) as e:
-        MyFacturasManager(datetime(2021, 1, 1))
+        MyFacturasManager(DatePeriod(2021, 1, 1))
     assert str(e.value)[0:20] == 'Factura Duplicada: {'
 
 
 def test_increase_month():
-    d = datetime(2021, 1, 28)
-    d = add_month(d)
-    assert d == datetime(2021, 2, 28)
+    d = DatePeriod(2021, 1)
+    d = add_month(d, 1)
+    assert d.year == 2021 and d.month == 2
 
 
 def test_app_setup():

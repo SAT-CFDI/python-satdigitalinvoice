@@ -26,10 +26,6 @@ def try_parsing_date(text):
     raise ValueError('no valid date format found')
 
 
-def parse_ym_date(periodo):
-    return try_parsing_date(periodo)[1]
-
-
 def to_uuid(s):
     try:
         return UUID(s)
@@ -45,7 +41,7 @@ def to_int(s):
 
 
 def random_string():
-    chars = "0123456789abcdefghijklmnopqrstuvwxzyABCDEFGHIJKLMNOPQRSTUVWXZY"
+    chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     return "".join(random.choice(chars) for _ in range(32))
 
 
@@ -70,11 +66,11 @@ def cert_info(signer: Signer):
         }
 
 
-def find_best_match(cases, emission_date):
+def find_best_match(cases, dp: DatePeriod):
     fk, fv = (None, None)
     for k, v in cases.items():
-        k = parse_ym_date(k)
-        if k <= emission_date:
+        k = datetime.strptime(k, '%Y-%m')
+        if k <= dp:
             if fk is None or k > fk:
                 fk, fv = k, v
     return fk, fv
@@ -90,10 +86,10 @@ def months_between(d1, d2):
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
 
-def add_month(d):
-    m = d.month % 12 + 1
-    y = d.year + d.month // 12
-    return d.replace(year=y, month=m)
+def add_month(dp: DatePeriod, months):
+    year, month = divmod(dp.year * 12 + dp.month + months - 1, 12)
+    month += 1
+    return DatePeriod(year, month)
 
 
 def load_certificate(data):

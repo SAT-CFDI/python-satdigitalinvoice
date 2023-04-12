@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from unittest import mock
 
-from satcfdi import Signer
+from satcfdi import Signer, DatePeriod
 
 from satdigitalinvoice.__version__ import __package__
 from satdigitalinvoice.file_data_managers import ClientsManager, FacturasManager, ConfigManager
@@ -34,7 +34,7 @@ def test_generar_ingresos(caplog):
             folio=1000,
             clients=clients,
             facturas=facturas,
-            ym_date=date(year=2023, month=4, day=1),
+            dp=date(year=2023, month=4, day=1),
             csd_signer=csd_signer,
         )
 
@@ -60,7 +60,7 @@ def test_generar_ingresos_error(caplog):
         folio=1000,
         clients=clients,
         facturas=facturas,
-        ym_date=date(year=2023, month=4, day=1),
+        dp=date(year=2023, month=4, day=1),
         csd_signer=csd_signer,
     )
 
@@ -80,7 +80,7 @@ def test_generar_ingresos_error2(caplog):
         folio=1000,
         clients=ClientsManager(),
         facturas=facturas,
-        ym_date=date(year=2023, month=4, day=1),
+        dp=date(year=2023, month=4, day=1),
         csd_signer=csd_signer,
     )
 
@@ -90,33 +90,33 @@ def test_generar_ingresos_error2(caplog):
 
 
 def test_periodo_desc():
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Mensual.1', offset=0) == 'MES DE ENERO DEL 2021'
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Bimestral.2', offset=0) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Trimestral.3', offset=0) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Cuatrimestral.4', offset=0) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Semestral.5', offset=0) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Anual.6', offset=0) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=0) == 'MES DE ENERO DEL 2021'
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=0) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=0) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=0) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=0) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=0) is None
 
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Mensual.7', offset=0) == 'MES DE DICIEMBRE DEL 2021'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Bimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Trimestral.9', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Cuatrimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Semestral.6', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Anual.12', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=0) == 'MES DE DICIEMBRE DEL 2021'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
 
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Mensual.1', offset=1) == 'MES DE FEBRERO DEL 2021'
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Bimestral.2', offset=1) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Trimestral.3', offset=1) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Cuatrimestral.4', offset=1) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Semestral.5', offset=1) is None
-    assert periodo_desc(date(year=2021, month=1, day=1), 'Anual.6', offset=1) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=1) == 'MES DE FEBRERO DEL 2021'
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=1) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=1) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=1) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=1) is None
+    assert periodo_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=1) is None
 
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Mensual.7', offset=1) == 'MES DE ENERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Bimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE FEBRERO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Trimestral.9', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE MARZO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Cuatrimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE ABRIL DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Semestral.6', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE JUNIO DEL 2022'
-    assert periodo_desc(date(year=2021, month=12, day=1), 'Anual.12', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE DICIEMBRE DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=1) == 'MES DE ENERO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE FEBRERO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE MARZO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE ABRIL DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE JUNIO DEL 2022'
+    assert periodo_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE DICIEMBRE DEL 2022'
 
 
 def test_find_best_match():

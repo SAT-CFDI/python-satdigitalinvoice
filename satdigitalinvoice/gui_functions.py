@@ -126,31 +126,29 @@ def validad_facturas(clients, facturas):
     return is_valid
 
 
-def year_month_desc(year, month, offset=0):
-    year, month = divmod(year * 12 + month + offset - 1, 12)
-    month += 1
-    return format_date(date(year=year, month=month, day=1), locale='es_MX', format="'Mes de' MMMM 'del' y").upper()
+def year_month_desc(dp: DatePeriod):
+    return format_date(date(year=dp.year, month=dp.month, day=1), locale='es_MX', format="'Mes de' MMMM 'del' y").upper()
 
 
-def periodo_desc(ym_date, periodo_mes_ajuste, offset):
+def periodo_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
     periodo, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
     periodo_meses = PERIODOS[periodo]
 
-    if (ym_date.month - mes_ajuste) % periodo_meses == 0:
-        periodo = year_month_desc(ym_date.year, ym_date.month, offset)
+    if (dp.month - mes_ajuste) % periodo_meses == 0:
+        if offset:
+            dp = add_month(dp, offset)
+
+        periodo = year_month_desc(dp)
         if periodo_meses > 1:
-            mes_final = (ym_date.month + periodo_meses - 2) % 12 + 1
             periodo += " AL " + year_month_desc(
-                year=ym_date.year + int(mes_final < ym_date.month),
-                month=mes_final,
-                offset=offset
+                dp=add_month(dp, periodo_meses - 1)
             )
 
         return periodo
     return None
 
 
-def generate_ingresos(folio, serie, clients, facturas, ym_date, csd_signer):
+def generate_ingresos(folio, serie, clients, facturas, dp, csd_signer):
     if not validad_facturas(clients, facturas):
         return
 
@@ -158,7 +156,7 @@ def generate_ingresos(folio, serie, clients, facturas, ym_date, csd_signer):
 
     def prepare_concepto(concepto):
         offset = concepto.get('_desfase_mes', 0)
-        periodo = periodo_desc(ym_date, concepto['_periodo_mes_ajuste'], offset)
+        periodo = periodo_desc(dp, concepto['_periodo_mes_ajuste'], offset)
         if periodo and concepto['ValorUnitario'] is not None:
             return format_concepto_desc(concepto, periodo=periodo)
 
@@ -424,24 +422,24 @@ def ajustes_directory(dp: DatePeriod):
     return os.path.join(facturas_folder(dp), 'ajustes')
 
 
-def ajustes(emisor_rfc, ym_date):
-    ym_date_effective = add_month(ym_date)
+def ajustes(emisor_rfc, dp: DatePeriod):
+    dp_effective = add_month(dp, 1)
 
     # clear directory
-    ajustes_dir = ajustes_directory(DatePeriod(ym_date.year, ym_date.month))
+    ajustes_dir = ajustes_directory(DatePeriod(dp.year, dp.month))
     clear_directory(ajustes_dir)
 
     clients = ClientsManager()
     facturas = FacturasManager(None)["Facturas"]
 
     def ajustes_iter():
-        for i, (rfc, concepto) in enumerate(find_ajustes(facturas, ym_date_effective.month)):
+        for i, (rfc, concepto) in enumerate(find_ajustes(facturas, dp_effective.month)):
             receptor = clients[rfc]
             valor_unitario_raw = concepto["ValorUnitario"]
 
             if isinstance(valor_unitario_raw, dict):
-                vud, vu = find_best_match(valor_unitario_raw, ym_date)
-                vund, vun = find_best_match(valor_unitario_raw, ym_date_effective)
+                vud, vu = find_best_match(valor_unitario_raw, dp)
+                vund, vun = find_best_match(valor_unitario_raw, dp_effective)
                 meses = months_between(vund, vud)
                 ajuste_porcentaje = (vun / vu - 1)
             else:
@@ -461,7 +459,7 @@ def ajustes(emisor_rfc, ym_date):
                 "valor_unitario_nuevo": pesos(vun) if vun else "",
                 "ajuste_porcentaje": porcentaje(ajuste_porcentaje, 2) if ajuste_porcentaje is not None else "",
                 "ajuste_periodo": f"{meses} MESES",
-                "efectivo_periodo_desc": periodo_desc(ym_date_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes', 0)),  # fecha(ym_date_effective),
+                "efectivo_periodo_desc": periodo_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes', 0)),  # fecha(ym_date_effective),
                 "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
                 "fecha_hoy": fecha(date.today()),
                 'file_name': file_name
@@ -476,7 +474,7 @@ def ajustes(emisor_rfc, ym_date):
             yield data
 
     ajustes_iter = list(ajustes_iter())
-    print("Ajuste Efectivo Al:", fecha(ym_date_effective))
+    print("Ajuste Efectivo Al:", year_month_desc(dp_effective))
     if ajustes_iter:
         print(
             tabulate(
@@ -490,6 +488,7 @@ def ajustes(emisor_rfc, ym_date):
                         ajuste["ajuste_porcentaje"].split(' ')[0],
                         ajuste["periodo"],
                         ajuste["ajuste_periodo"],
+                        ajuste["efectivo_periodo_desc"]
                     ]
                     for i, ajuste in enumerate(ajustes_iter, start=1)
                 ],
@@ -502,6 +501,7 @@ def ajustes(emisor_rfc, ym_date):
                     "Ajuste %",
                     "Periodo",
                     "Ajuste Periodo",
+                    "Ajuste Efectivo"
                 ),
                 disable_numparse=True,
                 colalign=("right", "left", "left", "right", "right", "right", "left", "left"),
