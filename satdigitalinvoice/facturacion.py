@@ -1,4 +1,5 @@
 import base64
+import decimal
 import io
 import itertools
 import logging
@@ -661,12 +662,13 @@ class FacturacionGUI:
                                         importe_pago=values["importe_pago"],
                                 )
                                 self.action_button_manager.set_items('facturas', [cfdi])
-                            except ValueError as e:
+                            except (ValueError, ArithmeticError) as e:
                                 PySimpleGUI.Popup(
                                     e,
-                                    title="ERROR",
                                     no_titlebar=True,
                                     grab_anywhere=True,
+                                    any_key_closes=True,
+                                    background_color="red4",
                                 )
 
                     case "status_sat":
