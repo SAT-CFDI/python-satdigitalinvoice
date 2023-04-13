@@ -22,7 +22,7 @@ from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, \
     generate_html_template, mf_pago_fmt, archivos_folder, year_month_desc, ajustes_directory, find_ajustes, \
-    format_concepto_desc, generate_pdf_template, periodo_desc
+    format_concepto_desc, generate_pdf_template, periodo_desc, parse_fecha_pago
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, cfdi_header, header_line, print_yaml
@@ -651,16 +651,23 @@ class FacturacionGUI:
                             self.action_button_manager.set_items(event.split("_")[0], s_items)
 
                     case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter":
-                        self.header("COMPROBANTE PAGO")
                         if i := self.selected_satcfdi:
-                            if cfdi := pago_factura(
-                                    factura_pagar=i,
-                                    fecha_pago=values["fecha_pago"],
-                                    forma_pago=values["forma_pago"],
-                                    importe_pago=values["importe_pago"],
-                                    csd_signer=self.csd_signer
-                            ):
+                            try:
+                                fecha_pago = parse_fecha_pago(values["fecha_pago"])
+                                cfdi = pago_factura(
+                                        factura_pagar=i,
+                                        fecha_pago=fecha_pago,
+                                        forma_pago=values["forma_pago"],
+                                        importe_pago=values["importe_pago"],
+                                )
                                 self.action_button_manager.set_items('facturas', [cfdi])
+                            except ValueError as e:
+                                PySimpleGUI.Popup(
+                                    e,
+                                    title="ERROR",
+                                    no_titlebar=True,
+                                    grab_anywhere=True,
+                                )
 
                     case "status_sat":
                         self.header("STATUS SAT")

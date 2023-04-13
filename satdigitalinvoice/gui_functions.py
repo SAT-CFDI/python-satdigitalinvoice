@@ -179,13 +179,11 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
 
 def parse_fecha_pago(fecha_pago):
     if not fecha_pago:
-        logger.info("Fecha de Pago esta vacia")
-        return
+        raise ValueError("Fecha de Pago es requerida")
 
     fecha_pago = datetime.fromisoformat(fecha_pago)
     if fecha_pago > datetime.now():
-        logger.info("Fecha de Pago esta en el futuro")
-        return
+        raise ValueError("Fecha de Pago es mayor a la fecha actual")
 
     if fecha_pago.replace(hour=12) > datetime.now():
         fecha_pago = datetime.now()
@@ -194,15 +192,12 @@ def parse_fecha_pago(fecha_pago):
 
     dif = datetime.now() - fecha_pago
     if dif.days > 30:
-        logger.info("!!! FECHA DE PAGO ES MAYOR A 30 DIAS !!!")
+        raise ValueError("Fecha de Pago es de hace mas de 30 dias")
 
     return fecha_pago
 
 
-def pago_factura(factura_pagar, fecha_pago, importe_pago, forma_pago, csd_signer):
-    if not (fecha_pago := parse_fecha_pago(fecha_pago)):
-        return
-
+def pago_factura(factura_pagar, fecha_pago: datetime, importe_pago, forma_pago):
     c = factura_pagar
 
     if importe_pago:
