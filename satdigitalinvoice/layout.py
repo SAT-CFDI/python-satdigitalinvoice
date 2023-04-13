@@ -147,9 +147,9 @@ def make_layout(has_fiel):
                             ],
                             [
                                 sg.Column([[
-                                    sg.Button(key="status_sat", border_width=0, visible=False),
-                                    sg.Button(key="email_notificada", border_width=0, visible=False),
-                                    sg.Button(key="pendiente_pago", border_width=0, visible=False),
+                                    sg.Button("".ljust(10), key="status_sat", border_width=0, button_color=sg.theme_background_color()),
+                                    sg.Button("".ljust(10), key="email_notificada", border_width=0, button_color=sg.theme_background_color()),
+                                    sg.Button("".ljust(10), key="pendiente_pago", border_width=0, button_color=sg.theme_background_color()),
                                 ]]),
                                 sg.VSeparator(),
                                 sg.Column([[

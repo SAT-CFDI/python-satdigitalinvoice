@@ -245,13 +245,13 @@ class FacturacionGUI:
         if i:
             estado = self.local_db.status_sat(i).get('Estado', 'Vigente')
             self.window["status_sat"].update(
-                estado,
-                visible=True,
+                estado.center(10),
+                disabled=False,
                 button_color="red4" if estado != "Vigente" else "green",
             )
         else:
             self.window["status_sat"].update(
-                visible=False
+                "".ljust(10), disabled=True, button_color=PySimpleGUI.theme_background_color()
             )
 
         # Email
@@ -260,12 +260,14 @@ class FacturacionGUI:
                       and i.estatus == "1"
         if is_enviable:
             self.window["email_notificada"].update(
-                " Enviada  " if self.local_db.notified(i) else "Por Enviar",
-                visible=True,
+                "Enviada".center(10) if self.local_db.notified(i) else "Por Enviar",
+                disabled=False,
                 button_color="green" if self.local_db.notified(i) else "red4",
             )
         else:
-            self.window["email_notificada"].update("", visible=False)
+            self.window["email_notificada"].update(
+                "".ljust(10), disabled=True, button_color=PySimpleGUI.theme_background_color()
+            )
 
         # Pendiente de Pago
         is_pendientable = i \
@@ -276,12 +278,14 @@ class FacturacionGUI:
                           and i["Total"]
         if is_pendientable:
             self.window["pendiente_pago"].update(
-                (" Pagada  " if i["MetodoPago"] == PUE else "Ignorada ") if self.local_db.liquidated(i) else "Por Pagar",
-                visible=True,
+                ("Pagada".center(10) if i["MetodoPago"] == PUE else "Ignorada".center(10)) if self.local_db.liquidated(i) else "Por Pagar".center(10),
+                disabled=False,
                 button_color="green" if self.local_db.liquidated(i) else "red4",
             )
         else:
-            self.window["pendiente_pago"].update("", visible=False)
+            self.window["pendiente_pago"].update(
+                "".ljust(10), disabled=True, button_color=PySimpleGUI.theme_background_color()
+            )
 
         # PPD
         is_ppd_active = i \
