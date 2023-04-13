@@ -63,7 +63,7 @@ class FacturacionGUI:
         self.rfc_prediales = config['rfc_prediales']
 
         self.window = PySimpleGUI.Window(
-            f"Facturación Masiva CFDI 4.0 {self.csd_signer.rfc}",
+            f"Facturación Mensual CFDI 4.0 {self.csd_signer.rfc}",
             make_layout(bool(self.fiel_signer)),
             size=(1280, 800),
             resizable=True,
