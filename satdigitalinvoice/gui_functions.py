@@ -60,8 +60,6 @@ def create_cfdi(receptor_cif, factura_details, emisor_cif):
         # folio=folio,
         conceptos=factura_details["Conceptos"]
     )
-    invoice['NoCertificado'] = ''
-    invoice['Certificado'] = ''
     invoice = invoice.process()
 
     expected_total = factura_details.get('Total')
@@ -224,8 +222,6 @@ def pago_factura(factura_pagar, fecha_pago, importe_pago, forma_pago, csd_signer
         fecha_pago=fecha_pago,
         forma_pago=forma_pago,
     )
-    invoice['NoCertificado'] = ''
-    invoice['Certificado'] = ''
     return invoice.process()
 
 
