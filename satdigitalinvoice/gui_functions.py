@@ -13,12 +13,13 @@ from satcfdi.accounting.process import payments_groupby_receptor, payments_reten
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.pacs import sat
+from satcfdi.printer import Representable
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
 from xlsxwriter.exceptions import FileCreateError
 
-from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY
+from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .utils import add_month
 
@@ -328,3 +329,14 @@ def mf_pago_fmt(cfdi):
 
 def ajustes_directory(dp: DatePeriod):
     return os.path.join(archivos_folder(dp), 'ajustes')
+
+
+def preview_cfdis(cfdis):
+    outfile = os.path.join(TEMP_DIRECTORY, "factura.html")
+    Representable.html_write_all(
+        objs=cfdis,
+        target=outfile,
+    )
+    os.startfile(
+        os.path.abspath(outfile)
+    )

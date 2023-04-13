@@ -23,7 +23,7 @@ from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, \
     generate_html_template, mf_pago_fmt, archivos_folder, year_month_desc, ajustes_directory, find_ajustes, \
-    format_concepto_desc, generate_pdf_template, periodo_desc, parse_fecha_pago, parse_importe_pago
+    format_concepto_desc, generate_pdf_template, periodo_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
 from .log_tools import log_line, cfdi_header, header_line, print_yaml
@@ -243,7 +243,6 @@ class FacturacionGUI:
         i = factura
         self.selected_satcfdi = i
         if i:
-            self.window["factura_seleccionada"].update(f"{i.name} - {i.uuid}")
             estado = self.local_db.status_sat(i).get('Estado', 'Vigente')
             self.window["status_sat"].update(
                 estado,
@@ -251,7 +250,6 @@ class FacturacionGUI:
                 button_color="red4" if estado != "Vigente" else "green",
             )
         else:
-            self.window["factura_seleccionada"].update("                                            ")
             self.window["status_sat"].update(
                 visible=False
             )
@@ -292,14 +290,8 @@ class FacturacionGUI:
                         and i.estatus == "1" \
                         and i.saldo_pendiente
         is_ppd_active = bool(is_ppd_active)
-        self.window["fecha_pago_select"].update(visible=is_ppd_active)
-        self.window["fecha_pago"].update(visible=is_ppd_active)
-        self.window["forma_pago_text"].update(visible=is_ppd_active)
-        self.window["forma_pago"].update(visible=is_ppd_active)
-
-        self.window["prepare_pago"].update(visible=is_ppd_active)
-        self.window["imp_pagado_text"].update(visible=is_ppd_active)
-        self.window["importe_pago"].update("", visible=is_ppd_active)
+        self.window["ppd_action_items"].update(visible=is_ppd_active)
+        self.window["importe_pago"].update("")
 
     def header(self, name, clear=True):
         if clear:
@@ -319,7 +311,7 @@ class FacturacionGUI:
         self.emitidas_show(cfdis)
 
     def facturas_emitidas(self, dp):
-        self.window["emitidas_text"].update("Facturas Emitidas el " + year_month_desc(dp))
+        self.window["emitidas_text"].update("Facturas Emitidas el " + str(dp))
 
         def fact_iter():
             for i in self.get_all_invoices().values():
@@ -594,16 +586,7 @@ class FacturacionGUI:
                         items = self.window["facturas_table"].metadata
                         selection = values["facturas_table"]
                         s_items = [items[i] for i in selection] if selection else items
-
-                        if s_items:
-                            outfile = os.path.join(TEMP_DIRECTORY, "factura.html")
-                            Representable.html_write_all(
-                                objs=s_items,
-                                target=outfile,
-                            )
-                            os.startfile(
-                                os.path.abspath(outfile)
-                            )
+                        preview_cfdis(s_items)
 
                     case 'clientes_table_double_click':
                         items = self.window["clientes_table"].metadata
@@ -651,7 +634,7 @@ class FacturacionGUI:
                             s_items = [items[i] for i in selection] if selection else items
                             self.action_button_manager.set_items(event.split("_")[0], s_items)
 
-                    case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter":
+                    case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter" | "ver_html_pago":
                         if i := self.selected_satcfdi:
                             try:
                                 fecha_pago = parse_fecha_pago(values["fecha_pago"])
@@ -660,12 +643,14 @@ class FacturacionGUI:
                                 self.window["importe_pago"].update(importe_pago)
 
                                 cfdi = pago_factura(
-                                        factura_pagar=i,
-                                        fecha_pago=fecha_pago,
-                                        forma_pago=values["forma_pago"],
-                                        importe_pago=importe_pago,
+                                    factura_pagar=i,
+                                    fecha_pago=fecha_pago,
+                                    forma_pago=values["forma_pago"],
+                                    importe_pago=importe_pago,
                                 )
                                 self.action_button_manager.set_items('facturas', [cfdi])
+                                if event == "ver_html_pago":
+                                    preview_cfdis([cfdi])
                             except (ValueError, ArithmeticError) as e:
                                 PySimpleGUI.Popup(
                                     e,

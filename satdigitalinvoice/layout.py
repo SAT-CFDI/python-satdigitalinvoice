@@ -38,6 +38,11 @@ REFRESH_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAAL
                "/Y14etQZR2EE32jIFSv4Z7fFAfuVr3Osjh0o88ZFcgS0sRhTRF9OffEmOQBr7S/RnJO/FWUz" \
                "/QK5ANQzsOVrvbHA2DeMcbvGAsYxiflhuMr39WCfH3AurXsZOFJD2joruXcFPYwKr4a6po1ecYwNTuYlLNOMTqXpPNQBv/ywAAAAASUVORK5CYII="
 
+PREVIEW_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABKElEQVR4nO2VMU8CQRCFP6WAQksqOxJ/A6WJUFFprJSEilARWgsa" \
+               "/4IVLYUNFZ0WVECwNxpCIDQYfwEVGj0zycNcCOTulqMxvGQze2/eztub3O3Cf0QJ6IQYD8CRi8Ed4AUUn0rTczFZGoTRfLmYRDG4Aj6BAXC8C4M80NC8H/ZNohh4K6Mel0FGu" \
+               "/cPT2tjMViHvUEg9i0KxBmQjeszPVSxCnCrmBW/lUECqAKzDX/yTPmEi0EaeFauq0JDzU+BG809HX7pKAYnwAiYA9fi7qVr+jZgKEo30rqNBh2dlAe65Yx7BJLStX2teQFa4i3/JN7WBV6Z5+JrwA/wKu4S" \
+               "+FYhixdADniTzvSRUQDeVXSsNiwUJ+ItbzpnpICy2vAhA4v2bLzl//ALOtSCJzC7jH4AAAAASUVORK5CYII="
+
 BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 
 
@@ -74,30 +79,30 @@ def make_layout(has_fiel):
                         ' Facturas  ',
                         [
                             [
-                                sg.Button("Refrescar", key="refresh_facturas", border_width=0,),
+                                sg.Button("Refrescar", key="refresh_facturas", border_width=0, ),
                                 sg.Text("", pad=TEXT_PADDING, key="preparar_facturas_text"),
                             ],
                             [
-                            sg.Table(
-                                values=[],
-                                headings=[
-                                    '#',
-                                    'EReg',
-                                    'Receptor Razon Social',
-                                    'Recep. Rfc',
-                                    "Tipo",
-                                    "Subtotal",
-                                    "Total"
-                                ],
-                                key="facturas_table",
-                                expand_x=True,
-                                expand_y=True,
-                                select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                                enable_events=True,
-                                text_color="black",
-                                background_color="white",
-                            )
-                        ]],
+                                sg.Table(
+                                    values=[],
+                                    headings=[
+                                        '#',
+                                        'EReg',
+                                        'Receptor Razon Social',
+                                        'Recep. Rfc',
+                                        "Tipo",
+                                        "Subtotal",
+                                        "Total"
+                                    ],
+                                    key="facturas_table",
+                                    expand_x=True,
+                                    expand_y=True,
+                                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                                    enable_events=True,
+                                    text_color="black",
+                                    background_color="white",
+                                )
+                            ]],
                         key='facturas_tab',
                     ),
                     sg.Tab(
@@ -141,40 +146,24 @@ def make_layout(has_fiel):
                                 sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
                             ],
                             [
-                                sg.Column(
-                                    [
-                                        [
-                                            sg.Text("                                            ", key="factura_seleccionada", border_width=0),
-                                        ],
-                                        [
-                                            sg.Text("", pad=(0, 3), border_width=0),
-                                            sg.Button(key="status_sat", border_width=0, visible=False),
-                                            sg.Button(key="email_notificada", border_width=0, visible=False),
-                                            sg.Button(key="pendiente_pago", border_width=0, visible=False),
-                                        ]
-                                    ],
-                                    pad=0
-                                ),
+                                sg.Column([[
+                                    sg.Button(key="status_sat", border_width=0, visible=False),
+                                    sg.Button(key="email_notificada", border_width=0, visible=False),
+                                    sg.Button(key="pendiente_pago", border_width=0, visible=False),
+                                ]]),
                                 sg.VSeparator(),
-                                sg.Column(
-                                    [
-                                        [
-                                            sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING,
-                                                              border_width=0,
-                                                              key="fecha_pago_select", visible=False),
-                                            sg.Input(datetime.now().strftime('%Y-%m-%d'), size=(12, 1), key="fecha_pago", visible=False, border_width=0),
-                                            sg.Text("FormaPago:", pad=TEXT_PADDING, visible=False, key="forma_pago_text", border_width=0),
-                                            sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", size=(34, 1),
-                                                     visible=False),
-                                        ],
-                                        [
-                                            sg.Button("Comprobante Pago", key="prepare_pago", border_width=0, visible=False),
-                                            sg.Text("       ImpPagado:", pad=TEXT_PADDING, visible=False, key="imp_pagado_text", border_width=0),
-                                            sg.Input("", size=(12, 1), key="importe_pago", visible=False, border_width=0),
-                                        ]
-                                    ],
-                                    pad=0,
-                                )
+                                sg.Column([[
+                                    sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING,
+                                                      border_width=0,
+                                                      key="fecha_pago_select"),
+                                    sg.Input(datetime.now().strftime('%Y-%m-%d'), size=(12, 1), key="fecha_pago", border_width=0),
+                                    sg.Text("FormaPago:", pad=TEXT_PADDING, key="forma_pago_text", border_width=0),
+                                    sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", size=(34, 1)),
+                                    sg.Text("ImpPagado:", pad=TEXT_PADDING, key="imp_pagado_text", border_width=0),
+                                    sg.Input("", size=(12, 1), key="importe_pago", border_width=0),
+                                    sg.Button("Preparar", key="prepare_pago", border_width=0),
+                                    sg.Button(image_data=PREVIEW_ICON, key="ver_html_pago", border_width=0, button_color=BUTTON_COLOR),
+                                ]], visible=False, key="ppd_action_items"),
                             ],
                             [
                                 sg.Table(
