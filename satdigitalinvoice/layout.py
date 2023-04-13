@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 import PySimpleGUI as sg
 # noinspection PyUnresolvedReferences
@@ -162,7 +162,7 @@ def make_layout(has_fiel):
                                             sg.CalendarButton("FechaPago:", format='%Y-%m-%d', title="FechaPago", no_titlebar=False, target="fecha_pago", pad=TEXT_PADDING,
                                                               border_width=0,
                                                               key="fecha_pago_select", visible=False),
-                                            sg.Input("", size=(12, 1), key="fecha_pago", visible=False, border_width=0),
+                                            sg.Input(datetime.now().strftime('%Y-%m-%d'), size=(12, 1), key="fecha_pago", visible=False, border_width=0),
                                             sg.Text("FormaPago:", pad=TEXT_PADDING, visible=False, key="forma_pago_text", border_width=0),
                                             sg.Combo([Code(k, v) for k, v in FORMA_PAGO.items()], default_value=Code("03", FORMA_PAGO["03"]), key="forma_pago", size=(34, 1),
                                                      visible=False),

@@ -2,7 +2,7 @@ import logging
 import os
 from datetime import datetime, date
 from decimal import Decimal
-from uuid import uuid4
+from decimal import InvalidOperation
 
 import xlsxwriter
 from babel.dates import format_date
@@ -18,7 +18,7 @@ from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
 from xlsxwriter.exceptions import FileCreateError
 
-from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
+from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY
 from .environments import facturacion_environment
 from .utils import add_month
 
@@ -197,13 +197,18 @@ def parse_fecha_pago(fecha_pago):
     return fecha_pago
 
 
+def parse_importe_pago(importe_pago: str):
+    if not importe_pago:
+        return None
+
+    try:
+        return round(Decimal(importe_pago), 2)
+    except InvalidOperation:
+        raise ValueError("Importe de Pago es invalido")
+
+
 def pago_factura(factura_pagar, fecha_pago: datetime, importe_pago, forma_pago):
     c = factura_pagar
-
-    if importe_pago:
-        importe_pago = round(Decimal(importe_pago), 2)
-    else:
-        importe_pago = c.saldo_pendiente
 
     invoice = Comprobante.pago_comprobantes(
         comprobantes=[
