@@ -315,7 +315,7 @@ class FacturacionGUI:
         self.emitidas_show(cfdis)
 
     def facturas_emitidas(self, dp):
-        self.window["emitidas_text"].update("Facturas Emitidas el " + str(dp))
+        self.window["emitidas_text"].update("Facturas Emitidas en " + str(dp))
 
         def fact_iter():
             for i in self.get_all_invoices().values():
