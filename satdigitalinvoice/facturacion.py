@@ -1,5 +1,4 @@
 import base64
-import decimal
 import io
 import itertools
 import logging
@@ -354,7 +353,6 @@ class FacturacionGUI:
                     return
 
                 dp = parse_date_period(values["periodo"])
-                # action_name, action_items = self.action_button_manager.clear()
 
                 if event in ("periodo_enter", "refresh_facturas", "refresh_ajustes", "refresh_clientes", "refresh_correos"):
                     event = 'main_tab_group'
@@ -368,7 +366,6 @@ class FacturacionGUI:
                         self.initial_screen(clients[self.csd_signer.rfc])
 
                     case "recuperar_emitidas" | "recuperar_recibidas":
-                        self.header("RECUPERAR")
                         fecha_final = date.today()
                         fecha_inicial = fecha_final - timedelta(days=int(values["recuperar_dias"]))
                         id_solicitud = self.local_db.get(event)
@@ -400,7 +397,10 @@ class FacturacionGUI:
 
                     case 'main_tab_group':
                         if values['main_tab_group'] == 'console_tab':
-                            _, _ = self.action_button_manager.clear()
+                            self.action_button_manager.clear()
+
+                        if values['main_tab_group'] == 'recuperar_tab':
+                            self.action_button_manager.clear()
 
                         if values['main_tab_group'] == 'facturas_tab':
                             if dp is None or dp.month is None:
@@ -458,7 +458,7 @@ class FacturacionGUI:
                             self.action_button_manager.set_items('clientes', clients)
 
                         if values['main_tab_group'] == 'emitidas_tab':
-                            _, _ = self.action_button_manager.clear()
+                            self.action_button_manager.clear()
                             self.facturas_pendientes()
 
                         if values['main_tab_group'] == 'correos_tab':
@@ -665,41 +665,37 @@ class FacturacionGUI:
                                 )
 
                     case "status_sat":
-                        self.header("STATUS SAT")
                         if i := self.selected_satcfdi:
-                            st = self.local_db.status_sat(i, update=True)
+                            self.local_db.status_sat(i, update=True)
                             self.set_selected_satcfdi(i)
 
                     case "pendiente_pago":
                         if i := self.selected_satcfdi:
-                            st = self.local_db.liquidated_flip(i)
+                            self.local_db.liquidated_flip(i)
                             self.set_selected_satcfdi(i)
 
                     case "email_notificada":
                         if i := self.selected_satcfdi:
-                            st = self.local_db.notified_flip(i)
+                            self.local_db.notified_flip(i)
                             self.set_selected_satcfdi(i)
 
                     case "crear_facturas":
-                        action_name, action_items = self.action_button_manager.clear()
+                        action_name = self.action_button_manager.name
+                        action_items = self.action_button_manager.items
 
-                        self.console.update(autoscroll=True)
-                        self.header(f"PROCESAR {action_name.upper()}", clear=False)
                         res = PySimpleGUI.popup(
                             f"Estas seguro que quieres procesar {len(action_items)} {action_name}?",
                             title=self.window[event].ButtonText,
                             button_type=POPUP_BUTTONS_OK_CANCEL,
                         )
                         if res == "OK":
+                            self.header(f"PROCESAR {action_name.upper()}")
+                            self.action_button_manager.clear()
                             self.window['console_tab'].select()
                             self.action_button(action_name, action_items)
                             print("FIN")
-                        else:
-                            print("OPERACION CANCELADA")
-                        self.console.update(autoscroll=False)
 
                     case "ver_excel":
-                        self.header("EXCEL")
                         clients = ClientsManager()
                         emisor_cif = clients[self.csd_signer.rfc]
                         if archivo_excel := exportar_facturas(
@@ -716,12 +712,9 @@ class FacturacionGUI:
                             print("No se pudo crear el archivo, cierra el archivo si se tiene abierto")
 
                     case "ver_html":
-                        self.header("HTML")
-
                         def fact_iter():
                             for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-                                        and i["Fecha"] == dp:
+                                if i["Fecha"] == dp:
                                     yield i
 
                         if cfdis := list(fact_iter()):
@@ -744,9 +737,6 @@ class FacturacionGUI:
                         )
 
                     case "sat_status_todas":
-                        self.console.update(autoscroll=True)
-                        self.header("SAT STATUS")
-
                         def fact_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Fecha"] == dp:
@@ -759,7 +749,6 @@ class FacturacionGUI:
                             print_yaml(estado)
 
                         print("FIN")
-                        self.console.update(autoscroll=False)
 
                     case "periodo" | "inicio" | "final" | "fecha_pago" | "forma_pago" | "importe_pago" | ' ':
                         pass

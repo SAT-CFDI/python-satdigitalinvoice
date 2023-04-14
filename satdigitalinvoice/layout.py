@@ -49,17 +49,18 @@ BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 def make_layout(has_fiel):
     # LAYOUT
     button_column = [
-        sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
         sg.Text("Año-Mes:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
+        sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
+        sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
 
         sg.Push(),
-        sg.Button("Procesar ", disabled=True, key="crear_facturas", border_width=0),
-        sg.VerticalSeparator(),
         sg.Text("Serie:", pad=TEXT_PADDING),
         sg.Text("", key="serie", pad=TEXT_PADDING, text_color="black"),
         sg.Text("Folio:", pad=TEXT_PADDING),
         sg.Input("", key="folio", size=(10, 1), enable_events=True),
+        sg.Button("".center(20), disabled=True, key="crear_facturas", border_width=0, button_color=sg.theme_background_color()),
     ]
 
     # ----- Full layout -----
@@ -69,14 +70,21 @@ def make_layout(has_fiel):
             sg.TabGroup(
                 [[
                     sg.Tab(
-                        ' Consola   ',
+                        'Consola'.center(11),
                         [
-                            [sg.Multiline(expand_x=True, expand_y=True, key="console", write_only=True, autoscroll=False, reroute_stdout=True)]
+                            [sg.Multiline(
+                                expand_x=True,
+                                expand_y=True,
+                                key="console",
+                                write_only=True,
+                                autoscroll=True,
+                                reroute_stdout=True
+                            )]
                         ],
                         key='console_tab',
                     ),
                     sg.Tab(
-                        ' Facturas  ',
+                        'Facturas'.center(11),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_facturas", border_width=0, ),
@@ -106,7 +114,7 @@ def make_layout(has_fiel):
                         key='facturas_tab',
                     ),
                     sg.Tab(
-                        ' Clientes   ',
+                        'Clientes'.center(11),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_clientes", border_width=0, ),
@@ -135,15 +143,12 @@ def make_layout(has_fiel):
                         key='clients_tab',
                     ),
                     sg.Tab(
-                        ' Emitidas  ',
+                        'Emitidas'.center(11),
                         [
                             [
                                 sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
                                 sg.Button("Todas", key="facturas_emitidas", border_width=0),
                                 sg.Text("", pad=TEXT_PADDING, key="emitidas_text"),
-                                sg.Push(),
-                                sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
-                                sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
                             ],
                             [
                                 sg.Column([[
@@ -191,7 +196,7 @@ def make_layout(has_fiel):
 
                     ),
                     sg.Tab(
-                        ' Correos   ',
+                        'Correos'.center(11),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_correos", border_width=0, ),
@@ -219,7 +224,7 @@ def make_layout(has_fiel):
                         key='correos_tab',
                     ),
                     sg.Tab(
-                        ' Ajustes   ',
+                        'Ajustes'.center(11),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_ajustes", border_width=0, ),
@@ -252,7 +257,7 @@ def make_layout(has_fiel):
                         key='ajustes_tab'
                     ),
                     sg.Tab(
-                        ' Recuperar ',
+                        'Recuperar'.center(11),
                         [
                             [
                                 sg.Button("SAT Status", key="sat_status_todas", border_width=0, visible=has_fiel),
@@ -280,25 +285,31 @@ def make_layout(has_fiel):
 
 class ActionButtonManager:
     def __init__(self, button):
-        self._name = ""
-        self._items = []
+        self.name = ""
+        self.items = []
         self.button = button
 
     def set_items(self, name, items):
-        self._name = name
-        self._items = items
+        self.name = name
+        self.items = items
         self.style_button()
 
     def clear(self):
-        name = self._name
-        items = self._items
-        self._name = ""
-        self._items = []
+        self.name = ""
+        self.items = []
         self.style_button()
-        return name, items
 
     def style_button(self):
-        self.button.update(
-            f"Procesar {len(self._items)} {self._name.capitalize()}" if self._items else f"Procesar {self._name.capitalize()}",
-            disabled=len(self._items) == 0
-        )
+        if self.items:
+            self.button.update(
+                f"Procesar {len(self.items)} {self.name.capitalize()}".center(20),
+                disabled=False,
+
+                button_color=sg.theme_button_color()
+            )
+        else:
+            self.button.update(
+                "".center(20),
+                disabled=True,
+                button_color=sg.theme_background_color()
+            )
