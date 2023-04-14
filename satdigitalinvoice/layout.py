@@ -312,7 +312,6 @@ class ActionButtonManager:
             self.button.update(
                 f"Procesar {len(self.items)} {self.name.capitalize()}".center(22),
                 disabled=False,
-
                 button_color=sg.theme_button_color()
             )
         else:
