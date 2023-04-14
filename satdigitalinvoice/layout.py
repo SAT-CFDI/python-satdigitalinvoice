@@ -270,12 +270,12 @@ def make_layout(has_fiel):
                         'Recuperar'.center(13),
                         [
                             [
-                                sg.Button("SAT Status", key="sat_status_todas", border_width=0, visible=has_fiel),
-                                sg.Text("Recuperar:", pad=TEXT_PADDING, visible=has_fiel),
-                                sg.Button("Emitidas ", key="recuperar_emitidas", border_width=0, visible=has_fiel),
-                                sg.Button("Recibidas", key="recuperar_recibidas", border_width=0, visible=has_fiel),
-                                sg.Text("Dias:", pad=TEXT_PADDING, visible=has_fiel),
-                                sg.Input("40", size=(4, 1), key="recuperar_dias", visible=has_fiel),
+                                sg.Button("SAT Status", key="sat_status_todas", border_width=0),
+                                sg.Text("Recuperar:", pad=TEXT_PADDING),
+                                sg.Button("Emitidas ", key="recuperar_emitidas", border_width=0),
+                                sg.Button("Recibidas", key="recuperar_recibidas", border_width=0),
+                                sg.Text("Dias:", pad=TEXT_PADDING),
+                                sg.Input("40", size=(4, 1), key="recuperar_dias"),
                             ]
                         ],
                         key='recuperar_tab',
