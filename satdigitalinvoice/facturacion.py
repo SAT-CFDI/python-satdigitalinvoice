@@ -335,8 +335,7 @@ class FacturacionGUI:
                 cfdi["Fecha"].strftime("%Y-%m-%d"),
                 cfdi["Total"],
                 self.local_db.liquidated_state(cfdi),
-                mf_pago_fmt(cfdi),
-                cfdi.uuid
+                mf_pago_fmt(cfdi)
             ]
             for i, cfdi in enumerate(cfdis, start=1)
         ]

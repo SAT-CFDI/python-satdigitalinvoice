@@ -56,11 +56,10 @@ def make_layout(has_fiel):
         sg.Button(image_data=HTML_ICON, key="ver_html", border_width=0, button_color=BUTTON_COLOR),
 
         sg.Push(),
-        sg.Text("Serie:", pad=TEXT_PADDING),
+        sg.Text("Factura:", pad=TEXT_PADDING),
         sg.Text("", key="serie", pad=TEXT_PADDING, text_color="black"),
-        sg.Text("Folio:", pad=TEXT_PADDING),
-        sg.Input("", key="folio", size=(10, 1), enable_events=True),
-        sg.Button("".center(20), disabled=True, key="crear_facturas", border_width=0, button_color=sg.theme_background_color()),
+        sg.Input("", key="folio", size=(8, 1), enable_events=True),
+        sg.Button("".center(22), disabled=True, key="crear_facturas", border_width=0, button_color=sg.theme_background_color()),
     ]
 
     # ----- Full layout -----
@@ -70,8 +69,12 @@ def make_layout(has_fiel):
             sg.TabGroup(
                 [[
                     sg.Tab(
-                        'Consola'.center(11),
+                        'Consola'.center(13),
                         [
+                            [
+                                sg.Push(),
+                                sg.Button(image_data=ABOUT_ICON, key="about", border_width=0, button_color=BUTTON_COLOR),
+                            ],
                             [sg.Multiline(
                                 expand_x=True,
                                 expand_y=True,
@@ -84,7 +87,7 @@ def make_layout(has_fiel):
                         key='console_tab',
                     ),
                     sg.Tab(
-                        'Facturas'.center(11),
+                        'Facturas'.center(13),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_facturas", border_width=0, ),
@@ -114,7 +117,7 @@ def make_layout(has_fiel):
                         key='facturas_tab',
                     ),
                     sg.Tab(
-                        'Clientes'.center(11),
+                        'Clientes'.center(13),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_clientes", border_width=0, ),
@@ -143,7 +146,7 @@ def make_layout(has_fiel):
                         key='clients_tab',
                     ),
                     sg.Tab(
-                        'Emitidas'.center(11),
+                        'Emitidas'.center(13),
                         [
                             [
                                 sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
@@ -181,7 +184,6 @@ def make_layout(has_fiel):
                                         "Total",
                                         "Pagada",
                                         "Tipo",
-                                        "Folio Fiscal",
                                     ],
                                     key="emitidas_table",
                                     expand_x=True,
@@ -196,7 +198,7 @@ def make_layout(has_fiel):
 
                     ),
                     sg.Tab(
-                        'Correos'.center(11),
+                        'Correos'.center(13),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_correos", border_width=0, ),
@@ -224,7 +226,7 @@ def make_layout(has_fiel):
                         key='correos_tab',
                     ),
                     sg.Tab(
-                        'Ajustes'.center(11),
+                        'Ajustes'.center(13),
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_ajustes", border_width=0, ),
@@ -257,7 +259,7 @@ def make_layout(has_fiel):
                         key='ajustes_tab'
                     ),
                     sg.Tab(
-                        'Recuperar'.center(11),
+                        'Recuperar'.center(13),
                         [
                             [
                                 sg.Button("SAT Status", key="sat_status_todas", border_width=0, visible=has_fiel),
@@ -266,8 +268,6 @@ def make_layout(has_fiel):
                                 sg.Button("Recibidas", key="recuperar_recibidas", border_width=0, visible=has_fiel),
                                 sg.Text("Dias:", pad=TEXT_PADDING, visible=has_fiel),
                                 sg.Input("40", size=(4, 1), key="recuperar_dias", visible=has_fiel),
-                                sg.Push(),
-                                sg.Button(image_data=ABOUT_ICON, key="about", border_width=0, button_color=BUTTON_COLOR),
                             ]
                         ],
                         key='recuperar_tab',
@@ -302,14 +302,14 @@ class ActionButtonManager:
     def style_button(self):
         if self.items:
             self.button.update(
-                f"Procesar {len(self.items)} {self.name.capitalize()}".center(20),
+                f"Procesar {len(self.items)} {self.name.capitalize()}".center(22),
                 disabled=False,
 
                 button_color=sg.theme_button_color()
             )
         else:
             self.button.update(
-                "".center(20),
+                "".center(22),
                 disabled=True,
                 button_color=sg.theme_background_color()
             )
