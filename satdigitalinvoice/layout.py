@@ -158,7 +158,7 @@ def make_layout(has_fiel):
                                 sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
                                 sg.Button("Todas", key="facturas_emitidas", border_width=0),
                                 sg.Button(image_data=SEARCH_ICON, key="emitidas_search_enter", border_width=0, button_color=BUTTON_COLOR),
-                                sg.Input("", size=(30, 1), key="emitidas_search", border_width=0),
+                                sg.Input("", size=(20, 1), key="emitidas_search", border_width=0),
                                 sg.Text("", pad=TEXT_PADDING, key="emitidas_text"),
                             ],
                             [
