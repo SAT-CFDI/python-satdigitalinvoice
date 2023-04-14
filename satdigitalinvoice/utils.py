@@ -8,6 +8,9 @@ from satcfdi import Signer, DatePeriod
 
 
 def parse_date_period(periodo):
+    if not periodo:
+        return DatePeriod(year=None)
+
     fmt, period = try_parsing_date(periodo)
     if fmt == '%Y':
         return DatePeriod(period.year)

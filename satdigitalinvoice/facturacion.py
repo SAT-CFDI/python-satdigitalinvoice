@@ -373,7 +373,10 @@ class FacturacionGUI:
                 if event in ("Exit", PySimpleGUI.WIN_CLOSED):
                     return
 
-                dp = parse_date_period(values["periodo"])
+                try:
+                    dp = parse_date_period(values["periodo"])
+                except ValueError:
+                    dp = None
 
                 if event in ("periodo_enter", "refresh_facturas", "refresh_ajustes", "refresh_clientes", "refresh_correos"):
                     event = 'main_tab_group'
@@ -429,8 +432,8 @@ class FacturacionGUI:
 
                         if values['main_tab_group'] == 'facturas_tab':
                             if dp is None or dp.month is None:
-                                print("Periodo no válido")
-                                self.window['console_tab'].select()
+                                self.window['preparar_facturas_text'].update("Periodo no válido")
+                                self.window['facturas_table'].update(values=[])
                                 continue
 
                             self.window['preparar_facturas_text'].update(f"{year_month_desc(dp)}")
