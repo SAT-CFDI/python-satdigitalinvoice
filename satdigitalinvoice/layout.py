@@ -55,7 +55,7 @@ BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 def make_layout(has_fiel):
     # LAYOUT
     button_column = [
-        sg.Text("Año-Mes:", pad=TEXT_PADDING),
+        sg.Text("Periodo:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
         sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
         sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
@@ -238,6 +238,7 @@ def make_layout(has_fiel):
                         [
                             [
                                 sg.Button("Refrescar", key="refresh_ajustes", border_width=0, ),
+                                sg.Text("", pad=TEXT_PADDING, key="preparar_ajustes_text"),
                             ],
                             [
                                 sg.Table(

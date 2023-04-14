@@ -536,12 +536,18 @@ class FacturacionGUI:
                             self.action_button_manager.set_items('correos', cfdi_correos)
 
                         if values['main_tab_group'] == 'ajustes_tab':
-                            emisor_rfc = self.csd_signer.rfc
+                            if dp is None or dp.month is None:
+                                self.window['preparar_ajustes_text'].update("Periodo no válido")
+                                self.window['ajustes_table'].update(values=[])
+                                continue
+
                             dp_effective = add_month(dp, 1)
+                            self.window['preparar_ajustes_text'].update(f"Ajustes Efectivos Al: {year_month_desc(dp_effective)}")
 
                             # clear directory
                             ajustes_dir = ajustes_directory(DatePeriod(dp.year, dp.month))
                             clear_directory(ajustes_dir)
+                            emisor_rfc = self.csd_signer.rfc
 
                             clients = ClientsManager()
                             facturas = FacturasManager(None)["Facturas"]
