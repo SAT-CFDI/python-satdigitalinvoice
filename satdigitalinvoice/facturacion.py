@@ -93,6 +93,7 @@ class FacturacionGUI:
         self.window['importe_pago'].bind("<Return>", "_enter")
         self.window['fecha_pago'].bind("<Return>", "_enter")
         self.window['forma_pago'].bind("<Return>", "_enter")
+        self.window['emitidas_search'].bind("<Return>", "_enter")
 
         self.window['facturas_table'].bind('<Double-Button-1>', '_double_click')
         self.window['clientes_table'].bind('<Double-Button-1>', '_double_click')
@@ -301,6 +302,27 @@ class FacturacionGUI:
             self.console.update("")
         log_line(name)
 
+    def facturas_search(self, search_text):
+        search_text = search_text.strip().upper()
+        if len(search_text) < 3:
+            self.window["emitidas_text"].update("El texto de búsqueda debe tener al menos 3 caracteres")
+            return
+
+        self.window["emitidas_text"].update(search_text)
+
+        def fact_iter():
+            for i in self.get_all_invoices().values():
+                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                        and (
+                        i.name == search_text
+                        or i["Receptor"]["Rfc"] == search_text
+                        or search_text in i["Receptor"].get("Nombre", "")
+                ):
+                    yield i
+
+        cfdis = list(fact_iter())
+        self.emitidas_show(cfdis)
+
     def facturas_pendientes(self):
         self.window["emitidas_text"].update("Facturas Pendientes de Pago")
 
@@ -393,6 +415,10 @@ class FacturacionGUI:
                                         self.unzip_cfdi(b)
                                 del self.local_db[event]
                             print("FIN")
+
+                    case "emitidas_search_enter":
+                        self.action_button_manager.clear()
+                        self.facturas_search(values["emitidas_search"])
 
                     case 'main_tab_group':
                         if values['main_tab_group'] == 'console_tab':

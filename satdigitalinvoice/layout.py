@@ -43,6 +43,12 @@ PREVIEW_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAAL
                "/cPT2tjMViHvUEg9i0KxBmQjeszPVSxCnCrmBW/lUECqAKzDX/yTPmEi0EaeFauq0JDzU+BG809HX7pKAYnwAiYA9fi7qVr+jZgKEo30rqNBh2dlAe65Yx7BJLStX2teQFa4i3/JN7WBV6Z5+JrwA/wKu4S" \
                "+FYhixdADniTzvSRUQDeVXSsNiwUJ+ItbzpnpICy2vAhA4v2bLzl//ALOtSCJzC7jH4AAAAASUVORK5CYII="
 
+SEARCH_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABM0lEQVR4nOXTuytAYRzG8Y8RJTPJ5jJIitwGoxiZGSTZDAaDTQaJhYWBf0A" \
+              "WRDHjD7BIMrkUg2wol079lEGc1yXJU2c4b8/5Pu/vfZ/Df1MjJrGKLSyjHyVfBZdjE0+4wwH2cB5rVxj8LLwmQNcYeWO3TdiOoJlUeDGOcIbqd3wFmI2QgZSAcTyiPYc3C9nBZcq" \
+              "dnGAjYUPNMUVfHnNlmIcSArIpLrCUx9wSAZ3StB8V/lD1EdCTGJBVeCVvg+4wlQAvxT0m8n6wERUtyukfjakb8ga04QELOby1uMGaxFbsxq4W49jeUke05xRlKfD5gO/GJBlkGr3" \
+              "ownA0JvsZD1H1Gfh8vLdiHbex/vIcYwyFX4G/VnbhdRFYIVEZbO7VmRekAn4Nnqn7nWP5NnX9JNyf1DM+Yku7BVpvYgAAAABJRU5ErkJggg=="
+
+
 BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 
 
@@ -151,6 +157,8 @@ def make_layout(has_fiel):
                             [
                                 sg.Button("Pendientes", key="facturas_pendientes", border_width=0),
                                 sg.Button("Todas", key="facturas_emitidas", border_width=0),
+                                sg.Button(image_data=SEARCH_ICON, key="emitidas_search_enter", border_width=0, button_color=BUTTON_COLOR),
+                                sg.Input("", size=(30, 1), key="emitidas_search", border_width=0),
                                 sg.Text("", pad=TEXT_PADDING, key="emitidas_text"),
                             ],
                             [
