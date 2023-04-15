@@ -164,38 +164,7 @@ class FacturacionGUI:
     def set_folio(self, folio: int = None):
         if folio:
             self.local_db.folio_set(folio)
-            self.window['folio'].update(folio)
-        else:
-            self.window['folio'].update(self.local_db.folio())
-
-    def enviar_correos(self, emisor_cif, emails):
-        with self.email_manager.sender as s:
-            for receptor, notify_invoices, pendientes_meses_anteriores in emails:
-                attachments = []
-                for r in notify_invoices:
-                    attachments += [r.filename + ".xml", r.filename + ".pdf"]
-
-                subject = f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}"
-                s.send_email(
-                    subject=subject,
-                    to_addrs=receptor["Email"],
-                    html=generate_html_template(
-                        'mail_facturas_template.html',
-                        fields={
-                            "facturas": notify_invoices,
-                            'pendientes_meses_anteriores': pendientes_meses_anteriores,
-                            'emisor': emisor_cif,
-                        },
-                    ),
-                    file_attachments=attachments
-                )
-                for r in notify_invoices:
-                    self.local_db.notified_set(r.uuid, True)
-                print_yaml({
-                    "correo": subject,
-                    "para": receptor["Email"]
-                })
-                self._read()
+        self.window['folio'].update(folio or self.local_db.folio())
 
     def recupera_comprobantes(self, id_solicitud):
         response = self.sat_service.recover_comprobante_status(
@@ -238,14 +207,42 @@ class FacturacionGUI:
         elif action_name == 'correos':
             clients = ClientsManager()
             emisor_cif = clients[self.csd_signer.rfc]
-            self.enviar_correos(emisor_cif, action_items)
+            with self.email_manager.sender as s:
+                for receptor, notify_invoices, pendientes_meses_anteriores in action_items:
+                    def attachments():
+                        for ni in notify_invoices:
+                            yield ni.filename + ".xml"
+                            yield ni.filename + ".pdf"
+
+                    subject = f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}"
+                    s.send_email(
+                        subject=subject,
+                        to_addrs=receptor["Email"],
+                        html=generate_html_template(
+                            'mail_facturas_template.html',
+                            fields={
+                                "facturas": notify_invoices,
+                                'pendientes_meses_anteriores': pendientes_meses_anteriores,
+                                'emisor': emisor_cif,
+                            },
+                        ),
+                        file_attachments=attachments()
+                    )
+                    for r in notify_invoices:
+                        self.local_db.notified_set(r.uuid, True)
+                    print_yaml({
+                        "correo": subject,
+                        "para": receptor["Email"]
+                    })
+                    self._read()
         elif action_name == 'clientes':
             for client in action_items:
                 print(f"Validando: {client['Rfc']}")
-                self._read()
                 validar_client(client)
+                self._read()
         else:
             raise ValueError(f"Invalid action: {action_name}")
+        print("FIN")
 
     def set_selected_satcfdi(self, factura):
         i = factura
@@ -682,29 +679,20 @@ class FacturacionGUI:
 
                     case "prepare_pago" | "importe_pago_enter" | "fecha_pago_enter" | "forma_pago_enter" | "ver_html_pago":
                         if i := self.selected_satcfdi:
-                            try:
-                                fecha_pago = parse_fecha_pago(values["fecha_pago"])
-                                importe_pago = parse_importe_pago(values["importe_pago"])
-                                importe_pago = importe_pago or i.saldo_pendiente
-                                self.window["importe_pago"].update(importe_pago)
+                            fecha_pago = parse_fecha_pago(values["fecha_pago"])
+                            importe_pago = parse_importe_pago(values["importe_pago"])
+                            importe_pago = importe_pago or i.saldo_pendiente
+                            self.window["importe_pago"].update(importe_pago)
 
-                                cfdi = pago_factura(
-                                    factura_pagar=i,
-                                    fecha_pago=fecha_pago,
-                                    forma_pago=values["forma_pago"],
-                                    importe_pago=importe_pago,
-                                )
-                                self.action_button_manager.set_items('facturas', [cfdi])
-                                if event == "ver_html_pago":
-                                    preview_cfdis([cfdi])
-                            except (ValueError, ArithmeticError) as e:
-                                PySimpleGUI.Popup(
-                                    e,
-                                    no_titlebar=True,
-                                    grab_anywhere=True,
-                                    any_key_closes=True,
-                                    background_color="red4",
-                                )
+                            cfdi = pago_factura(
+                                factura_pagar=i,
+                                fecha_pago=fecha_pago,
+                                forma_pago=values["forma_pago"],
+                                importe_pago=importe_pago,
+                            )
+                            self.action_button_manager.set_items('facturas', [cfdi])
+                            if event == "ver_html_pago":
+                                preview_cfdis([cfdi])
 
                     case "status_sat":
                         if i := self.selected_satcfdi:
@@ -737,7 +725,6 @@ class FacturacionGUI:
                                 action_items=self.action_button_manager.items
                             )
                             self.action_button_manager.clear()
-                            print("FIN")
 
                     case "ver_excel":
                         clients = ClientsManager()
@@ -748,12 +735,11 @@ class FacturacionGUI:
                                 emisor_cif,
                                 self.rfc_prediales
                         ):
-                            print("Archivo generado: " + archivo_excel)
                             os.startfile(
                                 os.path.abspath(archivo_excel)
                             )
                         else:
-                            print("No se pudo crear el archivo, cierra el archivo si se tiene abierto")
+                            raise Exception("No se pudo crear el archivo, cierra el archivo si se tiene abierto")
 
                     case "ver_html":
                         def fact_iter():
@@ -767,12 +753,11 @@ class FacturacionGUI:
                                 objs=cfdis,
                                 target=outfile,
                             )
-                            print("Archivo generado: " + outfile)
                             os.startfile(
                                 os.path.abspath(outfile)
                             )
                         else:
-                            print("No hay facturas para periodo seleccionado")
+                            raise Exception("No hay facturas para el periodo seleccionado")
 
                     case "ver_carpeta":
                         directory = archivos_folder(dp)
@@ -791,7 +776,6 @@ class FacturacionGUI:
                             self._read()
                             estado = self.local_db.status_sat(cfdi, update=True)
                             print_yaml(estado)
-
                         print("FIN")
 
                     case "periodo" | "inicio" | "final" | "fecha_pago" | "forma_pago" | "importe_pago" | ' ':
@@ -801,4 +785,13 @@ class FacturacionGUI:
                         logger.error(f"Unknown event '{event}'")
 
             except Exception as ex:
-                logger.exception(header_line("ERROR"))
+                if values['main_tab_group'] == 'console_tab':
+                    logger.exception(header_line("ERROR"))
+                else:
+                    PySimpleGUI.Popup(
+                        ex,
+                        no_titlebar=True,
+                        grab_anywhere=True,
+                        any_key_closes=True,
+                        background_color="red4",
+                    )
