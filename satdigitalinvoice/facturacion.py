@@ -433,9 +433,10 @@ class FacturacionGUI:
                             self.action_button_manager.clear()
 
                         if values['main_tab_group'] == 'facturas_tab':
+                            self.window['facturas_table'].update(values=[])
+
                             if dp is None or dp.month is None:
                                 self.window['preparar_facturas_text'].update("Periodo no válido")
-                                self.window['facturas_table'].update(values=[])
                                 continue
 
                             self.window['preparar_facturas_text'].update(f"{period_desc(dp)}")
@@ -468,6 +469,7 @@ class FacturacionGUI:
                             self.action_button_manager.set_items('facturas', cfdis)
 
                         if values['main_tab_group'] == 'clients_tab':
+                            self.window['clientes_table'].update(values=[])
                             clients = list(ClientsManager().values())
                             facturas = FacturasManager(dp)["Facturas"]
                             rows = [
@@ -763,6 +765,21 @@ class FacturacionGUI:
                             os.path.abspath(directory)
                         )
 
+                    case "ver_config":
+                        os.startfile(
+                            os.path.abspath(".")
+                        )
+
+                    case "editar_clientes":
+                        os.startfile(
+                            os.path.abspath("clientes.yaml")
+                        )
+
+                    case "editar_facturas":
+                        os.startfile(
+                            os.path.abspath("facturas.yaml")
+                        )
+
                     case "sat_status_todas":
                         def fact_iter():
                             for i in self.get_all_invoices().values():
@@ -783,9 +800,8 @@ class FacturacionGUI:
                         logger.error(f"Unknown event '{event}'")
 
             except Exception as ex:
-                if values['main_tab_group'] == 'console_tab':
-                    logger.exception(header_line("ERROR"))
-                else:
+                logger.exception(header_line("ERROR"))
+                if values['main_tab_group'] != 'console_tab':
                     PySimpleGUI.Popup(
                         ex,
                         no_titlebar=True,

@@ -48,6 +48,14 @@ SEARCH_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALE
               "dnGAjYUPNMUVfHnNlmIcSArIpLrCUx9wSAZ3StB8V/lD1EdCTGJBVeCVvg+4wlQAvxT0m8n6wERUtyukfjakb8ga04QELOby1uMGaxFbsxq4W49jeUke05xRlKfD5gO/GJBlkGr3" \
               "ownA0JvsZD1H1Gfh8vLdiHbex/vIcYwyFX4G/VnbhdRFYIVEZbO7VmRekAn4Nnqn7nWP5NnX9JNyf1DM+Yku7BVpvYgAAAABJRU5ErkJggg=="
 
+CONFIG_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABPElEQVR4nOWVvWoCQRSFP5NCSJHOdGkECaa3s" \
+              "/MtUu6CYOcTaGMZU2efwNYtrKwkWPgK9nmAEC38IRMGTmCZrIMru6B44MLOmXPP7N6ZvQPXgiowdcJyueEFMMBMYcTlhjfgG7hR2OfhqWYB0AEqQBnoA1/APKGZi" \
+              "+tLU1GOzfXiEVirBDvgE9gA70A9oauL20izU85aHgcxAlZACxgAH0DDo29IM1DOSh6paAI/QJQyVwJCIFaE4lxE8rBe//AALIA90HbMY5VgqTDikou0lbuQVyrugIkMnsSFGttN/ENHnJ1DWqNc6+FFV" \
+              "+J7jWO9tYul5pDWKJc8FxhnXSBriQKNa8eUqPBNbh5xTMeK4JRjWviP5msVkdMqnsVts7aKtGbX8zS7XtZmdwhDff5tol2/ckkXTrXoK/N88Qvnr38CSEQRlwAAAABJRU5ErkJggg=="
+
+EDIT_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA10lEQVR4nO3UPUpDQRSG4cfCQgn" \
+            "+LSPLSCcEC1u3EXdgEXdg3EC2IXYS0N4itZWWGkGvDHyBkE45Npq3usyB95tz5s6w4ZfZwwQveMIFtqvkB5jhDZe4xmdCyuQdxivrk3RSIl/gAe84Ta118oytCvkQPdwmZJxxXVXJl/TSSZd6O/hvs4+7yE" \
+            "/Wasd4xT2ONvIl/3gsuys3dLRWGyZ0ll/2RwwiX2SnZ5XyxnkerD5uEjKqkjemmOe7H3FXJW885rGaR9xVyg/xkZBpxjXIwZewU7VTf4ovf6VSMafchm4AAAAASUVORK5CYII="
 
 BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 
@@ -55,6 +63,7 @@ BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 def make_layout(has_fiel):
     # LAYOUT
     button_column = [
+        sg.Button(image_data=CONFIG_ICON, key="ver_config", border_width=0, button_color=BUTTON_COLOR),
         sg.Text("Periodo:", pad=TEXT_PADDING),
         sg.Input(date.today().strftime('%Y-%m'), size=(11, 1), key="periodo"),
         sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
@@ -93,40 +102,12 @@ def make_layout(has_fiel):
                         key='console_tab',
                     ),
                     sg.Tab(
-                        'Facturas'.center(13),
-                        [
-                            [
-                                sg.Button("Refrescar", key="refresh_facturas", border_width=0, ),
-                                sg.Text("", pad=TEXT_PADDING, key="preparar_facturas_text"),
-                            ],
-                            [
-                                sg.Table(
-                                    values=[],
-                                    headings=[
-                                        '#',
-                                        'EReg',
-                                        'Receptor Razon Social',
-                                        'Recep. Rfc',
-                                        "Tipo",
-                                        "Subtotal",
-                                        "Total"
-                                    ],
-                                    key="facturas_table",
-                                    expand_x=True,
-                                    expand_y=True,
-                                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                                    enable_events=True,
-                                    text_color="black",
-                                    background_color="white",
-                                )
-                            ]],
-                        key='facturas_tab',
-                    ),
-                    sg.Tab(
                         'Clientes'.center(13),
                         [
                             [
-                                sg.Button("Refrescar", key="refresh_clientes", border_width=0, ),
+                                sg.Button("Refrescar", key="refresh_clientes", border_width=0),
+                                sg.Push(),
+                                sg.Button(image_data=EDIT_ICON, key="editar_clientes", border_width=0, button_color=BUTTON_COLOR),
                             ],
                             [
                                 sg.Table(
@@ -150,6 +131,38 @@ def make_layout(has_fiel):
                                 )
                             ]],
                         key='clients_tab',
+                    ),
+                    sg.Tab(
+                        'Facturas'.center(13),
+                        [
+                            [
+                                sg.Button("Refrescar", key="refresh_facturas", border_width=0, ),
+                                sg.Text("", pad=TEXT_PADDING, key="preparar_facturas_text"),
+                                sg.Push(),
+                                sg.Button(image_data=EDIT_ICON, key="editar_facturas", border_width=0, button_color=BUTTON_COLOR),
+                            ],
+                            [
+                                sg.Table(
+                                    values=[],
+                                    headings=[
+                                        '#',
+                                        'EReg',
+                                        'Receptor Razon Social',
+                                        'Recep. Rfc',
+                                        "Tipo",
+                                        "Subtotal",
+                                        "Total"
+                                    ],
+                                    key="facturas_table",
+                                    expand_x=True,
+                                    expand_y=True,
+                                    select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
+                                    enable_events=True,
+                                    text_color="black",
+                                    background_color="white",
+                                )
+                            ]],
+                        key='facturas_tab',
                     ),
                     sg.Tab(
                         'Emitidas'.center(13),
