@@ -513,7 +513,8 @@ class FacturacionGUI:
                                         if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                                                 and self.local_db.liquidated_state(i) == LiquidatedState.NO \
                                                 and i["Fecha"] < dp_now \
-                                                and i["Receptor"]["Rfc"] == receptor_rfc:
+                                                and i["Receptor"]["Rfc"] == receptor_rfc \
+                                                and i not in notify_invoices:
                                             yield i
 
                                 fac_pen = sorted(
