@@ -722,20 +722,21 @@ class FacturacionGUI:
                             self.set_selected_satcfdi(i)
 
                     case "crear_facturas":
-                        action_name = self.action_button_manager.name
-                        action_items = self.action_button_manager.items
-
+                        action_text = self.action_button_manager.text()
                         res = PySimpleGUI.popup(
-                            f"Estas seguro que quieres procesar {len(action_items)} {action_name}?",
-                            title=self.window[event].ButtonText,
+                            f"{action_text}?",
+                            title="Confirmar",
                             button_type=POPUP_BUTTONS_OK_CANCEL,
                         )
                         if res == "OK":
-                            self.header(self.action_button_manager.text().upper())
-                            self.action_button_manager.clear()
+                            self.header(action_text.upper())
                             self.window['console_tab'].select()
                             self._read()
-                            self.action_button(action_name, action_items)
+                            self.action_button(
+                                action_name=self.action_button_manager.name,
+                                action_items=self.action_button_manager.items
+                            )
+                            self.action_button_manager.clear()
                             print("FIN")
 
                     case "ver_excel":
