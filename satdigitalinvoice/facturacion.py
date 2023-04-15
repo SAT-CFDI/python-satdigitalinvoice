@@ -9,6 +9,7 @@ from zipfile import ZipFile
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI
 from satcfdi import DatePeriod, csf
 from satcfdi.accounting import EmailManager
+from satcfdi.create.cfd import cfdi40
 from satcfdi.exceptions import ResponseError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, TipoDescargaMasivaTerceros, EstadoSolicitud
@@ -131,6 +132,13 @@ class FacturacionGUI:
 
     def generate_invoice(self, invoice):
         ref_id = random_string()
+
+        # Add Serie and Folio and signature
+        invoice['Serie'] = self.serie
+        folio = self.local_db.folio()
+        invoice['Folio'] = str(folio)
+        cfdi40.Comprobante.sign(invoice, self.csd_signer)
+
         attempts = 3
         for i in range(attempts):
             if i:
@@ -150,7 +158,7 @@ class FacturacionGUI:
                     logger.error(f"Response: {ex.response.text}")
                 continue
 
-            self.set_folio(int(res['Folio']) + 1)
+            self.set_folio(folio + 1)
             return move_to_folder(res.xml, pdf_data=res.pdf)
 
     def set_folio(self, folio: int = None):
@@ -723,9 +731,10 @@ class FacturacionGUI:
                             button_type=POPUP_BUTTONS_OK_CANCEL,
                         )
                         if res == "OK":
-                            self.header(f"PROCESAR {action_name.upper()}")
+                            self.header(self.action_button_manager.text().upper())
                             self.action_button_manager.clear()
                             self.window['console_tab'].select()
+                            self._read()
                             self.action_button(action_name, action_items)
                             print("FIN")
 

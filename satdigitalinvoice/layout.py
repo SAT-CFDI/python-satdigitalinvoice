@@ -308,16 +308,15 @@ class ActionButtonManager:
         self.items = []
         self.style_button()
 
-    def style_button(self):
+    def text(self):
         if self.items:
-            self.button.update(
-                f"Procesar {len(self.items)} {self.name.capitalize()}".center(22),
-                disabled=False,
-                button_color=sg.theme_button_color()
-            )
+            return f"Procesar {len(self.items)} {self.name.capitalize()}"
         else:
-            self.button.update(
-                "".center(22),
-                disabled=True,
-                button_color=sg.theme_background_color()
-            )
+            return ""
+
+    def style_button(self):
+        self.button.update(
+            self.text().center(22),
+            disabled=not self.items,
+            button_color=sg.theme_button_color() if self.items else sg.theme_background_color()
+        )
