@@ -1,10 +1,11 @@
 import logging
 import os
 import sys
-
+from zipfile import ZipFile
 import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
+
 DATA_DIRECTORY = ".data"
 ARCHIVOS_DIRECTORY = "archivos"
 TEMPLATES_DIRECTORY = "templates"
@@ -29,7 +30,15 @@ def add_file_handler():
 
 class FacturacionLauncher:
 
-    def __init__(self, debug=False):
+    def __init__(self, chdir=None, debug=False):
+        app_dir = os.getcwd()
+
+        if not chdir:
+            # APPDATA, LOCALAPPDATA, PROGRAMDATA, USERPROFILE
+            chdir = os.path.join(os.getenv('USERPROFILE'), 'FacturacionCFDI4')
+            os.makedirs(chdir, exist_ok=True)
+        os.chdir(chdir)
+
         # set up logging
         if debug:
             logging.basicConfig(
@@ -38,6 +47,16 @@ class FacturacionLauncher:
             )
         add_file_handler()
 
+        # loading the sample.zip
+        try:
+            with ZipFile(os.path.join(app_dir, 'sample.zip'), 'r') as zf:
+                for member in zf.infolist():
+                    if not os.path.exists(member.filename):
+                        zf.extract(member)
+        except FileNotFoundError:
+            pass
+
+        # layout
         layout = [
             [sg.Column([[
                 sg.Image(source=os.path.join(SOURCE_DIRECTORY, "images", "logo.png"), pad=2),
@@ -58,14 +77,14 @@ class FacturacionLauncher:
         ]
 
         self.window = sg.Window(
-            f"Facturación Masiva CFDI 4.0",  # {self.csd_signer.rfc}
+            f"Facturación Masiva CFDI 4.0",
             layout,
             size=(640, 480),
             resizable=True,
             font=("Courier New", 11, "bold"),
             no_titlebar=True,
             modal=True,
-            background_color='#a0dbd9', # sg.theme_background_color(),
+            background_color='#a0dbd9',  # sg.theme_background_color(),
             auto_close=True,
             auto_close_duration=10,  # seconds
         )
@@ -86,7 +105,7 @@ class FacturacionLauncher:
         except Exception as ex:
             logging.exception(ex)
             self.window['console'].update(
-               f"Error al cargar la aplicación. {ex.__class__.__name__}: {ex}",
+                f"Error al cargar la aplicación. {ex.__class__.__name__}: {ex}",
                 text_color='red4',
             )
             self.window.read()
