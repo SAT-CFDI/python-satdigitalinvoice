@@ -2,7 +2,6 @@ import collections.abc
 import json
 import logging
 import os
-from datetime import date
 from decimal import Decimal
 
 import jsonschema as jsonschema

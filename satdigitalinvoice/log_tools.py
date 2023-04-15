@@ -1,5 +1,6 @@
 import yaml
 from satcfdi import Code
+from .mycfdi import MyCFDI
 
 
 class NoAliasDumper(yaml.SafeDumper):
@@ -40,6 +41,6 @@ def log_item(text):
     )
 
 
-def cfdi_header(cfdi):
+def cfdi_header(cfdi: MyCFDI):
     receptor = Code(cfdi['Receptor']['Rfc'], cfdi['Receptor']['Nombre'])
     return f"{cfdi.name} - {cfdi.uuid} {receptor}"

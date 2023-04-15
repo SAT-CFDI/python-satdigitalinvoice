@@ -7,7 +7,7 @@ from jinja2.filters import do_mark_safe
 from satcfdi.transform.catalog import CATALOGS
 from satcfdi.transform.helpers import iterate as h_iterate
 
-from satdigitalinvoice import TEMPLATES_DIRECTORY
+from . import TEMPLATES_DIRECTORY
 
 
 class FacturacionEnvironment(Environment):
@@ -49,8 +49,8 @@ class FacturacionEnvironment(Environment):
             )
 
 
-facturacion_environment = FacturacionEnvironment()
-
-
 def tag(text, tag):
     return '<' + tag + '>' + text + '</' + tag + '>'
+
+
+facturacion_environment = FacturacionEnvironment()

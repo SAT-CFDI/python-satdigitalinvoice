@@ -771,7 +771,7 @@ class FacturacionGUI:
                                     yield i
 
                         for cfdi in fact_iter():
-                            print(f"Estado SAT: {cfdi.name} - {cfdi.uuid}")
+                            print(f"Estado SAT: {cfdi_header(cfdi)}")
                             self._read()
                             estado = self.local_db.status_sat(cfdi, update=True)
                             print_yaml(estado)
