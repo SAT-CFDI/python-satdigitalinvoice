@@ -103,7 +103,7 @@ class FacturacionGUI:
 
         # Add logging to the window
         h = logging.StreamHandler(self.window['console'])
-        h.setLevel(logging.INFO)
+        h.setLevel(logging.ERROR)
         logging.root.addHandler(h)
 
         self.main_loop()
