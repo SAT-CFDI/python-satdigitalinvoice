@@ -30,14 +30,11 @@ def add_file_handler():
 
 class FacturacionLauncher:
 
-    def __init__(self, chdir=None, debug=False):
+    def __init__(self, cwd=None, debug=False):
         app_dir = os.getcwd()
 
-        if not chdir:
-            # APPDATA, LOCALAPPDATA, PROGRAMDATA, USERPROFILE
-            chdir = os.path.join(os.getenv('USERPROFILE'), 'FacturacionCFDI4')
-            os.makedirs(chdir, exist_ok=True)
-        os.chdir(chdir)
+        if cwd:
+            os.chdir(cwd)
 
         # set up logging
         if debug:
