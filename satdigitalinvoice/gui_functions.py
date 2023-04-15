@@ -88,7 +88,7 @@ def parse_periodo_mes_ajuste(periodo_mes_ajuste: str):
     if periodo not in PERIODICIDAD:
         raise ValueError("Periodo Invalido")
 
-    return periodo, mes_ajuste
+    return PERIODICIDAD[periodo], mes_ajuste
 
 
 def format_concepto_desc(concepto, periodo):
@@ -128,8 +128,7 @@ def period_desc(dp: DatePeriod):
 
 
 def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
-    periodicidad, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
-    periodo_meses = PERIODICIDAD[periodicidad]
+    periodo_meses, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
 
     if (dp.month - mes_ajuste) % periodo_meses == 0:
         if offset:
