@@ -28,7 +28,7 @@ logger.level = logging.INFO
 
 sat_manager = sat.SAT()
 
-PERIODOS = {
+PERIODICIDAD = {
     "Mensual": 1,
     "Bimestral": 2,
     "Trimestral": 3,
@@ -85,7 +85,7 @@ def parse_periodo_mes_ajuste(periodo_mes_ajuste: str):
     if not (12 >= int(mes_ajuste) >= 1):
         raise ValueError("Periodo Invalido")
 
-    if periodo not in PERIODOS:
+    if periodo not in PERIODICIDAD:
         raise ValueError("Periodo Invalido")
 
     return periodo, mes_ajuste
@@ -123,21 +123,21 @@ def validad_facturas(clients, facturas):
     return is_valid
 
 
-def year_month_desc(dp: DatePeriod):
+def period_desc(dp: DatePeriod):
     return format_date(date(year=dp.year, month=dp.month, day=1), locale='es_MX', format="'Mes de' MMMM 'del' y").upper()
 
 
-def periodo_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
-    periodo, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
-    periodo_meses = PERIODOS[periodo]
+def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
+    periodicidad, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
+    periodo_meses = PERIODICIDAD[periodicidad]
 
     if (dp.month - mes_ajuste) % periodo_meses == 0:
         if offset:
             dp = add_month(dp, offset)
 
-        periodo = year_month_desc(dp)
+        periodo = period_desc(dp)
         if periodo_meses > 1:
-            periodo += " AL " + year_month_desc(
+            periodo += " AL " + period_desc(
                 dp=add_month(dp, periodo_meses - 1)
             )
 
@@ -152,7 +152,7 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
     emisor_cif = clients[emisor_rfc]
 
     def prepare_concepto(concepto):
-        periodo = periodo_desc(
+        periodo = periodicidad_desc(
             dp,
             concepto['_periodo_mes_ajuste'],
             concepto.get('_desfase_mes')

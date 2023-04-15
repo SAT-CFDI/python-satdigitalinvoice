@@ -7,7 +7,7 @@ from satcfdi import Signer, DatePeriod
 
 from satdigitalinvoice.__version__ import __package__
 from satdigitalinvoice.file_data_managers import ClientsManager, FacturasManager, ConfigManager
-from satdigitalinvoice.gui_functions import generate_ingresos, periodo_desc
+from satdigitalinvoice.gui_functions import generate_ingresos, periodicidad_desc
 from satdigitalinvoice.utils import find_best_match
 from tests.utils import verify_result, XElementPrettyPrinter
 
@@ -84,33 +84,33 @@ def test_generar_ingresos_error2(caplog):
 
 
 def test_periodo_desc():
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=0) == 'MES DE ENERO DEL 2021'
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=0) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=0) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=0) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=0) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=0) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=0) == 'MES DE ENERO DEL 2021'
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=0) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=0) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=0) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=0) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=0) is None
 
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=0) == 'MES DE DICIEMBRE DEL 2021'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=0) == 'MES DE DICIEMBRE DEL 2021'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE ENERO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE FEBRERO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MARZO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE MAYO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=0) == 'MES DE DICIEMBRE DEL 2021 AL MES DE NOVIEMBRE DEL 2022'
 
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=1) == 'MES DE FEBRERO DEL 2021'
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=1) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=1) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=1) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=1) is None
-    assert periodo_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=1) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Mensual.1', offset=1) == 'MES DE FEBRERO DEL 2021'
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Bimestral.2', offset=1) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Trimestral.3', offset=1) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Cuatrimestral.4', offset=1) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Semestral.5', offset=1) is None
+    assert periodicidad_desc(DatePeriod(year=2021, month=1), 'Anual.6', offset=1) is None
 
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=1) == 'MES DE ENERO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE FEBRERO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE MARZO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE ABRIL DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE JUNIO DEL 2022'
-    assert periodo_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE DICIEMBRE DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Mensual.7', offset=1) == 'MES DE ENERO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Bimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE FEBRERO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Trimestral.9', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE MARZO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Cuatrimestral.8', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE ABRIL DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Semestral.6', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE JUNIO DEL 2022'
+    assert periodicidad_desc(DatePeriod(year=2021, month=12), 'Anual.12', offset=1) == 'MES DE ENERO DEL 2022 AL MES DE DICIEMBRE DEL 2022'
 
 
 def test_find_best_match():

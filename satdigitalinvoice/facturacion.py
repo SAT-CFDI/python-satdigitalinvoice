@@ -22,11 +22,11 @@ from .client_validation import validar_client
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
-from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, mf_pago_fmt, archivos_folder, year_month_desc, ajustes_directory, find_ajustes, \
-    format_concepto_desc, generate_pdf_template, periodo_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis
+from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, mf_pago_fmt, archivos_folder, period_desc, ajustes_directory, find_ajustes, \
+    format_concepto_desc, generate_pdf_template, periodicidad_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
-from .log_tools import log_line, cfdi_header, header_line, print_yaml
+from .log_tools import cfdi_header, header_line, print_yaml
 from .mycfdi import get_all_cfdi, MyCFDI, move_to_folder
 from .utils import random_string, parse_date_period, load_certificate, to_int, cert_info, add_month, clear_directory, find_best_match, months_between
 
@@ -300,10 +300,9 @@ class FacturacionGUI:
         self.window["ppd_action_items"].update(visible=is_ppd_active)
         self.window["importe_pago"].update("")
 
-    def header(self, name, clear=True):
-        if clear:
-            self.console.update("")
-        log_line(name)
+    def header(self, name):
+        self.console.update("")
+        print(header_line(name))
 
     def facturas_search(self, search_text):
         search_text = search_text.strip().upper()
@@ -439,7 +438,7 @@ class FacturacionGUI:
                                 self.window['facturas_table'].update(values=[])
                                 continue
 
-                            self.window['preparar_facturas_text'].update(f"{year_month_desc(dp)}")
+                            self.window['preparar_facturas_text'].update(f"{period_desc(dp)}")
                             self.console.update("")
                             cfdis = generate_ingresos(
                                 clients=ClientsManager(),
@@ -546,7 +545,7 @@ class FacturacionGUI:
                                 continue
 
                             dp_effective = add_month(dp, 1)
-                            self.window['preparar_ajustes_text'].update(f"Ajustes Efectivos Al: {year_month_desc(dp_effective)}")
+                            self.window['preparar_ajustes_text'].update(f"Ajustes Efectivos Al: {period_desc(dp_effective)}")
 
                             # clear directory
                             ajustes_dir = ajustes_directory(DatePeriod(dp.year, dp.month))
@@ -583,7 +582,7 @@ class FacturacionGUI:
                                         "valor_unitario_nuevo": pesos(vun) if vun else "",
                                         "ajuste_porcentaje": porcentaje(ajuste_porcentaje, 2) if ajuste_porcentaje is not None else "",
                                         "ajuste_periodo": f"{meses} MESES",
-                                        "efectivo_periodo_desc": periodo_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),
+                                        "efectivo_periodo_desc": periodicidad_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),
                                         "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
                                         "fecha_hoy": fecha(date.today()),
                                         'file_name': file_name
