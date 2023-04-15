@@ -19,10 +19,10 @@ from satcfdi.transform.catalog import CATALOGS
 
 from . import __version__, PPD, PUE, TEMP_DIRECTORY
 from .client_validation import validar_client
+from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .formatting_functions.common import fecha, pesos, porcentaje
-from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, \
-    generate_html_template, mf_pago_fmt, archivos_folder, year_month_desc, ajustes_directory, find_ajustes, \
+from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_filename, mf_pago_fmt, archivos_folder, year_month_desc, ajustes_directory, find_ajustes, \
     format_concepto_desc, generate_pdf_template, periodo_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis
 from .layout import make_layout, ActionButtonManager
 from .localdb import LocalDBSatCFDI, LiquidatedState
@@ -215,16 +215,14 @@ class FacturacionGUI:
                             yield ni.filename + ".pdf"
 
                     subject = f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}"
+
                     s.send_email(
                         subject=subject,
                         to_addrs=receptor["Email"],
-                        html=generate_html_template(
-                            'mail_facturas_template.html',
-                            fields={
-                                "facturas": notify_invoices,
-                                'pendientes_meses_anteriores': pendientes_meses_anteriores,
-                                'emisor': emisor_cif,
-                            },
+                        html=facturacion_environment.get_template('mail_facturas_template.html').render(
+                            facturas=notify_invoices,
+                            pendientes_meses_anteriores=pendientes_meses_anteriores,
+                            emisor=emisor_cif,
                         ),
                         file_attachments=attachments()
                     )

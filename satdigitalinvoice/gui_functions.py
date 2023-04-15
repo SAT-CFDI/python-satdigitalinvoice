@@ -312,14 +312,6 @@ def generate_pdf_template(template_name, fields):
     return pdf
 
 
-def generate_html_template(template_name, fields):
-    increment_template = facturacion_environment.get_template(template_name)
-    render = increment_template.render(
-        fields
-    )
-    return render
-
-
 def mf_pago_fmt(cfdi):
     i = cfdi
     if i['TipoDeComprobante'] == "I":
