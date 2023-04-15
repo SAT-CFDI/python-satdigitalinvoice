@@ -21,43 +21,43 @@ def validar_client(client):
         if not rfc.is_valid():
             raise ValueError("RFC Not Valid Regex")
     except ValueError as ex:
-        logger.info(f"{rfc}: {ex}")
+        print(f"{rfc}: {ex}")
         return
 
     for email in client["Email"]:
         match = re.fullmatch(EMAIL_REGEX, email)
         if not match:
-            logger.info(f"{rfc}: Correo '{email}' is invalid")
+            print(f"{rfc}: Correo '{email}' is invalid")
 
     if id_cif := client["IdCIF"]:
         try:
             res = csf.retrieve(rfc, id_cif=id_cif)
         except ValueError as ex:
-            logger.info(f"{rfc}: idCIF '{id_cif}' is invalid")
+            print(f"{rfc}: idCIF '{id_cif}' is invalid")
             return
 
         if rfc.type == RFCType.MORAL:
             if client['RazonSocial'] != res['Denominación o Razón Social']:
-                logger.info(f"{rfc}: RazonSocial '{client['RazonSocial']}' is invalid, expected '{res['Denominación o Razón Social']}'")
+                print(f"{rfc}: RazonSocial '{client['RazonSocial']}' is invalid, expected '{res['Denominación o Razón Social']}'")
         elif rfc.type == RFCType.FISICA:
             if client['RazonSocial'] != f"{res['Nombre']} {res['Apellido Paterno']} {res['Apellido Materno']}":
-                logger.info(f"{rfc}: RazonSocial '{client['RazonSocial']}' is invalid, expected '{res['Nombre']} {res['Apellido Paterno']} {res['Apellido Materno']}'")
+                print(f"{rfc}: RazonSocial '{client['RazonSocial']}' is invalid, expected '{res['Nombre']} {res['Apellido Paterno']} {res['Apellido Materno']}'")
 
         if client['CodigoPostal'] != res['CP']:
-            logger.info(f"{rfc}: CodigoPostal '{client['CodigoPostal']}' is invalid, expected '{res['CP']}'")
+            print(f"{rfc}: CodigoPostal '{client['CodigoPostal']}' is invalid, expected '{res['CP']}'")
 
         if client['RegimenFiscal'] not in (r['RegimenFiscal'] for r in res['Regimenes']):
-            logger.info(
+            print(
                 f"{rfc}: RegimenFiscal '{client['RegimenFiscal']}' is invalid, "
                 f"expected '{(r['RegimenFiscal'].code for r in res['Regimenes'])}'"
             )
 
         if res['Situación del contribuyente'] not in ['ACTIVO', 'REACTIVADO']:
-            logger.info(f"{rfc}: Is not ACTIVO '{res['Situación del contribuyente']}'")
+            print(f"{rfc}: Is not ACTIVO '{res['Situación del contribuyente']}'")
 
         taxpayer_status = sat_service.list_69b(rfc)
         if taxpayer_status:
-            logger.info(f"{rfc}: has status '{taxpayer_status}'")
+            print(f"{rfc}: has status '{taxpayer_status}'")
 
 
 def clientes_generar_txt(clients):

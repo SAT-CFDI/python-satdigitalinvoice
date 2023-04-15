@@ -66,7 +66,7 @@ def create_cfdi(receptor_cif, factura_details, emisor_cif):
     expected_total = factura_details.get('Total')
     if expected_total is not None:
         if expected_total != invoice['Total']:
-            logger.info(f"{factura_details['Receptor']}: Total '{expected_total}' is invalid, expected '{invoice['Total']}'")
+            print(f"{factura_details['Receptor']}: Total '{expected_total}' is invalid, expected '{invoice['Total']}'")
             return None
 
     return invoice
@@ -105,7 +105,7 @@ def validad_facturas(clients, facturas):
     for factura_details in facturas:
         cliente = clients.get(factura_details['Receptor'])
         if not cliente:
-            logger.info(f"{factura_details['Receptor']}: client not found")
+            print(f"{factura_details['Receptor']}: client not found")
             is_valid = False
 
         for c in factura_details["Conceptos"]:
@@ -113,11 +113,11 @@ def validad_facturas(clients, facturas):
             try:
                 parse_periodo_mes_ajuste(periodo_mes_ajuste)
             except ValueError:
-                logger.info(f"{factura_details['Receptor']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
+                print(f"{factura_details['Receptor']}: _periodo_mes_ajuste '{periodo_mes_ajuste}' is invalid")
                 is_valid = False
 
         if factura_details["MetodoPago"] == "PPD" and factura_details["FormaPago"] != "99":
-            logger.info(f"{factura_details['Receptor']}: FormaPago '{factura_details['FormaPago']}' is invalid, expected '99' for PPD")
+            print(f"{factura_details['Receptor']}: FormaPago '{factura_details['FormaPago']}' is invalid, expected '99' for PPD")
             is_valid = False
 
     return is_valid

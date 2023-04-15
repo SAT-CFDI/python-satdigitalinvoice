@@ -29,19 +29,10 @@ def add_file_handler():
 
 
 class FacturacionLauncher:
-
-    def __init__(self, cwd=None, debug=False):
+    def __init__(self, cwd=None):
         app_dir = os.getcwd()
-
         if cwd:
             os.chdir(cwd)
-
-        # set up logging
-        if debug:
-            logging.basicConfig(
-                level=logging.DEBUG,
-                stream=sys.stderr,
-            )
         add_file_handler()
 
         # loading the sample.zip
