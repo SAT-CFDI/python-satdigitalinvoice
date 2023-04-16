@@ -566,7 +566,10 @@ class FacturacionGUI:
                                         vud, vu = find_best_match(valor_unitario_raw, dp)
                                         vund, vun = find_best_match(valor_unitario_raw, dp_effective)
                                         meses = months_between(vund, vud)
-                                        ajuste_porcentaje = (vun / vu - 1)
+                                        if vun and vu:
+                                            ajuste_porcentaje = (vun / vu - 1)
+                                        else:
+                                            ajuste_porcentaje = None
                                     else:
                                         vu = valor_unitario_raw
                                         vun = None
@@ -580,7 +583,7 @@ class FacturacionGUI:
                                         "receptor": receptor,
                                         "emisor": clients[emisor_rfc],
                                         "concepto": concepto,
-                                        "valor_unitario": pesos(vu),
+                                        "valor_unitario": pesos(vu) if vu else "",
                                         "valor_unitario_nuevo": pesos(vun) if vun else "",
                                         "ajuste_porcentaje": porcentaje(ajuste_porcentaje, 2) if ajuste_porcentaje is not None else "",
                                         "ajuste_periodo": f"{meses} MESES",

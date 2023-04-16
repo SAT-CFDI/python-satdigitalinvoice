@@ -69,7 +69,7 @@ def cert_info(signer: Signer):
         }
 
 
-def find_best_match(cases, dp: DatePeriod):
+def find_best_match(cases, dp: DatePeriod) -> (datetime, object):
     fk, fv = (None, None)
     for k, v in cases.items():
         k = datetime.strptime(k, '%Y-%m')
