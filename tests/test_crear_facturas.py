@@ -23,7 +23,6 @@ module = __package__
 
 def test_generar_ingresos(caplog):
     caplog.set_level(logging.INFO)
-    config = ConfigManager()
     facturas = FacturasManager(ym_date)["Facturas"]
 
     with mock.patch(f'satcfdi.create.cfd.cfdi40.datetime') as m:
@@ -47,9 +46,8 @@ def test_generar_ingresos(caplog):
     # assert facturas[0]["Conceptos"][0]["Descripcion"] == 1000
 
 
-def test_generar_ingresos_error(caplog):
+def test_generar_ingresos_error(caplog, capsys):
     caplog.set_level(logging.INFO)
-    config = ConfigManager()
     facturas = FacturasManager(ym_date)["FacturasIncorrectas"]
     print(len(facturas))
 
@@ -60,14 +58,14 @@ def test_generar_ingresos_error(caplog):
         emisor_rfc=csd_signer.rfc
     )
 
-    assert len(caplog.records) == 1
-    assert caplog.records[0].message == "ABMG891115PD7: Total '41000.16' is invalid, expected '37019.16'"
+    captured = capsys.readouterr()
+    assert captured.out == "1\nABMG891115PD7: Total '41000.16' is invalid, expected '37019.16'\n"
+    assert captured.err == ""
     assert ingresos is None
 
 
-def test_generar_ingresos_error2(caplog):
+def test_generar_ingresos_error2(caplog, capsys):
     caplog.set_level(logging.INFO)
-    config = ConfigManager()
     facturas = FacturasManager(ym_date)["FacturasIncorrectas2"]
     print(len(facturas))
 
@@ -78,8 +76,9 @@ def test_generar_ingresos_error2(caplog):
         emisor_rfc=csd_signer.rfc
     )
 
-    assert len(caplog.records) == 1
-    assert caplog.records[0].message == "XXXNOEXISTO: client not found"
+    captured = capsys.readouterr()
+    assert captured.out == "1\nXXXNOEXISTO: client not found\n"
+    assert captured.err == ""
     assert ingresos is None
 
 
