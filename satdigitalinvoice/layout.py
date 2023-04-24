@@ -169,6 +169,7 @@ def make_layout(has_fiel, local_db):
                         [
                             [
                                 sg.Column([[
+                                    sg.Button(image_data=IMPORT_CSV, key="importar_emitidas", border_width=0, button_color=BUTTON_COLOR),
                                     sg.ButtonMenu(
                                         image_data=SEARCH_ICON, button_text="", key="buscar_facturas", border_width=0, button_color=BUTTON_COLOR,
                                         menu_def=[
@@ -177,8 +178,6 @@ def make_layout(has_fiel, local_db):
                                         ],
                                     ),
                                     sg.Input(datetime.now().strftime(PERIODO_FMT), size=(40, 1), key="emitidas_search"),
-                                    sg.Push(),
-                                    sg.Button(image_data=IMPORT_CSV, key="importar_emitidas", border_width=0, button_color=BUTTON_COLOR),
                                 ]],
                                     expand_x=True
                                 )
