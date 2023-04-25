@@ -715,7 +715,8 @@ class FacturacionGUI:
                     case "facturas_table+delete" | "clientes_table+delete" | "correos_table+delete" | \
                          "ajustes_table+delete" | "emitidas_table+delete":
                         # noinspection PyUnresolvedReferences
-                        self.window[event.split("+")[0]].delete_selected()
+                        # self.window[event.split("+")[0]].delete_selected()
+                        pass
 
                     case "solicitudes_table+delete":
                         solitudes = self.local_db.get_solicitudes()
