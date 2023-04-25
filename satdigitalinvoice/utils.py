@@ -120,13 +120,6 @@ def estado_to_estatus(estatus):
     raise ValueError(f"Unknown status: {estatus}")
 
 
-def to_datetime(s):
-    try:
-        return datetime.fromisoformat(s, )
-    except ValueError:
-        return None
-
-
 def open_file(filename):
     if sys.platform == "win32":
         os.startfile(filename)
