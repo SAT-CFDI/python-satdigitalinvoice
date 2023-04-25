@@ -147,7 +147,7 @@ class FacturacionGUI:
 
         # Add Serie and Folio and signature
         folio = None
-        if invoice['TipoComprobante'] in self.facturas_con_serie_folio:
+        if invoice['TipoDeComprobante'] in self.facturas_con_serie_folio:
             invoice['Serie'] = self.local_db.serie()
             folio = self.local_db.folio()
             invoice['Folio'] = str(folio)
