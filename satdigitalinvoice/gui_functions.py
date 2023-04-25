@@ -17,6 +17,7 @@ from satcfdi.printer import Representable
 from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
 
+from tests.utils import open_file
 from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
@@ -364,7 +365,7 @@ def preview_cfdis(cfdis):
         objs=cfdis,
         target=outfile,
     )
-    os.startfile(
+    open_file(
         os.path.abspath(outfile)
     )
 

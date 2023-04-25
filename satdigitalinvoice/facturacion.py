@@ -16,11 +16,12 @@ from satcfdi.accounting.process import complement_invoices
 from satcfdi.create.cfd import cfdi40
 from satcfdi.exceptions import ResponseError
 from satcfdi.pacs import Accept
-from satcfdi.pacs.sat import SAT, EstadoSolicitud, TipoDescargaMasivaTerceros
+from satcfdi.pacs.sat import SAT, EstadoSolicitud
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
 from xlsxwriter.exceptions import XlsxFileError
 
+from tests.utils import open_file
 from . import __version__, PPD, PUE, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
@@ -682,7 +683,7 @@ class FacturacionGUI:
                         # noinspection PyUnresolvedReferences
                         for client in self.window["clientes_table"].selected_items():
                             url = csf.url(rfc=client["Rfc"], id_cif=client["IdCIF"])
-                            os.startfile(url)
+                            open_file(url)
 
                     case 'emitidas_table_enter':
                         # noinspection PyUnresolvedReferences
@@ -692,7 +693,7 @@ class FacturacionGUI:
                     case 'ajustes_table_enter':
                         # noinspection PyUnresolvedReferences
                         for ajuste in self.window["ajustes_table"].selected_items():
-                            os.startfile(
+                            open_file(
                                 os.path.abspath(ajuste['file_name'])
                             )
 
@@ -783,7 +784,7 @@ class FacturacionGUI:
                                 )
 
                     case "editar_clientes":
-                        os.startfile(
+                        open_file(
                             os.path.abspath("clientes.yaml")
                         )
 
@@ -791,24 +792,24 @@ class FacturacionGUI:
                         filename = 'clientes.txt'
                         clients = ClientsManager()
                         clientes_generar_txt(filename, clients)
-                        os.startfile(
+                        open_file(
                             os.path.dirname(
                                 os.path.abspath(filename)
                             )
                         )
 
                     case "editar_facturas" | "editar_ajustes":
-                        os.startfile(
+                        open_file(
                             os.path.abspath("facturas.yaml")
                         )
 
                     case "editar_configurar":
-                        os.startfile(
+                        open_file(
                             os.path.abspath("config.yaml")
                         )
 
                     case "ver_config":
-                        os.startfile(
+                        open_file(
                             os.path.abspath(".")
                         )
 
@@ -822,14 +823,14 @@ class FacturacionGUI:
                             emisor_cif,
                             self.rfc_prediales
                         )
-                        os.startfile(
+                        open_file(
                             os.path.abspath(archivo_excel)
                         )
 
                     case "ver_carpeta":
                         dp = to_date_period(values["periodo"])
                         directory = archivos_folder(dp)
-                        os.startfile(
+                        open_file(
                             os.path.abspath(directory)
                         )
 
