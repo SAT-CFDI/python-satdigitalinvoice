@@ -84,7 +84,7 @@ class FacturacionGUI:
             font=("Courier New", 10, "bold"),
             ttk_theme="default",
             margins=(0, 0),
-            use_custom_titlebar=True,
+            # use_custom_titlebar=True,
             titlebar_font=("Courier New", 11, "bold"),
             finalize=True,
         )
