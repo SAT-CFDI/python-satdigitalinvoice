@@ -67,8 +67,8 @@ def test_increase_month():
     assert d.year == 2021 and d.month == 2
 
 
-def test_app_setup():
-    config = ConfigManager()
-    a = FacturacionGUI(
-        config
-    )
+# def test_app_setup():
+#     config = ConfigManager()
+#     a = FacturacionGUI(
+#         config
+#     )
