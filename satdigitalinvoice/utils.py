@@ -121,8 +121,31 @@ def estado_to_estatus(estatus):
 
 
 def open_file(filename):
-    if sys.platform == "win32":
-        os.startfile(filename)
-    else:
-        opener = "open" if sys.platform == "darwin" else "xdg-open"
-        subprocess.call([opener, filename])
+    match OS.get_os():
+        case OS.WINDOWS:
+            os.startfile(filename)
+        case OS.LINUX:
+            subprocess.call(['xdg-open', filename])
+        case OS.MACOS:
+            subprocess.call(['open', filename])
+        case _:
+            raise NotImplementedError(f"Unknown OS: {OS.get_os()}")
+
+
+# Enum for operative Systems
+class OS:
+    WINDOWS = 'Windows'
+    LINUX = 'Linux'
+    MACOS = 'MacOS'
+    UNKNOWN = 'Unknown'
+
+    @staticmethod
+    def get_os():
+        if sys.platform.startswith('win'):
+            return OS.WINDOWS
+        elif sys.platform.startswith('linux'):
+            return OS.LINUX
+        elif sys.platform.startswith('darwin'):
+            return OS.MACOS
+        else:
+            return OS.UNKNOWN

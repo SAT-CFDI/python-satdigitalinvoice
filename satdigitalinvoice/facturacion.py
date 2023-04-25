@@ -32,7 +32,7 @@ from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptio
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import cfdi_header, header_line, print_yaml
 from .mycfdi import MyCFDI
-from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file
+from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -72,6 +72,7 @@ class FacturacionGUI:
             enviar_a_partir=config['enviar_a_partir'],
             pagar_a_partir=config['pagar_a_partir']
         )
+        self.facturas_con_serie_folio = config.get('facturas_con_serie_folio', ('I', 'P'))
 
         MyCFDI.local_db = self.local_db
         MyCFDI.base_dir = ARCHIVOS_DIRECTORY
@@ -105,8 +106,10 @@ class FacturacionGUI:
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
+        modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
+
         for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'correos_table', 'ajustes_table', 'solicitudes_table'):
-            self.window[t].bind('<Control-KeyPress-a>', '+select_all')
+            self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
             self.window[t].bind('<Return>', '_enter')
@@ -143,9 +146,12 @@ class FacturacionGUI:
         ref_id = random_string()
 
         # Add Serie and Folio and signature
-        invoice['Serie'] = self.local_db.serie()
-        folio = self.local_db.folio()
-        invoice['Folio'] = str(folio)
+        folio = None
+        if invoice['TipoComprobante'] in self.facturas_con_serie_folio:
+            invoice['Serie'] = self.local_db.serie()
+            folio = self.local_db.folio()
+            invoice['Folio'] = str(folio)
+
         cfdi40.Comprobante.sign(invoice, self.csd_signer)
 
         attempts = 3
@@ -171,7 +177,8 @@ class FacturacionGUI:
                     print(f"Response: {ex.response.text}")
                 continue
 
-            self.set_folio(folio + 1)
+            if folio is not None:
+                self.set_folio(folio + 1)
             cfdi = MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
             self.add_created_invoice(cfdi)
             return cfdi
