@@ -1,6 +1,8 @@
 import os
 import random
 import shutil
+import subprocess
+import sys
 from datetime import datetime
 from uuid import UUID
 
@@ -123,3 +125,11 @@ def to_datetime(s):
         return datetime.fromisoformat(s, )
     except ValueError:
         return None
+
+
+def open_file(filename):
+    if sys.platform == "win32":
+        os.startfile(filename)
+    else:
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([opener, filename])

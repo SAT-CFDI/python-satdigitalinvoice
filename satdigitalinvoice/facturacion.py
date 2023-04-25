@@ -21,7 +21,6 @@ from satcfdi.pacs.sat import SAT, EstadoSolicitud
 from satcfdi.transform.catalog import CATALOGS
 from xlsxwriter.exceptions import XlsxFileError
 
-from tests.utils import open_file
 from . import __version__, PPD, PUE, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
@@ -33,7 +32,7 @@ from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptio
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import cfdi_header, header_line, print_yaml
 from .mycfdi import MyCFDI
-from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid
+from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)

@@ -17,12 +17,11 @@ from satcfdi.printer import Representable
 from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
 
-from tests.utils import open_file
 from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes
-from .utils import add_month, find_best_match, months_between, clear_directory
+from .utils import add_month, find_best_match, months_between, clear_directory, open_file
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
