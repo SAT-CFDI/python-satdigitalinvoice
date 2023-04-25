@@ -88,6 +88,7 @@ class FacturacionGUI:
             # use_custom_titlebar=True,
             titlebar_font=("Courier New", 11, "bold"),
             finalize=True,
+            scaling=config.get('scaling', 1.0),
         )
 
         self.action_button_manager = ActionButtonManager(
