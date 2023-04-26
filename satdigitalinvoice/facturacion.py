@@ -206,7 +206,7 @@ class FacturacionGUI:
 
         self.window['serie_pago'].update(serie_pago)
         self.window['folio_pago'].update(
-            "Se usara el mismo folio de la factura que se paga" if serie_pago else "Sin folio"
+            "Se usara el mismo folio de la factura que se paga" if serie_pago else "Se usar serie y folio de proxima factura"
         )
 
     def nueva_solicitud(self, values):
