@@ -186,8 +186,8 @@ def parse_importe_pago(importe_pago: str):
 def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_pago: Decimal = None, serie_pago=None):
     c = factura_pagar
     invoice = Comprobante.pago_comprobantes(
-        serie=serie_pago,
-        folio=c.folio if serie_pago else '',
+        serie=serie_pago or None,
+        folio=c.folio if serie_pago else None,
         comprobantes=[
             PagoComprobante(
                 comprobante=c,

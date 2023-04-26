@@ -145,12 +145,12 @@ class FacturacionGUI:
 
         # Add Serie and Folio and signature
         folio = None
-        if invoice['Serie'] == '':
+        if 'Serie' not in invoice:
             invoice['Serie'] = self.local_db.serie()
             folio = self.local_db.folio()
             invoice['Folio'] = str(folio)
 
-        cfdi40.Comprobante.sign(invoice, self.csd_signer)
+        # cfdi40.Comprobante.sign(invoice, self.csd_signer)
 
         attempts = 3
         for i in range(attempts):
