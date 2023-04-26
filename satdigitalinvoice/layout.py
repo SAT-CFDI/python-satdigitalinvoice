@@ -458,7 +458,11 @@ def make_layout(has_fiel, local_db):
                                 sg.Column([[
                                     sg.Button(image_data=EDIT_ICON, key="editar_configurar", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Button(image_data=CONFIG_ICON, key="ver_config", border_width=0, button_color=BUTTON_COLOR),
-                                    sg.Text("Proxima Factura:", pad=TEXT_PADDING),
+                                ]])
+                            ],
+                            [
+                                sg.Column([[
+                                    sg.Text(" Proxima Factura:", pad=TEXT_PADDING),
                                     sg.Text("Serie:", pad=TEXT_PADDING),
                                     sg.Input("", key="serie", size=(8, 1)),
                                     sg.Text("Folio:", pad=TEXT_PADDING),
@@ -469,13 +473,16 @@ def make_layout(has_fiel, local_db):
                             ],
                             [
                                 sg.Column([[
-                                    sg.Text("         Complemento Pago:", pad=TEXT_PADDING),
+                                    sg.Text("Complemento Pago:", pad=TEXT_PADDING),
                                     sg.Text("Serie:", pad=TEXT_PADDING),
                                     sg.Input("", key="serie_pago", size=(8, 1)),
                                     sg.Text("", key="folio_pago", pad=TEXT_PADDING),
                                 ]],
                                     expand_x=True
                                 )
+                            ],
+                            [
+                                sg.Column([[]], size=(40, 40))
                             ],
                             [
                                 sg.Column([[
@@ -486,8 +493,8 @@ def make_layout(has_fiel, local_db):
                             ],
                             [
                                 sg.Column([[
-                                    sg.Button("Exportar Metadata", key="exportar_metadata", border_width=0),
-                                    sg.Button("Importar Metadata", key="importar_metadata", border_width=0),
+                                    sg.Button("Exportar Metadata ", key="exportar_metadata", border_width=0),
+                                    sg.Button("Importar Metadata ", key="importar_metadata", border_width=0),
                                 ]],
                                     expand_x=True
                                 )
