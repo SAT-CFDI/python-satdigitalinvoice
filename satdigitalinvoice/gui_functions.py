@@ -187,7 +187,7 @@ def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_p
     c = factura_pagar
     invoice = Comprobante.pago_comprobantes(
         serie=serie_pago or None,
-        folio=c.folio if serie_pago else None,
+        folio=c.get('Folio') if serie_pago else None,
         comprobantes=[
             PagoComprobante(
                 comprobante=c,

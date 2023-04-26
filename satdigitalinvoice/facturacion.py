@@ -150,7 +150,7 @@ class FacturacionGUI:
             folio = self.local_db.folio()
             invoice['Folio'] = str(folio)
 
-        # cfdi40.Comprobante.sign(invoice, self.csd_signer)
+        cfdi40.Comprobante.sign(invoice, self.csd_signer)
 
         attempts = 3
         for i in range(attempts):
@@ -438,7 +438,7 @@ class FacturacionGUI:
         self.window["ppd_action_items"].update(visible=is_ppd_active)
         self.window["importe_pago"].update(i.saldo_pendiente if is_ppd_active else '')
         if is_ppd_active:
-            self.action_button_manager.set_items("pago", [None])
+            self.action_button_manager.set_items("pago", [i])
         else:
             self.action_button_manager.clear()
 
@@ -502,14 +502,14 @@ class FacturacionGUI:
             values=list(fact_iter()),
         )
 
-    def crear_pago(self, values):
+    def crear_pago(self, values, facturas_pagar):
         fecha_pago = parse_fecha_pago(values["fecha_pago"])
         importe_pago = parse_importe_pago(values["importe_pago"])
         self.window["importe_pago"].update(importe_pago)
 
         # noinspection PyUnresolvedReferences
         cfdi = pago_factura(
-            factura_pagar=self.window["emitidas_table"].selected_items()[0],
+            factura_pagar=facturas_pagar[0],
             fecha_pago=fecha_pago,
             forma_pago=values["forma_pago"],
             importe_pago=importe_pago,
@@ -781,7 +781,7 @@ class FacturacionGUI:
                         action_items = self.action_button_manager.items
 
                         if action_name == "pago":
-                            action_items = self.crear_pago(values)
+                            action_items = self.crear_pago(values, action_items)
 
                         if event == "ver_preview":
                             if action_name in ("facturas", "pago"):
