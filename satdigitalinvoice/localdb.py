@@ -19,6 +19,7 @@ NOTIFIED = 2
 STATUS_SAT = 3
 FOLIO = 5
 SERIE = 6
+SERIE_PAGO = 7
 SOLICITUDES = 'solicitudes'
 
 sat_manager = sat.SAT()
@@ -42,6 +43,12 @@ class LocalDB(diskcache.Cache):
 
     def serie_set(self, value: str):
         self[SERIE] = value
+
+    def serie_pago(self) -> str:
+        return self.get(SERIE_PAGO, 'P')
+
+    def serie_pago_set(self, value: str):
+        self[SERIE_PAGO] = value
 
     def liquidated(self, uuid: UUID):
         return self.get((LIQUIDATED, uuid))

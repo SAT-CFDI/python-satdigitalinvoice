@@ -469,6 +469,16 @@ def make_layout(has_fiel, local_db):
                             ],
                             [
                                 sg.Column([[
+                                    sg.Text("         Complemento Pago:", pad=TEXT_PADDING),
+                                    sg.Text("Serie:", pad=TEXT_PADDING),
+                                    sg.Input("", key="serie_pago", size=(8, 1)),
+                                    sg.Text("Se usara el mismo folio de la factura que se paga", pad=TEXT_PADDING),
+                                ]],
+                                    expand_x=True
+                                )
+                            ],
+                            [
+                                sg.Column([[
                                     sg.Button("Organizar Facturas", key="organizar_facturas", border_width=0),
                                 ]],
                                     expand_x=True

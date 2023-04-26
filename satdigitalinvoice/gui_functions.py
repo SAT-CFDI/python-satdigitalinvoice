@@ -183,9 +183,11 @@ def parse_importe_pago(importe_pago: str):
         raise ValueError("Importe de Pago es invalido")
 
 
-def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_pago: Decimal = None):
+def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_pago: Decimal = None, serie_pago=None):
     c = factura_pagar
     invoice = Comprobante.pago_comprobantes(
+        serie=serie_pago,
+        folio=c.folio if serie_pago else '',
         comprobantes=[
             PagoComprobante(
                 comprobante=c,

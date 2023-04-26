@@ -72,7 +72,6 @@ class FacturacionGUI:
             enviar_a_partir=config['enviar_a_partir'],
             pagar_a_partir=config['pagar_a_partir']
         )
-        self.facturas_con_serie_folio = config.get('facturas_con_serie_folio', ('I', 'P'))
 
         MyCFDI.local_db = self.local_db
         MyCFDI.base_dir = ARCHIVOS_DIRECTORY
@@ -96,14 +95,12 @@ class FacturacionGUI:
             preview=self.window["ver_preview"],
         )
         self.console = self.window["console"]
-
-        self.set_serie()
-        self.set_folio()
+        self.set_inputs()
 
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'ajustes_periodo', 'serie', 'folio'):
+        for t in ('facturas_periodo', 'emitidas_search', 'ajustes_periodo', 'serie', 'folio', 'serie_pago'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
@@ -148,7 +145,7 @@ class FacturacionGUI:
 
         # Add Serie and Folio and signature
         folio = None
-        if invoice['TipoDeComprobante'] in self.facturas_con_serie_folio:
+        if invoice['Serie'] == '':
             invoice['Serie'] = self.local_db.serie()
             folio = self.local_db.folio()
             invoice['Folio'] = str(folio)
@@ -186,19 +183,27 @@ class FacturacionGUI:
 
     def set_serie(self, serie: str = None):
         if serie:
-            self.local_db.serie_set(serie)
+            self.local_db.serie_set(serie.strip())
+        self.set_inputs()
 
-        serie = serie or self.local_db.serie()
-        self.window['serie'].update(serie)
-        self.window['serie_folio'].update(f"{serie}{self.local_db.folio()}")
+    def set_serie_pago(self, serie: str = None):
+        self.local_db.serie_pago_set(serie.strip())
+        self.set_inputs()
 
     def set_folio(self, folio: int = None):
         if folio:
             self.local_db.folio_set(folio)
+        self.set_inputs()
 
-        folio = folio or self.local_db.folio()
+    def set_inputs(self):
+        folio = self.local_db.folio()
+        serie = self.local_db.serie()
+        serie_pago = self.local_db.serie_pago()
+
+        self.window['serie'].update(serie)
         self.window['folio'].update(folio)
-        self.window['serie_folio'].update(f"{self.local_db.serie()}{folio}")
+        self.window['serie_folio'].update(f"{serie}{folio}")
+        self.window['serie_pago'].update(serie_pago)
 
     def nueva_solicitud(self, values):
         tipo_recuperar = values["tipo_recuperar"]
@@ -504,6 +509,7 @@ class FacturacionGUI:
             fecha_pago=fecha_pago,
             forma_pago=values["forma_pago"],
             importe_pago=importe_pago,
+            serie_pago=self.local_db.serie_pago(),
         )
         return [cfdi]
 
@@ -656,6 +662,9 @@ class FacturacionGUI:
 
                     case "serie_enter":
                         self.set_serie(values["serie"])
+
+                    case "serie_pago_enter":
+                        self.set_serie_pago(values["serie_pago"])
 
                     case "about":
                         clients = ClientsManager()
