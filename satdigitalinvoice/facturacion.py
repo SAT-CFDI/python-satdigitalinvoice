@@ -203,7 +203,11 @@ class FacturacionGUI:
         self.window['serie'].update(serie)
         self.window['folio'].update(folio)
         self.window['serie_folio'].update(f"{serie}{folio}")
+
         self.window['serie_pago'].update(serie_pago)
+        self.window['folio_pago'].update(
+            "Se usara el mismo folio de la factura que se paga" if serie_pago else "Sin folio"
+        )
 
     def nueva_solicitud(self, values):
         tipo_recuperar = values["tipo_recuperar"]
