@@ -291,10 +291,12 @@ class FacturacionGUI:
                 ):
                     return
 
-            yield item
             if not self._read(timeout=delay * i):
                 self.progress_cancel(title)
                 return
+
+            yield item
+
         self.progress_cancel(title)
 
     @staticmethod
