@@ -189,7 +189,7 @@ class LocalDBSatCFDI(LocalDB):
             if res["ValidacionEFOS"] == "200":
                 self.status_merge(
                     uuid=cfdi.uuid,
-                    estatus=estado_to_estatus(res["Estatus"]),
+                    estatus=estado_to_estatus(res["Estado"]),
                     es_cancelable=res["EsCancelable"],
                     estatus_cancelacion=res["EstatusCancelacion"]
                 )
