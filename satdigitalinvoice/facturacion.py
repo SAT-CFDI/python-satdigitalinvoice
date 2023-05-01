@@ -539,6 +539,17 @@ class FacturacionGUI:
             non_blocking=True,
         )
 
+    def done_message(self, ex):
+        sg.Popup(
+            ex,
+            no_titlebar=True,
+            background_color="green4",
+            location=center_location(self.window),
+            button_type=POPUP_BUTTONS_NO_BUTTONS,
+            auto_close=True,
+            non_blocking=True,
+        )
+
     def nuevas_facturas(self, values, force=False):
         facturas_table = self.window['facturas_table']
         has_value = bool(facturas_table.metadata)
@@ -883,15 +894,15 @@ class FacturacionGUI:
                             with open(csv_file, newline='', encoding='utf-8') as f:
                                 reader = csv.reader(f)
                                 header = next(reader)
-                                for row in self.progress_iterate(reader, "Importando emitidas"):
+                                for row in reader:
                                     row = dict(zip(header, row))
                                     uuid = UUID(row["Folio Fiscal (UUID)"])
                                     if uuid not in all_invoices:
                                         cfdi = self.download_invoice(uuid)
 
                                         if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
-                                            estado = self.local_db.status_sat(cfdi, update=True)
-                                            print_yaml(estado)
+                                            self.local_db.status_sat(cfdi, update=True)
+                            self.done_message("FIN")
 
                     case "exportar_metadata":
                         with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:
@@ -899,12 +910,14 @@ class FacturacionGUI:
                             for i in self.get_all_invoices():
                                 if status := self.local_db.status_export(i):
                                     writer.writerow(status)
+                        self.done_message("FIN")
 
                     case "importar_metadata":
                         with open(METADATA_FILE, newline='', encoding='utf-8') as f:
                             reader = csv.reader(f)
                             for row in reader:
                                 self.local_db.status_merge(*row)
+                        self.done_message("FIN")
 
                     case _:
                         logger.error(f"Unknown event '{event}'")
