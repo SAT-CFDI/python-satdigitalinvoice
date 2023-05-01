@@ -48,6 +48,24 @@ def open_launch_window():
     return window
 
 
+def progress_iterate(items, title, fn=None):
+    ln = len(items)
+    for i, item in enumerate(items):
+        if not sg.one_line_progress_meter(
+                'Progress Meter',
+                i,
+                ln,
+                title,
+                fn(item) if callable(fn) else "",
+                keep_on_top=True,
+                no_titlebar=True,
+                grab_anywhere=True,
+        ):
+            return
+        yield item
+    sg.one_line_progress_meter_cancel()
+
+
 class FacturacionGUI:
     def __init__(self, config):
         os.makedirs(TEMP_DIRECTORY, exist_ok=True)
@@ -165,6 +183,7 @@ class FacturacionGUI:
                     ref_id=ref_id
                 )
             except Exception as ex:
+                self.show_console()
                 message = f"Error al generar factura: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}"
                 logger.exception(message)
                 print(message)
@@ -271,10 +290,11 @@ class FacturacionGUI:
         if event in ("Exit", sg.WIN_CLOSED):
             exit(0)
 
-    def action_button(self, action_name, action_items):
+    def action_button(self, action_name, action_items, action_text):
         match action_name:
             case 'solicitudes':
-                for solicitud in action_items:
+                self.show_console()
+                for solicitud in progress_iterate(action_items, action_text):
                     id_solicitud = solicitud["response"]["IdSolicitud"]
                     response = self.sat_service.recover_comprobante_status(
                         id_solicitud=id_solicitud
@@ -282,33 +302,25 @@ class FacturacionGUI:
                     print_yaml(response)
                     self.local_db.solicitud_merge(id_solicitud, response=response)
                     self.recupera_comprobantes(response)
-                    self._read()
 
             case 'facturas' | 'pago':
-                for invoice in action_items:
+                for invoice in progress_iterate(action_items, action_text):
                     cfdi = self.generate_invoice(invoice=invoice)
                     if cfdi is None:
                         break
-                    print_yaml({
-                        "FacturaGenerada": cfdi_header(cfdi),
-                    })
-                    self._read()
 
             case 'correos':
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in action_items:
-
+                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in progress_iterate(action_items, action_text):
                         def attachments():
                             for ni in facturas:
                                 yield ni.filename + ".xml"
                                 yield ni.filename + ".pdf"
 
-                        subject = f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}"
-
                         s.send_email(
-                            subject=subject,
+                            subject=f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}",
                             to_addrs=receptor["Email"],
                             html=facturacion_environment.get_template('mail_facturas_template.html').render(
                                 facturas=facturas,
@@ -320,27 +332,20 @@ class FacturacionGUI:
                         )
                         for r in facturas:
                             self.local_db.notified_set(r.uuid, True)
-                        print_yaml({
-                            "correo": subject,
-                            "para": receptor["Email"]
-                        })
-                        self._read()
 
             case 'ajustes':
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for data in action_items:
-                        receptor = data['receptor']
-                        file_name = data['file_name']
-                        subject = f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}"
-
+                    for data in progress_iterate(action_items, action_text):
                         if not data['ajuste_porcentaje']:
-                            print(f"NO HAY {subject}")
                             continue
 
+                        receptor = data['receptor']
+                        file_name = data['file_name']
+
                         s.send_email(
-                            subject=subject,
+                            subject=f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
                             to_addrs=receptor["Email"],
                             html=facturacion_environment.get_template('mail_ajustes_template.html').render(
                                 emisor=emisor,
@@ -348,22 +353,17 @@ class FacturacionGUI:
                             ),
                             file_attachments=[file_name]
                         )
-                        print_yaml({
-                            "correo": subject,
-                            "para": receptor["Email"]
-                        })
-                        self._read()
 
             case 'clientes':
-                for client in action_items:
-                    print(f"Validando: {client['Rfc']}")
+                for client in progress_iterate(
+                        action_items, action_text, lambda x: f"Validando: {x['Rfc']}"
+                ):
                     validar_client(client)
-                    self._read()
 
             case _:
                 raise ValueError(f"Invalid action: {action_name}")
 
-        print("FIN")
+        sg.one_line_progress_meter_cancel()
 
     def set_selected_satcfdis(self, cfdis: list):
         i = cfdis[0] if len(cfdis) == 1 else None
@@ -442,10 +442,14 @@ class FacturacionGUI:
         else:
             self.action_button_manager.clear()
 
-    def header(self, name):
-        self.window['console_tab'].select()
+    def header(self, name, select_console=True):
+        if select_console:
+            self.show_console()
         self.console.update(header_line(name))
         self._read()
+
+    def show_console(self):
+        self.window['console_tab'].select()
 
     def download_invoice(self, uuid: UUID):
         res = self.pac_service.recover(uuid, accept=Accept.XML_PDF)
@@ -796,12 +800,14 @@ class FacturacionGUI:
                                 keep_on_top=True,
                             )
                             if res == "OK":
-                                self.header(action_text.upper())
+                                self.header(action_text.upper(), select_console=False)
                                 self.action_button_manager.clear()
                                 self.action_button(
                                     action_name=action_name,
-                                    action_items=action_items
+                                    action_items=action_items,
+                                    action_text=action_text
                                 )
+                                self.main_tab_group(values)
 
                     case "editar_clientes":
                         open_file(
