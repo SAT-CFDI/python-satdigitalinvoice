@@ -300,7 +300,6 @@ class FacturacionGUI:
     def action_button(self, action_name, action_items, action_text):
         match action_name:
             case 'solicitudes':
-                self.show_console()
                 for solicitud in self.progress_iterate(action_items, action_text):
                     id_solicitud = solicitud["response"]["IdSolicitud"]
                     response = self.sat_service.recover_comprobante_status(
@@ -884,7 +883,6 @@ class FacturacionGUI:
                     case "cargar_zip":
                         zip_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("ZIP Files", "*.zip"),))
                         if zip_file:
-                            self.header("Cargar ZIP")
                             self.unzip_cfdi(zip_file)
 
                     case 'importar_emitidas':
