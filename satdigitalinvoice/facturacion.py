@@ -48,22 +48,6 @@ def open_launch_window():
     return window
 
 
-def progress_iterate(items, title, fn=None):
-    ln = len(items)
-    for i, item in enumerate(items):
-        if not sg.one_line_progress_meter(
-                'Progress Meter',
-                i,
-                ln,
-                title,
-                fn(item) if callable(fn) else "",
-                keep_on_top=True,
-                no_titlebar=True,
-                grab_anywhere=True,
-        ):
-            return
-        yield item
-    sg.one_line_progress_meter_cancel()
 
 
 class FacturacionGUI:
@@ -174,7 +158,8 @@ class FacturacionGUI:
         for i in range(attempts):
             if i:
                 print(f'Intentando de nuevo... Intento {i + 1} de {attempts}')
-                self._read(timeout=2000 * i)
+                if not self._read(timeout=2000 * i):
+                    return
 
             try:
                 res = self.pac_service.stamp(
@@ -260,7 +245,7 @@ class FacturacionGUI:
 
     def unzip_cfdi(self, file):
         with ZipFile(file, "r") as zf:
-            for fileinfo in zf.infolist():
+            for fileinfo in self.progress_iterate(zf.infolist(), 'Descomprimiendo'):
                 data = zf.read(fileinfo)
                 match os.path.splitext(fileinfo.filename)[1]:
                     case ".xml":
@@ -283,18 +268,40 @@ class FacturacionGUI:
                                 estatus=row['Estatus'],
                                 fecha_cancelacion=row['FechaCancelacion']
                             )
-                self._read()
 
     def _read(self, timeout=0):
         event, values = self.window.read(timeout=timeout)
         if event in ("Exit", sg.WIN_CLOSED):
-            exit(0)
+            return False
+        return True
+
+    def progress_iterate(self, items, title, fn=None):
+        ln = None
+        if hasattr(items, '__len__'):
+            ln = len(items)
+
+        for i, item in enumerate(items):
+            if not sg.one_line_progress_meter(
+                    'Progress Meter',
+                    i,
+                    ln or (i + 1),
+                    title,
+                    fn(item) if callable(fn) else "",
+                    keep_on_top=True,
+                    no_titlebar=True,
+                    grab_anywhere=True,
+            ):
+                return
+            yield item
+            if not self._read():
+                return
+        sg.one_line_progress_meter_cancel()
 
     def action_button(self, action_name, action_items, action_text):
         match action_name:
             case 'solicitudes':
                 self.show_console()
-                for solicitud in progress_iterate(action_items, action_text):
+                for solicitud in self.progress_iterate(action_items, action_text):
                     id_solicitud = solicitud["response"]["IdSolicitud"]
                     response = self.sat_service.recover_comprobante_status(
                         id_solicitud=id_solicitud
@@ -304,7 +311,7 @@ class FacturacionGUI:
                     self.recupera_comprobantes(response)
 
             case 'facturas' | 'pago':
-                for invoice in progress_iterate(action_items, action_text):
+                for invoice in self.progress_iterate(action_items, action_text):
                     cfdi = self.generate_invoice(invoice=invoice)
                     if cfdi is None:
                         break
@@ -313,7 +320,7 @@ class FacturacionGUI:
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in progress_iterate(action_items, action_text):
+                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_items, action_text):
                         def attachments():
                             for ni in facturas:
                                 yield ni.filename + ".xml"
@@ -337,7 +344,7 @@ class FacturacionGUI:
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for data in progress_iterate(action_items, action_text):
+                    for data in self.progress_iterate(action_items, action_text):
                         if not data['ajuste_porcentaje']:
                             continue
 
@@ -355,7 +362,7 @@ class FacturacionGUI:
                         )
 
             case 'clientes':
-                for client in progress_iterate(
+                for client in self.progress_iterate(
                         action_items, action_text, lambda x: f"Validando: {x['Rfc']}"
                 ):
                     validar_client(client)
@@ -872,12 +879,11 @@ class FacturacionGUI:
                     case 'importar_emitidas':
                         csv_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("CSV Files", "*.csv"),))
                         if csv_file:
-                            self.header("Importar emitidas")
                             all_invoices = self.get_all_invoices()
                             with open(csv_file, newline='', encoding='utf-8') as f:
                                 reader = csv.reader(f)
                                 header = next(reader)
-                                for row in reader:
+                                for row in self.progress_iterate(reader, "Importando emitidas"):
                                     row = dict(zip(header, row))
                                     uuid = UUID(row["Folio Fiscal (UUID)"])
                                     if uuid not in all_invoices:
@@ -886,8 +892,6 @@ class FacturacionGUI:
                                         if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
                                             estado = self.local_db.status_sat(cfdi, update=True)
                                             print_yaml(estado)
-                                    self._read()
-                                print("FIN")
 
                     case "exportar_metadata":
                         with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:
