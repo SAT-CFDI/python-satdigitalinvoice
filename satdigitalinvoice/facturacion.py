@@ -180,6 +180,7 @@ class FacturacionGUI:
                 self.set_folio(folio + 1)
             cfdi = MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
             self.add_created_invoice(cfdi)
+            self.progress_cancel('Generando factura')
             return cfdi
 
     def set_serie(self, serie: str = None):
