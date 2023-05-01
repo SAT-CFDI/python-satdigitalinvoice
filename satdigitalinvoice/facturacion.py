@@ -449,7 +449,7 @@ class FacturacionGUI:
         self._read()
 
     def show_console(self):
-        self.window['console_tab'].select()
+        self.window['errores_tab'].select()
 
     def download_invoice(self, uuid: UUID):
         res = self.pac_service.recover(uuid, accept=Accept.XML_PDF)

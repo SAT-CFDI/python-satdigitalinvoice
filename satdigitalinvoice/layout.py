@@ -434,7 +434,7 @@ def make_layout(has_fiel, local_db):
                         key='contabilidad_tab',
                     ),
                     sg.Tab(
-                        'Consola'.center(13),
+                        'Errores'.center(13),
                         [
                             [
                                 sg.Push(),
@@ -449,7 +449,7 @@ def make_layout(has_fiel, local_db):
                                 reroute_stdout=True
                             )]
                         ],
-                        key='console_tab',
+                        key='errores_tab',
                     ),
                     sg.Tab(
                         'Configuracion'.center(13),
