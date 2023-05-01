@@ -48,8 +48,6 @@ def open_launch_window():
     return window
 
 
-
-
 class FacturacionGUI:
     def __init__(self, config):
         os.makedirs(TEMP_DIRECTORY, exist_ok=True)
@@ -155,12 +153,9 @@ class FacturacionGUI:
         cfdi40.Comprobante.sign(invoice, self.csd_signer)
 
         attempts = 3
-        for i in range(attempts):
-            if i:
-                print(f'Intentando de nuevo... Intento {i + 1} de {attempts}')
-                if not self._read(timeout=2000 * i):
-                    return
-
+        for i in self.progress_iterate(
+                'Generando factura', range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
+        ):
             try:
                 res = self.pac_service.stamp(
                     cfdi=invoice,
@@ -170,6 +165,8 @@ class FacturacionGUI:
             except Exception as ex:
                 self.show_console()
                 message = f"Error al generar factura: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}"
+                message += f"\nIntento {i + 1} de {attempts}"
+
                 logger.exception(message)
                 print(message)
                 if isinstance(ex, ResponseError):
@@ -245,7 +242,7 @@ class FacturacionGUI:
 
     def unzip_cfdi(self, file):
         with ZipFile(file, "r") as zf:
-            for fileinfo in self.progress_iterate(zf.infolist(), 'Descomprimiendo'):
+            for fileinfo in self.progress_iterate('Descomprimiendo', zf.infolist()):
                 data = zf.read(fileinfo)
                 match os.path.splitext(fileinfo.filename)[1]:
                     case ".xml":
@@ -275,32 +272,41 @@ class FacturacionGUI:
             return False
         return True
 
-    def progress_iterate(self, items, title, fn=None):
-        ln = None
-        if hasattr(items, '__len__'):
-            ln = len(items)
-
+    def progress_iterate(self, title, items, fn=None, skip_first=False, delay=0):
+        ln = len(items)
         for i, item in enumerate(items):
-            if not sg.one_line_progress_meter(
-                    'Progress Meter',
-                    i,
-                    ln or (i + 1),
-                    title,
-                    fn(item) if callable(fn) else "",
-                    keep_on_top=True,
-                    no_titlebar=True,
-                    grab_anywhere=True,
-            ):
-                return
+            if skip_first and i == 0:
+                pass
+            else:
+                if not sg.one_line_progress_meter(
+                        '',
+                        i,
+                        ln,
+                        title,
+                        fn(item) if callable(fn) else "",
+                        key=title,
+                        keep_on_top=True,
+                        no_titlebar=True,
+                        grab_anywhere=True,
+                ):
+                    return
+
             yield item
-            if not self._read():
+            if not self._read(timeout=delay * i):
+                self.progress_cancel(title)
                 return
-        sg.one_line_progress_meter_cancel()
+        self.progress_cancel(title)
+
+    @staticmethod
+    def progress_cancel(title):
+        sg.one_line_progress_meter_cancel(
+            key=title
+        )
 
     def action_button(self, action_name, action_items, action_text):
         match action_name:
             case 'solicitudes':
-                for solicitud in self.progress_iterate(action_items, action_text):
+                for solicitud in self.progress_iterate(action_text, action_items):
                     id_solicitud = solicitud["response"]["IdSolicitud"]
                     response = self.sat_service.recover_comprobante_status(
                         id_solicitud=id_solicitud
@@ -310,16 +316,16 @@ class FacturacionGUI:
                     self.recupera_comprobantes(response)
 
             case 'facturas' | 'pago':
-                for invoice in self.progress_iterate(action_items, action_text):
-                    cfdi = self.generate_invoice(invoice=invoice)
-                    if cfdi is None:
+                for invoice in self.progress_iterate(action_text, action_items):
+                    if not self.generate_invoice(invoice=invoice):
+                        self.progress_cancel(action_text)
                         break
 
             case 'correos':
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_items, action_text):
+                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
                         def attachments():
                             for ni in facturas:
                                 yield ni.filename + ".xml"
@@ -343,7 +349,7 @@ class FacturacionGUI:
                 clients = ClientsManager()
                 emisor = clients[self.csd_signer.rfc]
                 with self.email_manager.sender as s:
-                    for data in self.progress_iterate(action_items, action_text):
+                    for data in self.progress_iterate(action_text, action_items):
                         if not data['ajuste_porcentaje']:
                             continue
 
@@ -362,7 +368,7 @@ class FacturacionGUI:
 
             case 'clientes':
                 for client in self.progress_iterate(
-                        action_items, action_text, lambda x: f"Validando: {x['Rfc']}"
+                        action_text, action_items, lambda x: f"Validando: {x['Rfc']}"
                 ):
                     validar_client(client)
 
