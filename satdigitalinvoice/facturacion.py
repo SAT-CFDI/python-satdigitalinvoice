@@ -66,7 +66,7 @@ class FacturacionGUI:
         self.sat_service = SAT(signer=self.fiel_signer)
         self.rfc_prediales = config['rfc_prediales']
 
-        self.all_invoices = None
+        self._all_invoices = None
         self.local_db = LocalDBSatCFDI(
             base_path=DATA_DIRECTORY,
             enviar_a_partir=config['enviar_a_partir'],
@@ -132,13 +132,13 @@ class FacturacionGUI:
         })
 
     def get_all_invoices(self):
-        if not self.all_invoices:
-            self.all_invoices = MyCFDI.get_all_cfdi()
-        return self.all_invoices
+        if not self._all_invoices:
+            self._all_invoices = MyCFDI.get_all_cfdi()
+        return self._all_invoices
 
     def add_created_invoice(self, invoice: MyCFDI):
-        self.all_invoices[invoice.uuid] = invoice
-        complement_invoices(self.all_invoices, invoice)
+        self._all_invoices[invoice.uuid] = invoice
+        complement_invoices(self._all_invoices, invoice)
 
     def generate_invoice(self, invoice):
         ref_id = random_string()
@@ -247,7 +247,7 @@ class FacturacionGUI:
                 data = zf.read(fileinfo)
                 match os.path.splitext(fileinfo.filename)[1]:
                     case ".xml":
-                        self.all_invoices = None
+                        self._all_invoices = None
                         MyCFDI.move_to_folder(data, pdf_data=None)
                     case ".pdf":
                         pass
@@ -468,7 +468,7 @@ class FacturacionGUI:
 
     def download_invoice(self, uuid: UUID):
         res = self.pac_service.recover(uuid, accept=Accept.XML_PDF)
-        self.all_invoices = None
+        self._all_invoices = None
         return MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
 
     def facturas_search(self):
