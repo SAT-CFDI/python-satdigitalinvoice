@@ -153,35 +153,37 @@ class FacturacionGUI:
         cfdi40.Comprobante.sign(invoice, self.csd_signer)
 
         attempts = 3
-        for i in self.progress_iterate(
-                'Generando factura', range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
-        ):
-            try:
-                res = self.pac_service.stamp(
-                    cfdi=invoice,
-                    accept=Accept.XML_PDF,
-                    ref_id=ref_id
-                )
-            except Exception as ex:
-                self.show_console()
-                message = f"Error al generar factura: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}"
-                message += f"\nIntento {i + 1} de {attempts}"
+        try:
+            for i in self.progress_iterate(
+                    'Generando factura', range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
+            ):
+                try:
+                    res = self.pac_service.stamp(
+                        cfdi=invoice,
+                        accept=Accept.XML_PDF,
+                        ref_id=ref_id
+                    )
+                except Exception as ex:
+                    self.show_console()
+                    message = f"Error al generar factura: {invoice.get('Serie')}{invoice.get('Folio')} {invoice['Receptor']['Rfc']}"
+                    message += f"\nIntento {i + 1} de {attempts}"
 
-                logger.exception(message)
-                print(message)
-                if isinstance(ex, ResponseError):
-                    logger.error(f"Status Code: {ex.response.status_code}")
-                    print(f"Status Code: {ex.response.status_code}")
-                    logger.error(f"Response: {ex.response.text}")
-                    print(f"Response: {ex.response.text}")
-                continue
+                    logger.exception(message)
+                    print(message)
+                    if isinstance(ex, ResponseError):
+                        logger.error(f"Status Code: {ex.response.status_code}")
+                        print(f"Status Code: {ex.response.status_code}")
+                        logger.error(f"Response: {ex.response.text}")
+                        print(f"Response: {ex.response.text}")
+                    continue
 
-            if folio is not None:
-                self.set_folio(folio + 1)
-            cfdi = MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
-            self.add_created_invoice(cfdi)
+                if folio is not None:
+                    self.set_folio(folio + 1)
+                cfdi = MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
+                self.add_created_invoice(cfdi)
+                return cfdi
+        finally:
             self.progress_cancel('Generando factura')
-            return cfdi
 
     def set_serie(self, serie: str = None):
         if serie:
@@ -275,30 +277,30 @@ class FacturacionGUI:
 
     def progress_iterate(self, title, items, fn=None, skip_first=False, delay=0):
         ln = len(items)
-        for i, item in enumerate(items):
-            if skip_first and i == 0:
-                pass
-            else:
-                if not sg.one_line_progress_meter(
-                        '',
-                        i,
-                        ln,
-                        title,
-                        fn(item) if callable(fn) else "",
-                        key=title,
-                        keep_on_top=True,
-                        no_titlebar=True,
-                        grab_anywhere=True,
-                ):
+        try:
+            for i, item in enumerate(items):
+                if skip_first and i == 0:
+                    pass
+                else:
+                    if not sg.one_line_progress_meter(
+                            '',
+                            i,
+                            ln,
+                            title,
+                            fn(item) if callable(fn) else "",
+                            key=title,
+                            keep_on_top=True,
+                            no_titlebar=True,
+                            grab_anywhere=True,
+                    ):
+                        return
+
+                if not self._read(timeout=delay * i):
                     return
 
-            if not self._read(timeout=delay * i):
-                self.progress_cancel(title)
-                return
-
-            yield item
-
-        self.progress_cancel(title)
+                yield item
+        finally:
+            self.progress_cancel(title)
 
     @staticmethod
     def progress_cancel(title):
@@ -307,78 +309,78 @@ class FacturacionGUI:
         )
 
     def action_button(self, action_name, action_items, action_text):
-        match action_name:
-            case 'solicitudes':
-                for solicitud in self.progress_iterate(action_text, action_items):
-                    id_solicitud = solicitud["response"]["IdSolicitud"]
-                    response = self.sat_service.recover_comprobante_status(
-                        id_solicitud=id_solicitud
-                    )
-                    print_yaml(response)
-                    self.local_db.solicitud_merge(id_solicitud, response=response)
-                    self.recupera_comprobantes(response)
-
-            case 'facturas' | 'pago':
-                for invoice in self.progress_iterate(action_text, action_items):
-                    if not self.generate_invoice(invoice=invoice):
-                        self.progress_cancel(action_text)
-                        break
-
-            case 'correos':
-                clients = ClientsManager()
-                emisor = clients[self.csd_signer.rfc]
-                with self.email_manager.sender as s:
-                    for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
-                        def attachments():
-                            for ni in facturas:
-                                yield ni.filename + ".xml"
-                                yield ni.filename + ".pdf"
-
-                        s.send_email(
-                            subject=f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}",
-                            to_addrs=receptor["Email"],
-                            html=facturacion_environment.get_template('mail_facturas_template.html').render(
-                                facturas=facturas,
-                                facturas_pendientes_meses_anteriores=facturas_facturas_pendientes_meses_anteriores,
-                                emisor=emisor,
-                                receptor=receptor,
-                            ),
-                            file_attachments=attachments()
+        try:
+            match action_name:
+                case 'solicitudes':
+                    for solicitud in self.progress_iterate(action_text, action_items):
+                        id_solicitud = solicitud["response"]["IdSolicitud"]
+                        response = self.sat_service.recover_comprobante_status(
+                            id_solicitud=id_solicitud
                         )
-                        for r in facturas:
-                            self.local_db.notified_set(r.uuid, True)
+                        print_yaml(response)
+                        self.local_db.solicitud_merge(id_solicitud, response=response)
+                        self.recupera_comprobantes(response)
 
-            case 'ajustes':
-                clients = ClientsManager()
-                emisor = clients[self.csd_signer.rfc]
-                with self.email_manager.sender as s:
-                    for data in self.progress_iterate(action_text, action_items):
-                        if not data['ajuste_porcentaje']:
-                            continue
+                case 'facturas' | 'pago':
+                    for invoice in self.progress_iterate(action_text, action_items):
+                        if not self.generate_invoice(invoice=invoice):
+                            break
 
-                        receptor = data['receptor']
-                        file_name = data['file_name']
+                case 'correos':
+                    clients = ClientsManager()
+                    emisor = clients[self.csd_signer.rfc]
+                    with self.email_manager.sender as s:
+                        for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
+                            def attachments():
+                                for ni in facturas:
+                                    yield ni.filename + ".xml"
+                                    yield ni.filename + ".pdf"
 
-                        s.send_email(
-                            subject=f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
-                            to_addrs=receptor["Email"],
-                            html=facturacion_environment.get_template('mail_ajustes_template.html').render(
-                                emisor=emisor,
-                                receptor=receptor,
-                            ),
-                            file_attachments=[file_name]
-                        )
+                            s.send_email(
+                                subject=f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}",
+                                to_addrs=receptor["Email"],
+                                html=facturacion_environment.get_template('mail_facturas_template.html').render(
+                                    facturas=facturas,
+                                    facturas_pendientes_meses_anteriores=facturas_facturas_pendientes_meses_anteriores,
+                                    emisor=emisor,
+                                    receptor=receptor,
+                                ),
+                                file_attachments=attachments()
+                            )
+                            for r in facturas:
+                                self.local_db.notified_set(r.uuid, True)
 
-            case 'clientes':
-                for client in self.progress_iterate(
-                        action_text, action_items, lambda x: f"Validando: {x['Rfc']}"
-                ):
-                    validar_client(client)
+                case 'ajustes':
+                    clients = ClientsManager()
+                    emisor = clients[self.csd_signer.rfc]
+                    with self.email_manager.sender as s:
+                        for data in self.progress_iterate(action_text, action_items):
+                            if not data['ajuste_porcentaje']:
+                                continue
 
-            case _:
-                raise ValueError(f"Invalid action: {action_name}")
+                            receptor = data['receptor']
+                            file_name = data['file_name']
 
-        sg.one_line_progress_meter_cancel()
+                            s.send_email(
+                                subject=f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
+                                to_addrs=receptor["Email"],
+                                html=facturacion_environment.get_template('mail_ajustes_template.html').render(
+                                    emisor=emisor,
+                                    receptor=receptor,
+                                ),
+                                file_attachments=[file_name]
+                            )
+
+                case 'clientes':
+                    for client in self.progress_iterate(
+                            action_text, action_items, lambda x: f"Validando: {x['Rfc']}"
+                    ):
+                        validar_client(client)
+
+                case _:
+                    raise ValueError(f"Invalid action: {action_name}")
+        finally:
+            self.progress_cancel(action_text)
 
     def set_selected_satcfdis(self, cfdis: list):
         i = cfdis[0] if len(cfdis) == 1 else None
