@@ -142,6 +142,7 @@ class FacturacionGUI:
 
     def generate_invoice(self, invoice):
         ref_id = random_string()
+        title = 'Generando factura'
 
         # Add Serie and Folio and signature
         folio = None
@@ -155,7 +156,7 @@ class FacturacionGUI:
         attempts = 3
         try:
             for i in self.progress_iterate(
-                    'Generando factura', range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
+                    title, range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
             ):
                 try:
                     res = self.pac_service.stamp(
@@ -183,7 +184,7 @@ class FacturacionGUI:
                 self.add_created_invoice(cfdi)
                 return cfdi
         finally:
-            self.progress_cancel('Generando factura')
+            self.progress_cancel(title)
 
     def set_serie(self, serie: str = None):
         if serie:
@@ -244,30 +245,34 @@ class FacturacionGUI:
                         self.unzip_cfdi(b)
 
     def unzip_cfdi(self, file):
+        title = 'Descomprimiendo'
         with ZipFile(file, "r") as zf:
-            for fileinfo in self.progress_iterate('Descomprimiendo', zf.infolist()):
-                data = zf.read(fileinfo)
-                match os.path.splitext(fileinfo.filename)[1]:
-                    case ".xml":
-                        self._all_invoices = None
-                        MyCFDI.move_to_folder(data, pdf_data=None)
-                    case ".pdf":
-                        pass
-                    case ".txt":
-                        cfdi_metadata_reader = csv.reader(
-                            (c.decode('utf-8') for c in data.splitlines() if c),
-                            delimiter='~',
-                            quotechar='|'
-                        )
-                        header = next(cfdi_metadata_reader)
-                        for row in cfdi_metadata_reader:
-                            row = dict(zip(header, row))
-                            print_yaml(row)
-                            self.local_db.status_merge(
-                                uuid=row['Uuid'],
-                                estatus=row['Estatus'],
-                                fecha_cancelacion=row['FechaCancelacion']
+            try:
+                for fileinfo in self.progress_iterate(title, zf.infolist()):
+                    data = zf.read(fileinfo)
+                    match os.path.splitext(fileinfo.filename)[1]:
+                        case ".xml":
+                            self._all_invoices = None
+                            MyCFDI.move_to_folder(data, pdf_data=None)
+                        case ".pdf":
+                            pass
+                        case ".txt":
+                            cfdi_metadata_reader = csv.reader(
+                                (c.decode('utf-8') for c in data.splitlines() if c),
+                                delimiter='~',
+                                quotechar='|'
                             )
+                            header = next(cfdi_metadata_reader)
+                            for row in cfdi_metadata_reader:
+                                row = dict(zip(header, row))
+                                print_yaml(row)
+                                self.local_db.status_merge(
+                                    uuid=row['Uuid'],
+                                    estatus=row['Estatus'],
+                                    fecha_cancelacion=row['FechaCancelacion']
+                                )
+            finally:
+                self.progress_cancel(title)
 
     def _read(self, timeout=0):
         event, values = self.window.read(timeout=timeout)
