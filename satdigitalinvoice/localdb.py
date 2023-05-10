@@ -9,7 +9,7 @@ import diskcache
 from satcfdi import Code
 from satcfdi.accounting import SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
-from satcfdi.create.cfd.catalogos import MetodoPago
+from satcfdi.create.cfd.catalogos import MetodoPago, TipoDeComprobante
 from satcfdi.pacs import sat
 
 from .utils import estado_to_estatus
@@ -155,6 +155,8 @@ class StatusState(Enum):
             return "❌"
 
 
+
+
 class LocalDBSatCFDI(LocalDB):
     def __init__(self, base_path, enviar_a_partir, pagar_a_partir):
         super().__init__(base_path)
@@ -203,7 +205,7 @@ class LocalDBSatCFDI(LocalDB):
         if cfdi.estatus == EstadoComprobante.Cancelado:
             return StatusState.CANCELLED
 
-        if cfdi["TipoDeComprobante"] != "I":
+        if cfdi["TipoDeComprobante"] != TipoDeComprobante.INGRESO:
             return StatusState.NONE
 
         mpago = cfdi["MetodoPago"]
