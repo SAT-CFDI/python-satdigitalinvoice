@@ -14,7 +14,7 @@ from satcfdi.accounting import EmailManager
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.accounting.process import complement_invoices
 from satcfdi.create.cfd import cfdi40
-from satcfdi.create.cfd.catalogos import MetodoPago
+from satcfdi.create.cfd.catalogos import MetodoPago, TipoDeComprobante
 from satcfdi.exceptions import ResponseError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
@@ -31,7 +31,7 @@ from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, a
     generate_ajustes
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
-from .log_tools import cfdi_header, header_line, print_yaml
+from .log_tools import header_line, print_yaml
 from .mycfdi import MyCFDI
 from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS
 
@@ -233,7 +233,7 @@ class FacturacionGUI:
         self.local_db.solicitud_merge(response["IdSolicitud"], request=args, response=response)
 
     def recupera_comprobantes(self, response):
-        if response["EstadoSolicitud"] == EstadoSolicitud.Terminada:
+        if response["EstadoSolicitud"] == EstadoSolicitud.TERMINADA:
             for id_paquete in response['IdsPaquetes']:
                 r, paquete = self.sat_service.recover_comprobante_download(
                     id_paquete=id_paquete
@@ -396,7 +396,7 @@ class FacturacionGUI:
             self.window["status_sat"].update(
                 estatus.name.center(10),
                 disabled=False,
-                button_color="red4" if estatus != EstadoComprobante.Vigente else "dark green",
+                button_color="red4" if estatus != EstadoComprobante.VIGENTE else "dark green",
             )
         else:
             self.window["status_sat"].update(
@@ -407,7 +407,7 @@ class FacturacionGUI:
         is_active = \
             bool(i) \
             and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
-            and i.estatus == EstadoComprobante.Vigente
+            and i.estatus == EstadoComprobante.VIGENTE
         if is_active:
             self.window["email_notificada"].update(
                 "Enviada".center(10) if self.local_db.notified(i) else "Por Enviar",
@@ -422,7 +422,7 @@ class FacturacionGUI:
         # Pendiente de Pago
         is_pendientable = \
             is_active \
-            and i["TipoDeComprobante"] == "I" \
+            and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
             and (i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION or i.saldo_pendiente) \
             and i["Total"]
         if is_pendientable:
@@ -435,7 +435,7 @@ class FacturacionGUI:
             )
         else:
             is_ppd_pagada = is_active \
-                            and i["TipoDeComprobante"] == "I" \
+                            and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
                             and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
                             and i.saldo_pendiente == 0
             if is_ppd_pagada:
@@ -454,7 +454,7 @@ class FacturacionGUI:
         # PPD
         is_ppd_active = \
             is_active \
-            and i["TipoDeComprobante"] == "I" \
+            and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
             and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
             and i.saldo_pendiente > 0
 
@@ -496,7 +496,7 @@ class FacturacionGUI:
                 for i in self.get_all_invoices().values():
                     if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
                             and not self.local_db.notified(i) \
-                            and i.estatus == EstadoComprobante.Vigente:
+                            and i.estatus == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
                 for i in self.get_all_invoices().values():
@@ -639,7 +639,7 @@ class FacturacionGUI:
                             sorted(
                                 (i for i in self.get_all_invoices().values()
                                  if i["Emisor"]["Rfc"] == self.csd_signer.rfc
-                                    and i.estatus == EstadoComprobante.Vigente
+                                    and i.estatus == EstadoComprobante.VIGENTE
                                     and not self.local_db.notified(i)
                                  ),
                                 key=lambda r: r["Receptor"]["Rfc"]
@@ -782,7 +782,7 @@ class FacturacionGUI:
                         # noinspection PyUnresolvedReferences
                         sel = self.window["solicitudes_table"].selected_items()
                         for s in sel:
-                            if s["response"].get("EstadoSolicitud").code < EstadoSolicitud.Terminada:
+                            if s["response"].get("EstadoSolicitud").code < EstadoSolicitud.TERMINADA:
                                 self.error_message("No se puede eliminar una solicitud en proceso")
                                 continue
                             del solitudes[s["response"]["IdSolicitud"]]

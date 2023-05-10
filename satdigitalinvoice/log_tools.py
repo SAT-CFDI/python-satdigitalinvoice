@@ -1,5 +1,4 @@
 import yaml
-from satcfdi import Code
 
 
 class NoAliasDumper(yaml.SafeDumper):
@@ -18,6 +17,3 @@ def header_line(text):
     return ("=" * ln) + " " + text + " " + ("=" * ln) + "\n"
 
 
-def cfdi_header(cfdi):
-    receptor = Code(cfdi['Receptor']['Rfc'], cfdi['Receptor']['Nombre'])
-    return f"{cfdi.name} - {cfdi.uuid} {receptor}"

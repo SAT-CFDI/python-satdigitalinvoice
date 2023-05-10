@@ -2,12 +2,12 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 import PySimpleGUI as sg
+from satcfdi import Code
 from satcfdi.pacs.sat import TipoDescargaMasivaTerceros
 # noinspection PyUnresolvedReferences
 from satcfdi.transform.catalog import CATALOGS
-from satdigitalinvoice.gui_functions import mf_pago_fmt, CALENDAR_FECHA_FMT
 
-from .log_tools import *
+from satdigitalinvoice.gui_functions import mf_pago_fmt, CALENDAR_FECHA_FMT
 
 FORMA_PAGO = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_FormaPago']
 TEXT_PADDING = ((5, 0), 3)
@@ -382,7 +382,7 @@ def make_layout(has_fiel, local_db):
                                     sg.Input(datetime.now().strftime(CALENDAR_FECHA_FMT), size=(12, 1), key="fecha_final"),
 
                                     sg.Text("Tipo:", pad=TEXT_PADDING),
-                                    sg.Combo([TipoDescargaMasivaTerceros.CFDI, TipoDescargaMasivaTerceros.Metadata], default_value=TipoDescargaMasivaTerceros.CFDI,
+                                    sg.Combo([TipoDescargaMasivaTerceros.CFDI, TipoDescargaMasivaTerceros.METADATA], default_value=TipoDescargaMasivaTerceros.CFDI,
                                              key="tipo_solicitud", size=(10, 1)),
 
                                     sg.Button("Nueva Solicitud", key="nueva_solicitud", border_width=0),

@@ -22,7 +22,7 @@ class MyCFDI(SatCFDI):
 
     @SatCFDI.estatus.getter
     def estatus(self) -> EstadoComprobante:
-        return self.consulta_estado().get('Estatus', EstadoComprobante.Vigente)
+        return self.consulta_estado().get('Estatus', EstadoComprobante.VIGENTE)
 
     def consulta_estado(self):
         return self.local_db.status_sat(self)

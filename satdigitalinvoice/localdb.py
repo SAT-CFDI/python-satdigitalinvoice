@@ -202,7 +202,7 @@ class LocalDBSatCFDI(LocalDB):
             return super().status(cfdi.uuid)
 
     def liquidated_state(self, cfdi: SatCFDI):
-        if cfdi.estatus == EstadoComprobante.Cancelado:
+        if cfdi.estatus == EstadoComprobante.CANCELADO:
             return StatusState.CANCELLED
 
         if cfdi["TipoDeComprobante"] != TipoDeComprobante.INGRESO:
