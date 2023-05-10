@@ -9,9 +9,9 @@ import diskcache
 from satcfdi import Code
 from satcfdi.accounting import SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
+from satcfdi.create.cfd.catalogos import MetodoPago
 from satcfdi.pacs import sat
 
-from . import PPD
 from .utils import estado_to_estatus
 
 LIQUIDATED = 0
@@ -207,11 +207,11 @@ class LocalDBSatCFDI(LocalDB):
             return StatusState.NONE
 
         mpago = cfdi["MetodoPago"]
-        if cfdi['Total'] == 0 or (mpago == PPD and cfdi.saldo_pendiente == 0):
+        if cfdi['Total'] == 0 or (mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO and cfdi.saldo_pendiente == 0):
             return StatusState.PAID
 
         if self.liquidated(cfdi):
-            if mpago == PPD:
+            if mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO:
                 return StatusState.IGNORED
             return StatusState.PAID
 
