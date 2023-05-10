@@ -12,9 +12,6 @@ METADATA_FILE = os.path.join(ARCHIVOS_DIRECTORY, "metadata.csv")
 TEMPLATES_DIRECTORY = "templates"
 TEMP_DIRECTORY = ".data/temp"
 
-PPD = "PPD"
-PUE = "PUE"
-
 
 def add_file_handler():
     os.makedirs(DATA_DIRECTORY, exist_ok=True)

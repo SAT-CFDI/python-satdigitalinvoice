@@ -14,6 +14,7 @@ from satcfdi.accounting import EmailManager
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.accounting.process import complement_invoices
 from satcfdi.create.cfd import cfdi40
+from satcfdi.create.cfd.catalogos import MetodoPago
 from satcfdi.exceptions import ResponseError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
@@ -21,7 +22,7 @@ from satcfdi.pacs.sat import SAT, EstadoSolicitud
 from satcfdi.transform.catalog import CATALOGS
 from xlsxwriter.exceptions import XlsxFileError
 
-from . import __version__, PPD, PUE, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
+from . import __version__, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
@@ -422,20 +423,20 @@ class FacturacionGUI:
         is_pendientable = \
             is_active \
             and i["TipoDeComprobante"] == "I" \
-            and (i["MetodoPago"] == PUE or i.saldo_pendiente) \
+            and (i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION or i.saldo_pendiente) \
             and i["Total"]
         if is_pendientable:
             self.window["pendiente_pago"].update(
-                (("Pagada" if i["MetodoPago"] == PUE else "Ignorada")
+                (("Pagada" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "Ignorada")
                  if self.local_db.liquidated(i) else "Por Pagar").center(10),
                 disabled=False,
-                button_color=("dark green" if i["MetodoPago"] == PUE else "yellow4")
+                button_color=("dark green" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "yellow4")
                 if self.local_db.liquidated(i) else "red4",
             )
         else:
             is_ppd_pagada = is_active \
                             and i["TipoDeComprobante"] == "I" \
-                            and i["MetodoPago"] == PPD \
+                            and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
                             and i.saldo_pendiente == 0
             if is_ppd_pagada:
                 self.window["pendiente_pago"].update(
@@ -454,7 +455,7 @@ class FacturacionGUI:
         is_ppd_active = \
             is_active \
             and i["TipoDeComprobante"] == "I" \
-            and i["MetodoPago"] == PPD \
+            and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
             and i.saldo_pendiente > 0
 
         self.window["ppd_action_items"].update(visible=is_ppd_active)
