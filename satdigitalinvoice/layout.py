@@ -8,7 +8,7 @@ from satcfdi.pacs.sat import TipoDescargaMasivaTerceros
 
 from satdigitalinvoice.gui_functions import mf_pago_fmt, CALENDAR_FECHA_FMT
 
-FORMA_PAGO = select_all('Td5a9fdcc78ab4510aee9addb48db94cf47a91f1b')
+FORMA_PAGO = select_all('C756_c_FormaPago')
 TEXT_PADDING = ((5, 0), 3)
 
 # 24 x 24
@@ -355,7 +355,7 @@ def make_layout(has_fiel, local_db):
                                         i,
                                         r["RazonSocial"],
                                         r["Rfc"],
-                                        r["RegimenFiscal"].code,
+                                        r["RegimenFiscal"],
                                         r["CodigoPostal"],
                                         r["IdCIF"]
                                     ]

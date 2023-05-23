@@ -17,8 +17,6 @@ from yaml.constructor import ConstructorError
 from . import SOURCE_DIRECTORY
 from .utils import find_best_match, first_duplicate
 
-# REGIMEN_FISCAL = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_RegimenFiscal']
-
 logger = logging.getLogger(__name__)
 sat_manager = sat.SAT()
 
@@ -109,7 +107,7 @@ class ClientsManager(LocalData):
             if error := jsonschema.exceptions.best_match(client_validator.iter_errors(v)):
                 raise error
             self[k]["Rfc"] = k
-            self[k]["RegimenFiscal"] = Code(self[k]["RegimenFiscal"], None)
+            self[k]["RegimenFiscal"] = self[k]["RegimenFiscal"]
 
 
 class FacturasManager(LocalData):
