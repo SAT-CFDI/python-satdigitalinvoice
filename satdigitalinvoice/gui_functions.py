@@ -13,8 +13,6 @@ from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.pacs import sat
 from satcfdi.printer import Representable
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
 from weasyprint import HTML, CSS
 
 from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY

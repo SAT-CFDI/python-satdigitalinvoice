@@ -10,8 +10,6 @@ import jsonschema as jsonschema
 import yaml
 from satcfdi import Code, DatePeriod
 from satcfdi.pacs import sat
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
 from satcfdi.transform.helpers import Xint
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
@@ -19,7 +17,7 @@ from yaml.constructor import ConstructorError
 from . import SOURCE_DIRECTORY
 from .utils import find_best_match, first_duplicate
 
-REGIMEN_FISCAL = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_RegimenFiscal']
+# REGIMEN_FISCAL = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_RegimenFiscal']
 
 logger = logging.getLogger(__name__)
 sat_manager = sat.SAT()
@@ -111,7 +109,7 @@ class ClientsManager(LocalData):
             if error := jsonschema.exceptions.best_match(client_validator.iter_errors(v)):
                 raise error
             self[k]["Rfc"] = k
-            self[k]["RegimenFiscal"] = Code(self[k]["RegimenFiscal"], REGIMEN_FISCAL.get(self[k]["RegimenFiscal"]))
+            self[k]["RegimenFiscal"] = Code(self[k]["RegimenFiscal"], None)
 
 
 class FacturasManager(LocalData):

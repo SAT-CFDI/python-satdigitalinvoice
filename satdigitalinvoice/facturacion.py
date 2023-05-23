@@ -18,8 +18,6 @@ from satcfdi.create.cfd.catalogos import MetodoPago, TipoDeComprobante
 from satcfdi.exceptions import ResponseError
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
 from xlsxwriter.exceptions import XlsxFileError
 
 from . import __version__, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE

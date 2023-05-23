@@ -4,8 +4,6 @@ from html import escape as html_escape
 import jinja2
 from jinja2 import Environment, Undefined
 from jinja2.filters import do_mark_safe
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
 from satcfdi.transform.helpers import iterate as h_iterate
 from satdigitalinvoice.formatting_functions.common import pesos, num_letras, fecha as c_fecha
 

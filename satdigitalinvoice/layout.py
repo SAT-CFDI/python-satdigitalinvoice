@@ -3,13 +3,12 @@ from enum import StrEnum
 
 import PySimpleGUI as sg
 from satcfdi import Code
+from satcfdi.catalogs import select_all
 from satcfdi.pacs.sat import TipoDescargaMasivaTerceros
-# noinspection PyUnresolvedReferences
-from satcfdi.transform.catalog import CATALOGS
 
 from satdigitalinvoice.gui_functions import mf_pago_fmt, CALENDAR_FECHA_FMT
 
-FORMA_PAGO = CATALOGS['{http://www.sat.gob.mx/sitio_internet/cfd/catalogos}c_FormaPago']
+FORMA_PAGO = select_all('Td5a9fdcc78ab4510aee9addb48db94cf47a91f1b')
 TEXT_PADDING = ((5, 0), 3)
 
 # 24 x 24
