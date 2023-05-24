@@ -375,6 +375,24 @@ class FacturacionGUI:
                                 file_attachments=[file_name]
                             )
 
+                case 'depositos':
+                    clients = ClientsManager()
+                    emisor = clients[self.csd_signer.rfc]
+                    with self.email_manager.sender as s:
+                        for data in self.progress_iterate(action_text, action_items):
+                            receptor = data['receptor']
+                            file_name = data['file_name']
+
+                            s.send_email(
+                                subject=f"Depósito Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
+                                to_addrs=receptor["Email"],
+                                html=facturacion_environment.get_template('mail_depositos_template.html').render(
+                                    emisor=emisor,
+                                    receptor=receptor,
+                                ),
+                                file_attachments=[file_name]
+                            )
+
                 case 'clientes':
                     for client in self.progress_iterate(
                             action_text, action_items, lambda x: f"Validando: {x['Rfc']}"
