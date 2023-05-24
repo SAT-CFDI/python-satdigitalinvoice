@@ -240,7 +240,6 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
 
                 concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
                 file_name = os.path.join(ajustes_dir, f'AjusteRenta_{receptor_rfc}_{i}.pdf')
-
                 client_receptor = clients[receptor_rfc]  # type: dict
                 data = {
                     "receptor": client_receptor,
@@ -252,16 +251,9 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
                     "meses": num_meses or '',
                     "efectivo_periodo_desc": periodicidad_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),
                     "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
-                    'file_name': file_name
                 }
+                data['create_fn'] = create_ajuste_fn(ajuste_porcentaje, data, file_name)
 
-                if ajuste_porcentaje:
-                    res = generate_pdf_template(
-                        template_name='incremento_template.md',
-                        fields=data
-                    )
-                    with open(file_name, 'wb') as f:
-                        f.write(res)
                 yield data
             except Exception as e:
                 errors.append(f"{i} {receptor_rfc}: {str(e)}")
@@ -272,11 +264,18 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
     return cfdis
 
 
-def find_depositos(facturas):
-    for f in facturas:
-        rfc = f["Receptor"]
-        for concepto in f["Conceptos"]:
-            yield rfc, concepto
+def create_ajuste_fn(ajuste_porcentaje, data, file_name):
+    def fn():
+        if ajuste_porcentaje:
+            res = generate_pdf_template(
+                template_name='incremento_template.md',
+                fields=data
+            )
+            with open(file_name, 'wb') as f:
+                f.write(res)
+            return file_name
+
+    return fn
 
 
 def generar_depositos(clients, facturas, dp, emisor_rfc):
@@ -285,7 +284,7 @@ def generar_depositos(clients, facturas, dp, emisor_rfc):
     clear_directory(depositos_dir)
 
     def depositos_iter():
-        for i, (receptor_rfc, concepto) in enumerate(find_depositos(facturas), start=1):
+        for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp.month), start=1):
             try:
                 vu = concepto["ValorUnitario"]
 
@@ -299,8 +298,8 @@ def generar_depositos(clients, facturas, dp, emisor_rfc):
                     "concepto": concepto,
                     "valor_unitario": vu,
                     "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
-                    'file_name': file_name
                 }
+                data['create_fn'] = create_deposito_fn(data, file_name)
                 yield data
             except Exception as e:
                 errors.append(f"{i} {receptor_rfc}: {str(e)}")
@@ -309,6 +308,19 @@ def generar_depositos(clients, facturas, dp, emisor_rfc):
     if errors:
         raise ConsoleErrors("Generar Depositos Errores", errors=errors)
     return cfdis
+
+
+def create_deposito_fn(data, file_name):
+    def fn():
+        res = generate_pdf_template(
+            template_name='deposito_template.md',
+            fields=data
+        )
+        with open(file_name, 'wb') as f:
+            f.write(res)
+        return file_name
+
+    return fn
 
 
 def archivos_folder(dp: DatePeriod):

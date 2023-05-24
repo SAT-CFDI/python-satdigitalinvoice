@@ -99,7 +99,7 @@ class FacturacionGUI:
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'ajustes_periodo', 'serie', 'folio', 'serie_pago'):
+        for t in ('facturas_periodo', 'emitidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
@@ -109,7 +109,7 @@ class FacturacionGUI:
             self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
-            self.window[t].bind('<Return>', '_enter')
+            self.window[t].bind('<Return>', '+enter')
 
     def run(self):
         self.main_loop()
@@ -354,44 +354,24 @@ class FacturacionGUI:
                             for r in facturas:
                                 self.local_db.notified_set(r.uuid, True)
 
-                case 'ajustes':
-                    clients = ClientsManager()
-                    emisor = clients[self.csd_signer.rfc]
+                case 'ajustes' | 'depositos':
                     with self.email_manager.sender as s:
                         for data in self.progress_iterate(action_text, action_items):
-                            if not data['ajuste_porcentaje']:
-                                continue
+                            if file_name := data['create_fn']():
+                                receptor = data['receptor']
+                                if action_name == 'ajustes':
+                                    subject = f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}"
+                                elif action_name == 'depositos':
+                                    subject = f"Depósito Renta {receptor['RazonSocial']} - {receptor['Rfc']}"
+                                else:
+                                    raise NotImplementedError()
 
-                            receptor = data['receptor']
-                            file_name = data['file_name']
-
-                            s.send_email(
-                                subject=f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
-                                to_addrs=receptor["Email"],
-                                html=facturacion_environment.get_template('mail_ajustes_template.html').render(
-                                    emisor=emisor,
-                                    receptor=receptor,
-                                ),
-                                file_attachments=[file_name]
-                            )
-
-                case 'depositos':
-                    clients = ClientsManager()
-                    emisor = clients[self.csd_signer.rfc]
-                    with self.email_manager.sender as s:
-                        for data in self.progress_iterate(action_text, action_items):
-                            receptor = data['receptor']
-                            file_name = data['file_name']
-
-                            s.send_email(
-                                subject=f"Depósito Renta {receptor['RazonSocial']} - {receptor['Rfc']}",
-                                to_addrs=receptor["Email"],
-                                html=facturacion_environment.get_template('mail_depositos_template.html').render(
-                                    emisor=emisor,
-                                    receptor=receptor,
-                                ),
-                                file_attachments=[file_name]
-                            )
+                                s.send_email(
+                                    subject=subject,
+                                    to_addrs=receptor["Email"],
+                                    html=facturacion_environment.get_template(f'mail_{action_name}_template.html').render(data),
+                                    file_attachments=[file_name]
+                                )
 
                 case 'clientes':
                     for client in self.progress_iterate(
@@ -772,48 +752,40 @@ class FacturacionGUI:
                     case "ajustes_periodo_enter":
                         self.nuevos_ajustes(values, force=True)
 
+                    case "depositos_periodo_enter":
+                        self.nuevos_depositos(values, force=True)
+
                     case 'main_tab_group':
                         self.main_tab_group(values)
 
-                    case 'facturas_table_enter':
+                    case 'facturas_table+enter':
                         # noinspection PyUnresolvedReferences
                         if s_items := self.window["facturas_table"].selected_items():
                             preview_cfdis(s_items)
 
-                    case 'clientes_table_enter':
+                    case 'clientes_table+enter':
                         # noinspection PyUnresolvedReferences
                         for client in self.window["clientes_table"].selected_items():
                             url = csf.url(rfc=client["Rfc"], id_cif=client["IdCIF"])
                             open_file(url)
 
-                    case 'emitidas_table_enter':
+                    case 'emitidas_table+enter':
                         # noinspection PyUnresolvedReferences
                         if s_items := self.window["emitidas_table"].selected_items():
                             preview_cfdis(s_items)
 
-                    case 'ajustes_table_enter':
+                    case 'ajustes_table+enter' | 'depositos_table+enter':
+                        table = event.split("+")[0]
                         # noinspection PyUnresolvedReferences
-                        for ajuste in self.window["ajustes_table"].selected_items():
-                            open_file(
-                                os.path.abspath(ajuste['file_name'])
-                            )
+                        for items in self.window[table].selected_items():
+                            if file_name := items['create_fn']():
+                                open_file(
+                                    os.path.abspath(file_name)
+                                )
+                            else:
+                                self.error_message("No se pudo crear el archivo")
 
-                    case 'depositos_table_enter':
-                        # noinspection PyUnresolvedReferences
-                        for deposito in self.window["depositos_table"].selected_items():
-                            file_name = deposito['file_name']
-                            res = generate_pdf_template(
-                                template_name='deposito_template.md',
-                                fields=deposito
-                            )
-                            with open(file_name, 'wb') as f:
-                                f.write(res)
-
-                            open_file(
-                                os.path.abspath(file_name)
-                            )
-
-                    case 'correos_table_enter' | 'solicitudes_table_enter':
+                    case 'correos_table+enter' | 'solicitudes_table+enter':
                         pass
 
                     case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "solicitudes_table" | "depositos_table":
