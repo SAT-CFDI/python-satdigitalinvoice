@@ -211,7 +211,7 @@ def find_ajustes(facturas, mes_ajuste):
 
 def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
     errors = []
-    ajustes_dir = ajustes_directory(DatePeriod(dp.year, dp.month))
+    ajustes_dir = os.path.join(archivos_folder(dp), 'ajustes')
     clear_directory(ajustes_dir)
 
     def ajustes_iter():
@@ -269,6 +269,45 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
     cfdis = list(ajustes_iter())
     if errors:
         raise ConsoleErrors("Generar Ajustes Errores", errors=errors)
+    return cfdis
+
+
+def find_depositos(facturas):
+    for f in facturas:
+        rfc = f["Receptor"]
+        for concepto in f["Conceptos"]:
+            yield rfc, concepto
+
+
+def generar_depositos(clients, facturas, dp, emisor_rfc):
+    errors = []
+    depositos_dir = os.path.join(archivos_folder(dp), 'depositos')
+    clear_directory(depositos_dir)
+
+    def depositos_iter():
+        for i, (receptor_rfc, concepto) in enumerate(find_depositos(facturas), start=1):
+            try:
+                vu = concepto["ValorUnitario"]
+
+                concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
+                file_name = os.path.join(depositos_dir, f'Deposito_{receptor_rfc}_{i}.pdf')
+
+                client_receptor = clients[receptor_rfc]  # type: dict
+                data = {
+                    "receptor": client_receptor,
+                    "emisor": clients[emisor_rfc],
+                    "concepto": concepto,
+                    "valor_unitario": vu,
+                    "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
+                    'file_name': file_name
+                }
+                yield data
+            except Exception as e:
+                errors.append(f"{i} {receptor_rfc}: {str(e)}")
+
+    cfdis = list(depositos_iter())
+    if errors:
+        raise ConsoleErrors("Generar Depositos Errores", errors=errors)
     return cfdis
 
 
@@ -352,10 +391,6 @@ def mf_pago_fmt(cfdi):
     if i['TipoDeComprobante'] == "I":
         return i['TipoDeComprobante'].code + ' ' + i['MetodoPago'].code + ' ' + (i['FormaPago'].code if i['FormaPago'].code != '99' else '  ')
     return i['TipoDeComprobante'].code + '       '
-
-
-def ajustes_directory(dp: DatePeriod):
-    return os.path.join(archivos_folder(dp), 'ajustes')
 
 
 def preview_cfdis(cfdis):

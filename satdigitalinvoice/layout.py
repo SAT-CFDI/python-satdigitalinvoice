@@ -333,6 +333,34 @@ def make_layout(has_fiel, local_db):
                         key='ajustes_tab'
                     ),
                     sg.Tab(
+                        'Depositos'.center(13),
+                        [
+                            [
+                                sg.Button(image_data=EDIT_ICON, key="editar_depositos", border_width=0, button_color=BUTTON_COLOR),
+                                sg.Text("Periodo:", pad=TEXT_PADDING),
+                                sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="depositos_periodo"),
+                                sg.Text("", pad=TEXT_PADDING, key="preparar_depositos_text", font=LARGE_FONT),
+                            ],
+                            [
+                                MyTable(
+                                    key="depositos_table",
+                                    headings=[
+                                        "#",
+                                        "Receptor Razon Social",
+                                        "Recep. Rfc",
+                                        "Actual",
+                                    ],
+                                    row_fn=lambda i, r: [
+                                        i,
+                                        r["receptor"]["RazonSocial"],
+                                        r["receptor"]["Rfc"],
+                                        r["valor_unitario"],
+                                    ]
+                                )
+                            ]],
+                        key='depositos_tab'
+                    ),
+                    sg.Tab(
                         'Clientes '.center(13),
                         [
                             [

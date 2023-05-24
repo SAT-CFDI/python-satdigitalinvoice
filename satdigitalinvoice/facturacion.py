@@ -26,7 +26,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes
+    generate_ajustes, generar_depositos, generate_pdf_template
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import header_line, print_yaml
@@ -105,7 +105,7 @@ class FacturacionGUI:
 
         modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
 
-        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'correos_table', 'ajustes_table', 'solicitudes_table'):
+        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
             self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
@@ -612,6 +612,30 @@ class FacturacionGUI:
                 values=ajustes,
             )
 
+    def nuevos_depositos(self, values, force=False):
+        depositos_table = self.window['depositos_table']
+        has_value = bool(depositos_table.metadata)
+        depositos_table.update(values=[])
+        self.window['preparar_depositos_text'].update("")
+
+        if has_value or force:
+            dp = to_date_period(values["depositos_periodo"])
+            if dp is None or dp.month is None:
+                raise ValueError("Periodo no válido")
+
+            self.window['preparar_depositos_text'].update(f"{period_desc(dp)}")
+
+            depositos = generar_depositos(
+                clients=ClientsManager(),
+                facturas=FacturasManager(dp)["Facturas"],
+                dp=dp,
+                emisor_rfc=self.csd_signer.rfc,
+
+            )
+            depositos_table.update(
+                values=depositos,
+            )
+
     def main_tab_group(self, values):
         self.action_button_manager.clear()
 
@@ -667,6 +691,9 @@ class FacturacionGUI:
 
             case 'ajustes_tab':
                 self.nuevos_ajustes(values)
+
+            case 'depositos_tab':
+                self.nuevos_depositos(values)
 
             case 'solicitudes_tab':
                 solitudes = self.local_db.get_solicitudes()
@@ -753,10 +780,25 @@ class FacturacionGUI:
                                 os.path.abspath(ajuste['file_name'])
                             )
 
+                    case 'depositos_table_enter':
+                        # noinspection PyUnresolvedReferences
+                        for deposito in self.window["depositos_table"].selected_items():
+                            file_name = deposito['file_name']
+                            res = generate_pdf_template(
+                                template_name='deposito_template.md',
+                                fields=deposito
+                            )
+                            with open(file_name, 'wb') as f:
+                                f.write(res)
+
+                            open_file(
+                                os.path.abspath(file_name)
+                            )
+
                     case 'correos_table_enter' | 'solicitudes_table_enter':
                         pass
 
-                    case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "emitidas_table" | "solicitudes_table":
+                    case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "solicitudes_table" | "depositos_table":
                         # noinspection PyUnresolvedReferences
                         s_items = self.window[event].selected_items()
                         if event == "emitidas_table":
@@ -765,7 +807,8 @@ class FacturacionGUI:
                             self.action_button_manager.set_items(event.split("_")[0], s_items)
 
                     case "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
-                         "ajustes_table+select_all" | "emitidas_table+select_all" | 'solicitudes_table+select_all':
+                         "ajustes_table+select_all" | "emitidas_table+select_all" | 'solicitudes_table+select_all' | \
+                         'depositos_table+select_all':
                         # noinspection PyUnresolvedReferences
                         self.window[event.split("+")[0]].select_all()
 
