@@ -19,7 +19,7 @@ from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes
-from .utils import add_month, find_best_match, months_between, clear_directory, open_file
+from .utils import add_month, find_best_match, months_between, open_file
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -212,7 +212,7 @@ def find_ajustes(facturas, mes_ajuste):
 def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
     errors = []
     ajustes_dir = os.path.join(archivos_folder(dp), 'ajustes')
-    clear_directory(ajustes_dir)
+    os.makedirs(ajustes_dir, exist_ok=True)
 
     def ajustes_iter():
         for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp_effective.month), start=1):
@@ -268,20 +268,19 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
     def fn():
         if ajuste_porcentaje:
             res = generate_pdf_template(
-                template_name='incremento_template.md',
+                template_name='ajuste_template.md',
                 fields=data
             )
             with open(file_name, 'wb') as f:
                 f.write(res)
             return file_name
-
     return fn
 
 
 def generar_depositos(clients, facturas, dp, emisor_rfc):
     errors = []
     depositos_dir = os.path.join(archivos_folder(dp), 'depositos')
-    clear_directory(depositos_dir)
+    os.makedirs(depositos_dir, exist_ok=True)
 
     def depositos_iter():
         for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp.month), start=1):
