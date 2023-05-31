@@ -5,7 +5,7 @@ import jinja2
 from jinja2 import Environment, Undefined
 from jinja2.filters import do_mark_safe
 from satcfdi.transform.helpers import iterate as h_iterate
-from satdigitalinvoice.formatting_functions.common import pesos, num_letras, fecha as c_fecha
+import satdigitalinvoice.formatting_functions.common as common
 
 from . import TEMPLATES_DIRECTORY
 
@@ -54,19 +54,19 @@ class FacturacionEnvironment(Environment):
 
         @self.filter
         def moneda_nacional(k):
-            return pesos(k)
+            return common.pesos(k)
 
         @self.filter
         def numero(k):
-            return str(k) + ' (' + num_letras(k) + ')'
+            return common.numero(k)
 
         @self.filter
         def porcentaje(k):
-            return str(k) + '% (' + num_letras(k) + ' POR CIENTO)'
+            return common.porcentaje(k)
 
         @self.filter
         def fecha(k):
-            return c_fecha(k)
+            return common.fecha(k)
 
 
 def tag(text, tag):

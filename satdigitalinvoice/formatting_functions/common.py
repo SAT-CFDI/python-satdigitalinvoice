@@ -15,6 +15,14 @@ def num_letras(number):
     return num2words(number, lang=LANG).upper()
 
 
+def numero(k):
+    return str(k) + ' (' + num_letras(k) + ')'
+
+
+def porcentaje(k):
+    return str(k) + '% (' + num_letras(k) + ' POR CIENTO)'
+
+
 def fecha(date):
     return format_date(date, locale='es_MX', format="d 'de' MMMM 'del' y").upper()
 
