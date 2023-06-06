@@ -10,6 +10,7 @@ from satcfdi import DatePeriod
 from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
 from satcfdi.accounting.process import payments_groupby_receptor, payments_retentions_export
 from satcfdi.create.cfd import cfdi40
+from satcfdi.create.cfd.catalogos import TipoRelacion
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.pacs import sat
 from satcfdi.printer import Representable
@@ -56,6 +57,12 @@ def create_cfdi(receptor_cif, factura_details, emisor_cif):
         ),
         metodo_pago=factura_details['MetodoPago'],
         forma_pago=factura_details['FormaPago'],
+        cfdi_relacionados=[
+            cfdi40.CfdiRelacionados(
+                tipo_relacion=TipoRelacion.SUSTITUCION_DE_LOS_CFDI_PREVIOS,
+                cfdi_relacionado='342e7897-07e8-4c11-883c-07230d206be3',
+            )
+        ],
         # serie=serie,
         # folio=folio,
         conceptos=factura_details["Conceptos"]
