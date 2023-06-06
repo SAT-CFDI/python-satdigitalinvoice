@@ -57,12 +57,12 @@ def create_cfdi(receptor_cif, factura_details, emisor_cif):
         ),
         metodo_pago=factura_details['MetodoPago'],
         forma_pago=factura_details['FormaPago'],
-        cfdi_relacionados=[
-            cfdi40.CfdiRelacionados(
-                tipo_relacion=TipoRelacion.SUSTITUCION_DE_LOS_CFDI_PREVIOS,
-                cfdi_relacionado='342e7897-07e8-4c11-883c-07230d206be3',
-            )
-        ],
+        # cfdi_relacionados=[
+        #     cfdi40.CfdiRelacionados(
+        #         tipo_relacion=TipoRelacion.SUSTITUCION_DE_LOS_CFDI_PREVIOSaaaaaaa,
+        #         cfdi_relacionado=''xyc',
+        #     )
+        # ],
         # serie=serie,
         # folio=folio,
         conceptos=factura_details["Conceptos"]
