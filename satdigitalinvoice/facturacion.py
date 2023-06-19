@@ -356,9 +356,24 @@ class FacturacionGUI:
 
                 case 'ajustes' | 'depositos':
                     with self.email_manager.sender as s:
-                        for data in self.progress_iterate(action_text, action_items):
-                            if file_name := data['create_fn']():
-                                receptor = data['receptor']
+                        grouped_action_items = []
+                        for _, g_data in itertools.groupby(
+                            sorted(
+                                action_items,
+                                key=lambda r: r["receptor"]["Rfc"]
+                            ),
+                            lambda r: r["receptor"]["Rfc"]
+                        ):
+                            grouped_action_items.append(list(g_data))
+
+                        for g_data in self.progress_iterate(action_text, grouped_action_items):
+                            file_names = []
+                            for data in g_data:
+                                if file := data['create_fn']():
+                                    file_names.append(file)
+
+                            if file_names:
+                                receptor = g_data[0]['receptor']
                                 if action_name == 'ajustes':
                                     subject = f"Ajuste Renta {receptor['RazonSocial']} - {receptor['Rfc']}"
                                 elif action_name == 'depositos':
@@ -370,7 +385,7 @@ class FacturacionGUI:
                                     subject=subject,
                                     to_addrs=receptor["Email"],
                                     html=facturacion_environment.get_template(f'mail_{action_name}_template.html').render(data),
-                                    file_attachments=[file_name]
+                                    file_attachments=file_names
                                 )
 
                 case 'clientes':
