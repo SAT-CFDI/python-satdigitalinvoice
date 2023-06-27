@@ -6,7 +6,7 @@ from enum import Enum
 from uuid import UUID
 
 import diskcache
-from satcfdi import Code
+from satcfdi.models import Code
 from satcfdi.accounting import SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.create.cfd.catalogos import MetodoPago, TipoDeComprobante

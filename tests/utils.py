@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from pprint import PrettyPrinter
 
-from satcfdi import XElement
+from satcfdi.xelement import XElement
 
 current_dir = os.path.dirname(__file__)
 

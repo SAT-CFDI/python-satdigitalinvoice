@@ -6,12 +6,11 @@ from decimal import InvalidOperation
 
 import xlsxwriter
 from markdown2 import markdown
-from satcfdi import DatePeriod
 from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
 from satcfdi.accounting.process import payments_groupby_receptor, payments_retentions_export
 from satcfdi.create.cfd import cfdi40
-from satcfdi.create.cfd.catalogos import TipoRelacion
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
+from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
 from satcfdi.printer import Representable
 from weasyprint import HTML, CSS

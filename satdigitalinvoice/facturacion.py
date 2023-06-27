@@ -9,7 +9,8 @@ from uuid import UUID
 from zipfile import ZipFile
 
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI as sg, POPUP_BUTTONS_NO_BUTTONS
-from satcfdi import DatePeriod, csf
+from satcfdi import csf
+from satcfdi.models import DatePeriod
 from satcfdi.accounting import EmailManager
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.accounting.process import complement_invoices

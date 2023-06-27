@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 import PySimpleGUI as sg
-from satcfdi import Code
+from satcfdi.models import Code
 from satcfdi.catalogs import select_all
 from satcfdi.pacs.sat import TipoDescargaMasivaTerceros
 

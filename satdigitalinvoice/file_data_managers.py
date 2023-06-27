@@ -8,7 +8,7 @@ from decimal import Decimal
 
 import jsonschema as jsonschema
 import yaml
-from satcfdi import Code, DatePeriod
+from satcfdi.models import Code, DatePeriod
 from satcfdi.pacs import sat
 from satcfdi.transform.helpers import Xint
 from yaml import MappingNode, SafeLoader

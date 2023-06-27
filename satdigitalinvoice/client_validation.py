@@ -2,9 +2,9 @@ import logging
 import re
 import warnings
 
-# noinspection PyUnresolvedReferences
 from bs4.builder import XMLParsedAsHTMLWarning
-from satcfdi import csf, RFC, RFCType
+from satcfdi.models import RFC, RFCType
+from satcfdi import csf
 from satcfdi.pacs.sat import SAT
 
 sat_service = SAT()

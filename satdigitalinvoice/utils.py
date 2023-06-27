@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 from uuid import UUID
 
-from satcfdi import Signer, DatePeriod
+from satcfdi.models import Signer, DatePeriod
 from satcfdi.accounting.models import EstadoComprobante
 
 

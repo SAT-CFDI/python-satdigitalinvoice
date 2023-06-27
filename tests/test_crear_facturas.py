@@ -3,7 +3,7 @@ from decimal import Decimal
 from unittest import mock
 
 import pytest
-from satcfdi import Signer, DatePeriod
+from satcfdi.models import Signer, DatePeriod
 
 from satdigitalinvoice.__version__ import __package__
 from satdigitalinvoice.exceptions import ConsoleErrors

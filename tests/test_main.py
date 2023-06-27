@@ -1,7 +1,7 @@
 from datetime import date, datetime
 
 import pytest
-from satcfdi import DatePeriod
+from satcfdi.models import DatePeriod
 
 from satdigitalinvoice.facturacion import FacturacionGUI
 from yaml.constructor import ConstructorError
