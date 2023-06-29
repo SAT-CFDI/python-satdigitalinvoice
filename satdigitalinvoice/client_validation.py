@@ -15,10 +15,12 @@ EMAIL_REGEX = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
 
 
 def validar_client(client):
+    errors = []
+
     rfc = client['Rfc']
 
     def error(msg):
-        print(f"{rfc}: {msg}")
+        errors.append(f"{rfc}: {msg}")
 
     try:
         rfc = RFC(rfc)
@@ -53,6 +55,8 @@ def validar_client(client):
             error(f"has status '{taxpayer_status}'")
     except ValueError as ex:
         error(ex)
+
+    return errors
 
 
 def clientes_generar_txt(filename, clients):

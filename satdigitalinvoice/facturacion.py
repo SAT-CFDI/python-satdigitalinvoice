@@ -393,7 +393,10 @@ class FacturacionGUI:
                     for client in self.progress_iterate(
                             action_text, action_items, lambda x: f"Validando: {x['Rfc']}"
                     ):
-                        validar_client(client)
+                        if errors := validar_client(client):
+                            self.show_console()
+                            for e in errors:
+                                print(e)
 
                 case _:
                     raise ValueError(f"Invalid action: {action_name}")
