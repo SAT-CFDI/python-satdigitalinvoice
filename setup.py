@@ -53,7 +53,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11"
     ],
-    python_requires='>=3.10',
+    python_requires='>=3.11',
     package_dir={package: package_dir},
     packages=packages,
     package_data={
