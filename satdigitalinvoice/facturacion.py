@@ -842,7 +842,8 @@ class FacturacionGUI:
                     case "status_sat":
                         # noinspection PyUnresolvedReferences
                         if i := self.window["emitidas_table"].selected_items()[0]:
-                            self.local_db.status_sat(i, update=True)
+                            res = self.local_db.status_sat(i, update=True)
+                            self.done_message(f"Estado: {res['Estado']}")
                             self.set_selected_satcfdis([i])
                             # noinspection PyUnresolvedReferences
                             self.window['emitidas_table'].refresh()

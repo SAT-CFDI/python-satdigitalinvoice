@@ -114,9 +114,9 @@ def first_duplicate(seq):
 
 def estado_to_estatus(estatus):
     if estatus == 'Vigente':
-        return EstadoComprobante.Vigente.value
+        return EstadoComprobante.VIGENTE.value
     elif estatus == 'Cancelado':
-        return EstadoComprobante.Cancelado.value
+        return EstadoComprobante.CANCELADO.value
     raise ValueError(f"Unknown status: {estatus}")
 
 
