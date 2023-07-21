@@ -173,10 +173,6 @@ def parse_fecha_pago(fecha_pago):
     else:
         fecha_pago = fecha_pago.replace(hour=12)
 
-    dif = datetime.now() - fecha_pago
-    if dif.days > 35:
-        raise ValueError("Fecha de Pago es de hace mas de 35 dias")
-
     return fecha_pago
 
 

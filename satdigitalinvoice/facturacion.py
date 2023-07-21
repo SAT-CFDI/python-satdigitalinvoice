@@ -89,6 +89,7 @@ class FacturacionGUI:
             finalize=True,
             scaling=config.get('scaling', 1.0),
         )
+        self.has_focus = True
 
         self.action_button_manager = ActionButtonManager(
             button=self.window["crear_facturas"],
@@ -111,6 +112,8 @@ class FacturacionGUI:
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
             self.window[t].bind('<Return>', '+enter')
+
+
 
     def run(self):
         self.main_loop()
@@ -546,6 +549,20 @@ class FacturacionGUI:
 
     def crear_pago(self, values, facturas_pagar):
         fecha_pago = parse_fecha_pago(values["fecha_pago"])
+
+        max_dias = 30
+        dif_dias = (datetime.now() - fecha_pago).days
+        if dif_dias > max_dias:
+            res = sg.popup(
+                f"Estas seguro que quieres hacer Complemento de Pago con fecha de pago de hace '{dif_dias}' dias?",
+                title="Confirmar",
+                button_type=POPUP_BUTTONS_OK_CANCEL,
+                location=center_location(self.window),
+                keep_on_top=True,
+            )
+            if res != "OK":
+                return []
+
         importe_pago = parse_importe_pago(values["importe_pago"])
         self.window["importe_pago"].update(importe_pago)
 
@@ -719,284 +736,287 @@ class FacturacionGUI:
                 )
 
     def main_loop(self):
-        has_focus = True
         _, values = self.window.read(timeout=0)
         event = "main_tab_group"
 
         while True:
-            try:
-                if event in ("Exit", sg.WIN_CLOSED):
-                    return
+            if event in ("Exit", sg.WIN_CLOSED):
+                return
 
-                match event:
-                    case '_focus_in':
-                        if not has_focus:
-                            has_focus = True
-                            if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab"):
-                                self.main_tab_group(values)
-
-                    case '_focus_out':
-                        try:
-                            has_focus = bool(self.window.TKroot.focus_get())
-                        except KeyError:
-                            has_focus = True
-
-                    case "folio_enter":
-                        self.set_folio(to_int(values["folio"]))
-
-                    case "serie_enter":
-                        self.set_serie(values["serie"])
-
-                    case "serie_pago_enter":
-                        self.set_serie_pago(values["serie_pago"])
-
-                    case "about":
-                        clients = ClientsManager()
-                        self.initial_screen(clients[self.csd_signer.rfc])
-
-                    case "nueva_solicitud":
-                        self.nueva_solicitud(values)
-                        self.main_tab_group(values)
-
-                    case "buscar_facturas":
-                        self.window["emitidas_search"].update(values["buscar_facturas"])
-                        self.facturas_search()
-
-                    case "emitidas_search_enter":
-                        self.facturas_search()
-
-                    case "facturas_periodo_enter":
-                        self.nuevas_facturas(values, force=True)
-
-                    case "ajustes_periodo_enter":
-                        self.nuevos_ajustes(values, force=True)
-
-                    case "depositos_periodo_enter":
-                        self.nuevos_depositos(values, force=True)
-
-                    case 'main_tab_group':
-                        self.main_tab_group(values)
-
-                    case 'facturas_table+enter':
-                        # noinspection PyUnresolvedReferences
-                        if s_items := self.window["facturas_table"].selected_items():
-                            preview_cfdis(s_items)
-
-                    case 'clientes_table+enter':
-                        # noinspection PyUnresolvedReferences
-                        for client in self.window["clientes_table"].selected_items():
-                            url = csf.url(rfc=client["Rfc"], id_cif=client["IdCIF"])
-                            open_file(url)
-
-                    case 'emitidas_table+enter':
-                        # noinspection PyUnresolvedReferences
-                        if s_items := self.window["emitidas_table"].selected_items():
-                            preview_cfdis(s_items)
-
-                    case 'ajustes_table+enter' | 'depositos_table+enter':
-                        table = event.split("+")[0]
-                        # noinspection PyUnresolvedReferences
-                        for items in self.window[table].selected_items():
-                            if file_name := items['create_fn']():
-                                open_file(
-                                    os.path.abspath(file_name)
-                                )
-                            else:
-                                self.error_message("No se pudo crear el archivo")
-
-                    case 'correos_table+enter' | 'solicitudes_table+enter':
-                        pass
-
-                    case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "solicitudes_table" | "depositos_table":
-                        # noinspection PyUnresolvedReferences
-                        s_items = self.window[event].selected_items()
-                        if event == "emitidas_table":
-                            self.set_selected_satcfdis(s_items)
-                        else:
-                            self.action_button_manager.set_items(event.split("_")[0], s_items)
-
-                    case "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
-                         "ajustes_table+select_all" | "emitidas_table+select_all" | 'solicitudes_table+select_all' | \
-                         'depositos_table+select_all':
-                        # noinspection PyUnresolvedReferences
-                        self.window[event.split("+")[0]].select_all()
-
-                    case "facturas_table+delete" | "clientes_table+delete" | "correos_table+delete" | \
-                         "ajustes_table+delete" | "emitidas_table+delete":
-                        # noinspection PyUnresolvedReferences
-                        # self.window[event.split("+")[0]].delete_selected()
-                        pass
-
-                    case "solicitudes_table+delete":
-                        solitudes = self.local_db.get_solicitudes()
-                        # noinspection PyUnresolvedReferences
-                        sel = self.window["solicitudes_table"].selected_items()
-                        for s in sel:
-                            if s["response"].get("EstadoSolicitud").code < EstadoSolicitud.TERMINADA:
-                                self.error_message("No se puede eliminar una solicitud en proceso")
-                                continue
-                            del solitudes[s["response"]["IdSolicitud"]]
-                        self.local_db.set_solicitudes(solitudes)
-                        self.main_tab_group(values)
-
-                    case "status_sat":
-                        # noinspection PyUnresolvedReferences
-                        if i := self.window["emitidas_table"].selected_items()[0]:
-                            res = self.local_db.status_sat(i, update=True)
-                            self.done_message(f"Estado: {res['Estado']}")
-                            self.set_selected_satcfdis([i])
-                            # noinspection PyUnresolvedReferences
-                            self.window['emitidas_table'].refresh()
-
-                    case "pendiente_pago":
-                        # noinspection PyUnresolvedReferences
-                        if i := self.window["emitidas_table"].selected_items()[0]:
-                            self.local_db.liquidated_flip(i)
-                            self.set_selected_satcfdis([i])
-                            # noinspection PyUnresolvedReferences
-                            self.window['emitidas_table'].refresh()
-
-                    case "email_notificada":
-                        # noinspection PyUnresolvedReferences
-                        if i := self.window["emitidas_table"].selected_items()[0]:
-                            self.local_db.notified_flip(i)
-                            self.set_selected_satcfdis([i])
-                            # noinspection PyUnresolvedReferences
-                            self.window['emitidas_table'].refresh()
-
-                    case "crear_facturas" | "ver_preview":
-                        action_text = self.action_button_manager.text()
-                        action_name = self.action_button_manager.name
-                        action_items = self.action_button_manager.items
-
-                        if action_name == "pago":
-                            action_items = self.crear_pago(values, action_items)
-
-                        if event == "ver_preview":
-                            if action_name in ("facturas", "pago"):
-                                preview_cfdis(action_items)
-
-                        elif event == "crear_facturas":
-                            res = sg.popup(
-                                f"Estas seguro que quieres '{action_text}'?",
-                                title="Confirmar",
-                                button_type=POPUP_BUTTONS_OK_CANCEL,
-                                location=center_location(self.window),
-                                keep_on_top=True,
-                            )
-                            if res == "OK":
-                                self.header(action_text.upper(), select_console=False)
-                                self.action_button_manager.clear()
-                                self.action_button(
-                                    action_name=action_name,
-                                    action_items=action_items,
-                                    action_text=action_text
-                                )
-                                self.main_tab_group(values)
-
-                    case "editar_clientes":
-                        open_file(
-                            os.path.abspath("clientes.yaml")
-                        )
-
-                    case "exportar_clientes":
-                        filename = 'clientes.txt'
-                        clients = ClientsManager()
-                        clientes_generar_txt(filename, clients)
-                        open_file(
-                            os.path.dirname(
-                                os.path.abspath(filename)
-                            )
-                        )
-
-                    case "editar_facturas" | "editar_ajustes":
-                        open_file(
-                            os.path.abspath("facturas.yaml")
-                        )
-
-                    case "editar_configurar":
-                        open_file(
-                            os.path.abspath("config.yaml")
-                        )
-
-                    case "ver_config":
-                        open_file(
-                            os.path.abspath(".")
-                        )
-
-                    case "ver_excel":
-                        dp = to_date_period(values["periodo"])
-                        clients = ClientsManager()
-                        emisor_cif = clients[self.csd_signer.rfc]
-                        archivo_excel = exportar_facturas(
-                            self.get_all_invoices(),
-                            dp,
-                            emisor_cif,
-                            self.rfc_prediales
-                        )
-                        open_file(
-                            os.path.abspath(archivo_excel)
-                        )
-
-                    case "ver_carpeta":
-                        dp = to_date_period(values["periodo"])
-                        directory = archivos_folder(dp)
-                        open_file(
-                            os.path.abspath(directory)
-                        )
-
-                    case "organizar_facturas":
-                        MyCFDI.rename_invoices(search_path="**/*.xml")
-
-                    case "cargar_zip":
-                        zip_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("ZIP Files", "*.zip"),))
-                        if zip_file:
-                            self.unzip_cfdi(zip_file)
-
-                    case 'importar_emitidas':
-                        csv_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("CSV Files", "*.csv"),))
-                        if csv_file:
-                            all_invoices = self.get_all_invoices()
-                            with open(csv_file, newline='', encoding='utf-8') as f:
-                                reader = csv.reader(f)
-                                header = next(reader)
-                                for row in reader:
-                                    row = dict(zip(header, row))
-                                    uuid = UUID(row["Folio Fiscal (UUID)"])
-                                    if uuid not in all_invoices:
-                                        cfdi = self.download_invoice(uuid)
-
-                                        if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
-                                            self.local_db.status_sat(cfdi, update=True)
-                            self.done_message("FIN")
-
-                    case "exportar_metadata":
-                        with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:
-                            writer = csv.writer(f)
-                            for i in self.get_all_invoices():
-                                if status := self.local_db.status_export(i):
-                                    writer.writerow(status)
-                        self.done_message("FIN")
-
-                    case "importar_metadata":
-                        with open(METADATA_FILE, newline='', encoding='utf-8') as f:
-                            reader = csv.reader(f)
-                            for row in reader:
-                                self.local_db.status_merge(*row)
-                        self.done_message("FIN")
-
-                    case _:
-                        logger.error(f"Unknown event '{event}'")
-
-            except (ValueError, XlsxFileError) as ex:
-                self.error_message(ex)
-            except ConsoleErrors as ex:
-                self.header(str(ex))
-                for error in ex.errors:
-                    self.console.update(f"{error}\n", append=True)
-            except Exception as ex:
-                self.header("Exception")
-                self.console.update(append=True, value=str(ex))
-                logger.exception("Main Loop Exception")
-
+            self.action(event, values)
             event, values = self.window.read()
+
+    def action(self, event, values):
+        try:
+            match event:
+                case '_focus_in':
+                    if not self.has_focus:
+                        self.has_focus = True
+                        if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab"):
+                            self.main_tab_group(values)
+
+                case '_focus_out':
+                    try:
+                        self.has_focus = bool(self.window.TKroot.focus_get())
+                    except KeyError:
+                        self.has_focus = True
+
+                case "folio_enter":
+                    self.set_folio(to_int(values["folio"]))
+
+                case "serie_enter":
+                    self.set_serie(values["serie"])
+
+                case "serie_pago_enter":
+                    self.set_serie_pago(values["serie_pago"])
+
+                case "about":
+                    clients = ClientsManager()
+                    self.initial_screen(clients[self.csd_signer.rfc])
+
+                case "nueva_solicitud":
+                    self.nueva_solicitud(values)
+                    self.main_tab_group(values)
+
+                case "buscar_facturas":
+                    self.window["emitidas_search"].update(values["buscar_facturas"])
+                    self.facturas_search()
+
+                case "emitidas_search_enter":
+                    self.facturas_search()
+
+                case "facturas_periodo_enter":
+                    self.nuevas_facturas(values, force=True)
+
+                case "ajustes_periodo_enter":
+                    self.nuevos_ajustes(values, force=True)
+
+                case "depositos_periodo_enter":
+                    self.nuevos_depositos(values, force=True)
+
+                case 'main_tab_group':
+                    self.main_tab_group(values)
+
+                case 'facturas_table+enter':
+                    # noinspection PyUnresolvedReferences
+                    if s_items := self.window["facturas_table"].selected_items():
+                        preview_cfdis(s_items)
+
+                case 'clientes_table+enter':
+                    # noinspection PyUnresolvedReferences
+                    for client in self.window["clientes_table"].selected_items():
+                        url = csf.url(rfc=client["Rfc"], id_cif=client["IdCIF"])
+                        open_file(url)
+
+                case 'emitidas_table+enter':
+                    # noinspection PyUnresolvedReferences
+                    if s_items := self.window["emitidas_table"].selected_items():
+                        preview_cfdis(s_items)
+
+                case 'ajustes_table+enter' | 'depositos_table+enter':
+                    table = event.split("+")[0]
+                    # noinspection PyUnresolvedReferences
+                    for items in self.window[table].selected_items():
+                        if file_name := items['create_fn']():
+                            open_file(
+                                os.path.abspath(file_name)
+                            )
+                        else:
+                            self.error_message("No se pudo crear el archivo")
+
+                case 'correos_table+enter' | 'solicitudes_table+enter':
+                    pass
+
+                case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "solicitudes_table" | "depositos_table":
+                    # noinspection PyUnresolvedReferences
+                    s_items = self.window[event].selected_items()
+                    if event == "emitidas_table":
+                        self.set_selected_satcfdis(s_items)
+                    else:
+                        self.action_button_manager.set_items(event.split("_")[0], s_items)
+
+                case "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
+                     "ajustes_table+select_all" | "emitidas_table+select_all" | 'solicitudes_table+select_all' | \
+                     'depositos_table+select_all':
+                    # noinspection PyUnresolvedReferences
+                    self.window[event.split("+")[0]].select_all()
+
+                case "facturas_table+delete" | "clientes_table+delete" | "correos_table+delete" | \
+                     "ajustes_table+delete" | "emitidas_table+delete":
+                    # noinspection PyUnresolvedReferences
+                    # self.window[event.split("+")[0]].delete_selected()
+                    pass
+
+                case "solicitudes_table+delete":
+                    solitudes = self.local_db.get_solicitudes()
+                    # noinspection PyUnresolvedReferences
+                    sel = self.window["solicitudes_table"].selected_items()
+                    for s in sel:
+                        if s["response"].get("EstadoSolicitud").code < EstadoSolicitud.TERMINADA:
+                            self.error_message("No se puede eliminar una solicitud en proceso")
+                            continue
+                        del solitudes[s["response"]["IdSolicitud"]]
+                    self.local_db.set_solicitudes(solitudes)
+                    self.main_tab_group(values)
+
+                case "status_sat":
+                    # noinspection PyUnresolvedReferences
+                    if i := self.window["emitidas_table"].selected_items()[0]:
+                        res = self.local_db.status_sat(i, update=True)
+                        self.done_message(f"Estado: {res['Estado']}")
+                        self.set_selected_satcfdis([i])
+                        # noinspection PyUnresolvedReferences
+                        self.window['emitidas_table'].refresh()
+
+                case "pendiente_pago":
+                    # noinspection PyUnresolvedReferences
+                    if i := self.window["emitidas_table"].selected_items()[0]:
+                        self.local_db.liquidated_flip(i)
+                        self.set_selected_satcfdis([i])
+                        # noinspection PyUnresolvedReferences
+                        self.window['emitidas_table'].refresh()
+
+                case "email_notificada":
+                    # noinspection PyUnresolvedReferences
+                    if i := self.window["emitidas_table"].selected_items()[0]:
+                        self.local_db.notified_flip(i)
+                        self.set_selected_satcfdis([i])
+                        # noinspection PyUnresolvedReferences
+                        self.window['emitidas_table'].refresh()
+
+                case "crear_facturas" | "ver_preview":
+                    action_text = self.action_button_manager.text()
+                    action_name = self.action_button_manager.name
+                    action_items = self.action_button_manager.items
+
+                    if action_name == "pago":
+                        action_items = self.crear_pago(values, action_items)
+                        if not action_items:
+                            return
+
+                    if event == "ver_preview":
+                        if action_name in ("facturas", "pago"):
+                            preview_cfdis(action_items)
+
+                    elif event == "crear_facturas":
+                        res = sg.popup(
+                            f"Estas seguro que quieres '{action_text}'?",
+                            title="Confirmar",
+                            button_type=POPUP_BUTTONS_OK_CANCEL,
+                            location=center_location(self.window),
+                            keep_on_top=True,
+                        )
+                        if res == "OK":
+                            self.header(action_text.upper(), select_console=False)
+                            self.action_button_manager.clear()
+                            self.action_button(
+                                action_name=action_name,
+                                action_items=action_items,
+                                action_text=action_text
+                            )
+                            self.main_tab_group(values)
+
+                case "editar_clientes":
+                    open_file(
+                        os.path.abspath("clientes.yaml")
+                    )
+
+                case "exportar_clientes":
+                    filename = 'clientes.txt'
+                    clients = ClientsManager()
+                    clientes_generar_txt(filename, clients)
+                    open_file(
+                        os.path.dirname(
+                            os.path.abspath(filename)
+                        )
+                    )
+
+                case "editar_facturas" | "editar_ajustes":
+                    open_file(
+                        os.path.abspath("facturas.yaml")
+                    )
+
+                case "editar_configurar":
+                    open_file(
+                        os.path.abspath("config.yaml")
+                    )
+
+                case "ver_config":
+                    open_file(
+                        os.path.abspath(".")
+                    )
+
+                case "ver_excel":
+                    dp = to_date_period(values["periodo"])
+                    clients = ClientsManager()
+                    emisor_cif = clients[self.csd_signer.rfc]
+                    archivo_excel = exportar_facturas(
+                        self.get_all_invoices(),
+                        dp,
+                        emisor_cif,
+                        self.rfc_prediales
+                    )
+                    open_file(
+                        os.path.abspath(archivo_excel)
+                    )
+
+                case "ver_carpeta":
+                    dp = to_date_period(values["periodo"])
+                    directory = archivos_folder(dp)
+                    open_file(
+                        os.path.abspath(directory)
+                    )
+
+                case "organizar_facturas":
+                    MyCFDI.rename_invoices(search_path="**/*.xml")
+
+                case "cargar_zip":
+                    zip_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("ZIP Files", "*.zip"),))
+                    if zip_file:
+                        self.unzip_cfdi(zip_file)
+
+                case 'importar_emitidas':
+                    csv_file = sg.popup_get_file('', multiple_files=False, no_window=True, file_types=(("CSV Files", "*.csv"),))
+                    if csv_file:
+                        all_invoices = self.get_all_invoices()
+                        with open(csv_file, newline='', encoding='utf-8') as f:
+                            reader = csv.reader(f)
+                            header = next(reader)
+                            for row in reader:
+                                row = dict(zip(header, row))
+                                uuid = UUID(row["Folio Fiscal (UUID)"])
+                                if uuid not in all_invoices:
+                                    cfdi = self.download_invoice(uuid)
+
+                                    if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
+                                        self.local_db.status_sat(cfdi, update=True)
+                        self.done_message("FIN")
+
+                case "exportar_metadata":
+                    with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:
+                        writer = csv.writer(f)
+                        for i in self.get_all_invoices():
+                            if status := self.local_db.status_export(i):
+                                writer.writerow(status)
+                    self.done_message("FIN")
+
+                case "importar_metadata":
+                    with open(METADATA_FILE, newline='', encoding='utf-8') as f:
+                        reader = csv.reader(f)
+                        for row in reader:
+                            self.local_db.status_merge(*row)
+                    self.done_message("FIN")
+
+                case _:
+                    logger.error(f"Unknown event '{event}'")
+
+        except (ValueError, XlsxFileError) as ex:
+            self.error_message(ex)
+        except ConsoleErrors as ex:
+            self.header(str(ex))
+            for error in ex.errors:
+                self.console.update(f"{error}\n", append=True)
+        except Exception as ex:
+            self.header("Exception")
+            self.console.update(append=True, value=str(ex))
+            logger.exception("Main Loop Exception")
