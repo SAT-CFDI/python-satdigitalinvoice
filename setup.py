@@ -69,7 +69,7 @@ setuptools.setup(
         'PyYAML',
         'babel',
         'markdown2',
-        'PySimpleGUI',
+        'PySimpleGUI>=4.60.5',
         'XlsxWriter',
         'jsonschema'
     ],
