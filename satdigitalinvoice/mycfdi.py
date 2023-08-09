@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import MutableMapping
 from uuid import UUID
 
+from satcfdi import render
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
 
@@ -121,7 +122,7 @@ class MyCFDI(SatCFDI):
                     fp.write(pdf_data)
             else:
                 try:
-                    cfdi.pdf_write(full_name + ".pdf")
+                    render.pdf_write(cfdi, full_name + ".pdf")
                 except:
                     logger.exception("Fallo crear PDF: '%s'", full_name)
         except FileExistsError:
@@ -172,4 +173,4 @@ class MyCFDI(SatCFDI):
                 except FileExistsError:
                     os.remove(pdf_current)
                 except FileNotFoundError:
-                    invoice.pdf_write(pdf_preferred)
+                    render.pdf_write(invoice, pdf_preferred)
