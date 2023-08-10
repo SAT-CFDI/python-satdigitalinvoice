@@ -336,7 +336,6 @@ def archivos_filename(dp: DatePeriod, ext="xlsx"):
 
 def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     emisor_rfc = emisor_cif['Rfc']
-    emisor_regimen = emisor_cif['RegimenFiscal']
 
     emitidas = filter_invoices_iter(invoices=all_invoices.values(), fecha=dp, rfc_emisor=emisor_rfc)
     emitidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc)
@@ -350,7 +349,6 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
         p
         for p in recibidas_pagos
         if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0
-           and p.comprobante["Receptor"].get("RegimenFiscalReceptor") in (emisor_regimen, None)
     ]
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
@@ -367,7 +365,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     payments_export(workbook, "RECIBIDAS PAGOS", recibidas_pagos)
 
     # SPECIALES
-    payments_export(workbook, f"RECIBIDAS PAGOS IVA {emisor_regimen}", pagos_hechos_iva)
+    payments_export(workbook, f"RECIBIDAS PAGOS IVA", pagos_hechos_iva)
     if prediales:
         payments_export(workbook, "PREDIALES", prediales)
 
