@@ -4,6 +4,7 @@ from html import escape as html_escape
 import jinja2
 from jinja2 import Environment, Undefined
 from jinja2.filters import do_mark_safe
+from satcfdi import render as cfdi_render
 from satcfdi.transform.helpers import iterate as h_iterate
 import satdigitalinvoice.formatting_functions.common as common
 
@@ -67,6 +68,10 @@ class FacturacionEnvironment(Environment):
         @self.filter
         def fecha(k):
             return common.fecha(k)
+
+        @self.glob
+        def html_str(cdfi):
+            return cfdi_render.html_str(cdfi)
 
 
 def tag(text, tag):
