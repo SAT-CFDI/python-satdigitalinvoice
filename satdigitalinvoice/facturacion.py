@@ -101,19 +101,17 @@ class FacturacionGUI:
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago'):
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
         modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
 
-        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
+        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
             self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
             self.window[t].bind('<Return>', '+enter')
-
-
 
     def run(self):
         self.main_loop()
@@ -547,6 +545,56 @@ class FacturacionGUI:
             values=sorted(fact_iter(), key=lambda x: x["Fecha"], reverse=False),
         )
 
+    def facturas_search_recibidas(self):
+        search_text = self.window["recibidas_search"].get()
+        search_text = search_text.strip()
+
+        if len(search_text) < 3:
+            raise ValueError("Búsqueda debe de tener al menos 3 caracteres")
+
+        def fact_iter():
+            if search_text == SearchOptions.PorPagar:
+                for i in self.get_all_invoices().values():
+                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                            and self.local_db.liquidated_state(i) == StatusState.PENDING:
+                        yield i
+            elif search_text == SearchOptions.PorEnviar:
+                for i in self.get_all_invoices().values():
+                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                            and not self.local_db.notified(i) \
+                            and i.estatus == EstadoComprobante.VIGENTE:
+                        yield i
+            elif date_search_text := to_date_period(search_text):
+                for i in self.get_all_invoices().values():
+                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                            and i["Fecha"] == date_search_text:
+                        yield i
+            elif uuid_search_text := to_uuid(search_text):
+                if uuid_search_text not in self.get_all_invoices():
+                    try:
+                        self.download_invoice(uuid_search_text)
+                    except ResponseError as e:
+                        if e.response.status_code == 404:
+                            self.error_message(f"Factura no encontrada en el PAC")
+                        else:
+                            raise e
+                if c := self.get_all_invoices().get(uuid_search_text):
+                    yield c
+            else:
+                up_search_text = search_text.upper()
+                for i in self.get_all_invoices().values():
+                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                            and (
+                            i.name == up_search_text
+                            or i["Emisor"]["Rfc"] == up_search_text
+                            or up_search_text in i["Emisor"].get("Nombre", "")
+                    ):
+                        yield i
+
+        self.window['recibidas_table'].update(
+            values=sorted(fact_iter(), key=lambda x: x["Fecha"], reverse=False),
+        )
+
     def crear_pago(self, values, facturas_pagar):
         fecha_pago = parse_fecha_pago(values["fecha_pago"])
 
@@ -685,6 +733,9 @@ class FacturacionGUI:
             case 'emitidas_tab':
                 self.facturas_search()
 
+            case 'recibidas_tab':
+                self.facturas_search_recibidas()
+
             case 'correos_tab':
                 now = date.today()
                 dp_now = DatePeriod(now.year, now.month)
@@ -782,8 +833,15 @@ class FacturacionGUI:
                     self.window["emitidas_search"].update(values["buscar_facturas"])
                     self.facturas_search()
 
+                case "buscar_facturas_recibidas":
+                    self.window["recibidas_search"].update(values["buscar_facturas_recibidas"])
+                    self.facturas_search_recibidas()
+
                 case "emitidas_search_enter":
                     self.facturas_search()
+
+                case "recibidas_search_enter":
+                    self.facturas_search_recibidas()
 
                 case "facturas_periodo_enter":
                     self.nuevas_facturas(values, force=True)
@@ -808,9 +866,10 @@ class FacturacionGUI:
                         url = csf.url(rfc=client["Rfc"], id_cif=client["IdCIF"])
                         open_file(url)
 
-                case 'emitidas_table+enter':
+                case 'emitidas_table+enter' | 'recibidas_table+enter':
                     # noinspection PyUnresolvedReferences
-                    if s_items := self.window["emitidas_table"].selected_items():
+                    table = event.split("+")[0]
+                    if s_items := self.window[table].selected_items():
                         preview_cfdis(s_items)
 
                 case 'ajustes_table+enter' | 'depositos_table+enter':
@@ -827,22 +886,24 @@ class FacturacionGUI:
                 case 'correos_table+enter' | 'solicitudes_table+enter':
                     pass
 
-                case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "solicitudes_table" | "depositos_table":
+                case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "recibidas_table" | "solicitudes_table" | "depositos_table":
                     # noinspection PyUnresolvedReferences
                     s_items = self.window[event].selected_items()
                     if event == "emitidas_table":
                         self.set_selected_satcfdis(s_items)
+                    elif event == "recibidas_table":
+                        pass
                     else:
                         self.action_button_manager.set_items(event.split("_")[0], s_items)
 
                 case "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
-                     "ajustes_table+select_all" | "emitidas_table+select_all" | 'solicitudes_table+select_all' | \
+                     "ajustes_table+select_all" | "emitidas_table+select_all" | "recibidas_table" | 'solicitudes_table+select_all' | \
                      'depositos_table+select_all':
                     # noinspection PyUnresolvedReferences
                     self.window[event.split("+")[0]].select_all()
 
                 case "facturas_table+delete" | "clientes_table+delete" | "correos_table+delete" | \
-                     "ajustes_table+delete" | "emitidas_table+delete":
+                     "ajustes_table+delete" | "emitidas_table+delete" | "recibidas_table+delete":
                     # noinspection PyUnresolvedReferences
                     # self.window[event.split("+")[0]].delete_selected()
                     pass

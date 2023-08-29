@@ -234,6 +234,58 @@ def make_layout(has_fiel, local_db):
                         key='emitidas_tab',
                     ),
                     sg.Tab(
+                        'Recibidas '.center(13),
+                        [
+                            [
+                                sg.Column([[
+                                    sg.Button(image_data=IMPORT_CSV, key="importar_recibidas", border_width=0, button_color=BUTTON_COLOR),
+                                    sg.ButtonMenu(
+                                        image_data=SEARCH_ICON, button_text="", key="buscar_facturas_recibidas", border_width=0, button_color=BUTTON_COLOR,
+                                        menu_def=[
+                                            [],
+                                            [str(o) for o in SearchOptions],
+                                        ],
+                                    ),
+                                    sg.Input(datetime.now().strftime(PERIODO_FMT), size=(40, 1), key="recibidas_search"),
+                                ]],
+                                    expand_x=True
+                                )
+                            ],
+                            [
+                                sg.HorizontalSeparator(color="black"),
+                            ],
+                            [
+                                MyTable(
+                                    key="recibidas_table",
+                                    headings=[
+                                        '#',
+                                        'Emisor Razon Social',
+                                        'Emisor Rfc',
+                                        'Factura',
+                                        "Fecha",
+                                        "Total",
+                                        "Pendiente",
+                                        "Status",
+                                        "Tipo",
+                                        "Folio"
+                                    ],
+                                    row_fn=lambda i, r: [
+                                        i,
+                                        r['Emisor'].get('Nombre', ''),
+                                        r['Emisor']['Rfc'],
+                                        r.name,
+                                        r["Fecha"].strftime(CALENDAR_FECHA_FMT),
+                                        r["Total"],
+                                        r.saldo_pendiente if r.saldo_pendiente else "",
+                                        str(local_db.liquidated_state(r)) + str(" 📧" if local_db.notified(r) else "   "),
+                                        mf_pago_fmt(r),
+                                        r.uuid
+                                    ]
+                                )
+                            ]],
+                        key='recibidas_tab',
+                    ),
+                    sg.Tab(
                         'Facturas '.center(13),
                         [
                             [
