@@ -42,9 +42,10 @@ def validar_client(client):
             error(f"CodigoPostal '{client['CodigoPostal']}' is invalid, expected '{res['CP']}'")
 
         if client['RegimenFiscal'] not in (r['RegimenFiscal'] for r in res['Regimenes']):
+            regimen = ', '.join(r['RegimenFiscal'].code or "" for r in res['Regimenes'])
             error(
                 f"RegimenFiscal '{client['RegimenFiscal']}' is invalid, "
-                f"expected '{(r['RegimenFiscal'].code for r in res['Regimenes'])}'"
+                f"expected one of '{regimen}'"
             )
 
         if res['Situación del contribuyente'] not in ('ACTIVO', 'REACTIVADO'):
