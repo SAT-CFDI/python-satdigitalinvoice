@@ -155,8 +155,6 @@ class StatusState(Enum):
             return "❌"
 
 
-
-
 class LocalDBSatCFDI(LocalDB):
     def __init__(self, base_path, enviar_a_partir, pagar_a_partir):
         super().__init__(base_path)
