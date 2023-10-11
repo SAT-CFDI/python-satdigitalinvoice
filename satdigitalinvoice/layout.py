@@ -502,14 +502,26 @@ def make_layout(has_fiel, local_db):
                     ),
                     sg.Tab(
                         'Contabilidad '.center(13),
-                        [[
-                            sg.Column([[
-                                sg.Text("Periodo:", pad=TEXT_PADDING),
-                                sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
-                                sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
-                                sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
-                            ]])
-                        ]],
+                        [
+                            [
+                                sg.Column([[
+                                    sg.Text("Periodo:", pad=TEXT_PADDING),
+                                    sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
+                                    sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
+                                    sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
+                                ]])
+                            ],
+                            [
+                                sg.Multiline(
+                                    expand_x=True,
+                                    expand_y=True,
+                                    key="declaracion",
+                                    write_only=True,
+                                    autoscroll=True,
+                                    reroute_stdout=True
+                                )
+                            ]
+                        ],
                         key='contabilidad_tab',
                     ),
                     sg.Tab(

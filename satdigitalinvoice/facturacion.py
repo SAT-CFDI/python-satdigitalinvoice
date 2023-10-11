@@ -27,7 +27,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes, generar_depositos, generate_pdf_template
+    generate_ajustes, generar_depositos, generate_pdf_template, calculate_declaracion_provisional
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import header_line, print_yaml
@@ -786,6 +786,10 @@ class FacturacionGUI:
                     values=list(solitudes.values()),
                 )
 
+            case 'contabilidad_tab':
+                pass
+
+
     def main_loop(self):
         _, values = self.window.read(timeout=0)
         event = "main_tab_group"
@@ -1019,6 +1023,17 @@ class FacturacionGUI:
                     )
                     open_file(
                         os.path.abspath(archivo_excel)
+                    )
+
+                    declaracion_provisional = calculate_declaracion_provisional(
+                        self.get_all_invoices(),
+                        dp,
+                        emisor_cif,
+                        self.rfc_prediales
+                    )
+                    self.window['declaracion'].update(
+                        append=False,
+                        value=declaracion_provisional
                     )
 
                 case "ver_carpeta":

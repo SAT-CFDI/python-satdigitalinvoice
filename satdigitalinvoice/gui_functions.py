@@ -19,6 +19,7 @@ from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes
+from .log_tools import to_yaml
 from .utils import add_month, find_best_match, months_between, open_file
 
 logger = logging.getLogger(__name__)
@@ -276,6 +277,7 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
             with open(file_name, 'wb') as f:
                 f.write(res)
             return file_name
+
     return fn
 
 
@@ -348,7 +350,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     pagos_hechos_iva = [
         p
         for p in recibidas_pagos
-        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0 and p.comprobante["Receptor"]["RegimenFiscalReceptor"] not in ('616', )
+        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0 and p.comprobante["Receptor"]["RegimenFiscalReceptor"] not in ('616',)
     ]
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
@@ -377,6 +379,16 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
     workbook.close()
     return archivo_excel
+
+
+def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
+    res = {
+        "AA": "123",
+        "BB": "2332",
+    }
+    return to_yaml(
+        res
+    )
 
 
 def generate_pdf_template(template_name, fields):

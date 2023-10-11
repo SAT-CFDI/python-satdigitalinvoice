@@ -8,12 +8,14 @@ class NoAliasDumper(yaml.SafeDumper):
 
 def print_yaml(data):
     print(
-        yaml.dump(data, Dumper=NoAliasDumper, allow_unicode=True, width=1280, sort_keys=False)
+        to_yaml(data)
     )
+
+
+def to_yaml(data):
+    return yaml.dump(data, Dumper=NoAliasDumper, allow_unicode=True, width=1280, sort_keys=False)
 
 
 def header_line(text):
     ln = (150 - len(text)) // 2
     return ("=" * ln) + " " + text + " " + ("=" * ln) + "\n"
-
-
