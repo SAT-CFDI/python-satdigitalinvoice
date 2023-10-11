@@ -101,7 +101,7 @@ class FacturacionGUI:
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago'):
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago', 'periodo'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
@@ -1024,6 +1024,11 @@ class FacturacionGUI:
                     open_file(
                         os.path.abspath(archivo_excel)
                     )
+
+                case "periodo_enter":
+                    dp = to_date_period(values["periodo"])
+                    clients = ClientsManager()
+                    emisor_cif = clients[self.csd_signer.rfc]
 
                     declaracion_provisional = calculate_declaracion_provisional(
                         self.get_all_invoices(),

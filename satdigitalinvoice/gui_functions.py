@@ -382,13 +382,27 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
 
 def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
+    emisor_rfc = emisor_cif['Rfc']
+
+    emitidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc)
+    recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
+
+    emitidas_pagos = sum_payments(emitidas_pagos)
+    recibidas_pagos = sum_payments(recibidas_pagos)
+
     res = {
-        "AA": "123",
-        "BB": "2332",
+        "Emitidas": emitidas_pagos,
+        "Recibidas": recibidas_pagos,
     }
     return to_yaml(
         res
     )
+
+
+def sum_payments(payments):
+    return {
+        'Subtotal': sum(i.sub_total for i in payments),
+    }
 
 
 def generate_pdf_template(template_name, fields):
