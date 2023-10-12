@@ -33,13 +33,20 @@ def validar_client(client):
 
         if rfc.type == RFCType.FISICA:
             razon_social = f"{res['Nombre']} {res['Apellido Paterno']} {res['Apellido Materno']}"
-        else:
+        elif 'Denominación o Razón Social' in res:
             razon_social = res['Denominación o Razón Social']
+        else:
+            error(f"Does not have 'Denominación o Razón Social'")
+
         if client['RazonSocial'] != razon_social:
             error(f"RazonSocial '{client['RazonSocial']}' is invalid, expected '{razon_social}'")
 
         if client['CodigoPostal'] != res['CP']:
             error(f"CodigoPostal '{client['CodigoPostal']}' is invalid, expected '{res['CP']}'")
+
+        for r in res['Regimenes']:
+            if r['RegimenFiscal'].code == None:
+                error(f"RegimenFiscal '{r['RegimenFiscal']}' is invalid")
 
         if client['RegimenFiscal'] not in (r['RegimenFiscal'] for r in res['Regimenes']):
             regimen = ', '.join(r['RegimenFiscal'].code or "" for r in res['Regimenes'])
@@ -54,7 +61,7 @@ def validar_client(client):
         taxpayer_status = sat_service.list_69b(rfc)
         if taxpayer_status:
             error(f"has status '{taxpayer_status}'")
-    except ValueError as ex:
+    except Exception as ex:
         error(ex)
 
     return errors
