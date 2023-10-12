@@ -596,6 +596,7 @@ class FacturacionGUI:
         )
 
     def crear_pago(self, values, facturas_pagar):
+        clients = ClientsManager()
         fecha_pago = parse_fecha_pago(values["fecha_pago"])
 
         max_dias = 30
@@ -616,6 +617,7 @@ class FacturacionGUI:
 
         # noinspection PyUnresolvedReferences
         cfdi = pago_factura(
+            receptor_cif=clients[facturas_pagar[0]["Receptor"]["Rfc"]],
             factura_pagar=facturas_pagar[0],
             fecha_pago=fecha_pago,
             forma_pago=values["forma_pago"],

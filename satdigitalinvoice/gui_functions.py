@@ -50,7 +50,7 @@ def create_cfdi(receptor_cif, factura_details, emisor_cif):
         emisor=emisor,
         lugar_expedicion=emisor_cif['CodigoPostal'],
         receptor=cfdi40.Receptor(
-            rfc=factura_details['Receptor'],
+            rfc=receptor_cif['Rfc'],
             nombre=receptor_cif['RazonSocial'],
             uso_cfdi=factura_details['UsoCFDI'],
             domicilio_fiscal_receptor=receptor_cif['CodigoPostal'],
@@ -185,9 +185,19 @@ def parse_importe_pago(importe_pago: str):
         raise ValueError("Importe de Pago es invalido")
 
 
-def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_pago: Decimal = None, serie_pago=None):
+def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_pago: Decimal = None, serie_pago=None, receptor_cif=None):
     c = factura_pagar
+
+    receptor = cfdi40.Receptor(
+        rfc=receptor_cif['Rfc'],
+        nombre=receptor_cif['RazonSocial'],
+        domicilio_fiscal_receptor=receptor_cif['CodigoPostal'],
+        regimen_fiscal_receptor=receptor_cif['RegimenFiscal'],
+        uso_cfdi="CP01"
+    )
+
     invoice = Comprobante.pago_comprobantes(
+        receptor=receptor,
         serie=serie_pago or None,
         folio=c.get('Folio') if serie_pago else None,
         comprobantes=[
