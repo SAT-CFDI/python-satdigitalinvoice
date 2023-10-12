@@ -399,7 +399,10 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
     total_deducciones = deduccion_opcional + prediales
     base_gravable = total_ingresos - deduccion_opcional - prediales
     isr_causado = isr_mensual(dp, base_gravable)
+    isr_a_cargo = isr_causado - emitidas_pagos['ISR Ret']
 
+    # IVA
+    iva_a_cargo = round(total_ingresos * Decimal("0.16")) - emitidas_pagos['IVA Ret'] - recibidas_pagos['IVA16 Tras']
     res = {
         "ISR PERSONAS FÍSICAS. ARRENDAMIENTO DE INMUEBLES (USO O GOCE)": {
             "¿Tus ingresos fueron obtenidos en copropiedad o sociedad conyugal?": "No",
@@ -412,32 +415,35 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
             "ISR causado": isr_causado,
             "Estímulos acreditables": 0,
             "Impuesto retenido": emitidas_pagos['ISR Ret'],
-            "ISR a cargo": isr_causado - emitidas_pagos['ISR Ret'],
+            "ISR a cargo": isr_a_cargo,
         },
         "IMPUESTO AL VALOR AGREGADO": {
-            "Actividades gravadas a la tasa del 16%": recibidas_pagos['Subtotal'],
+            "Actividades gravadas a la tasa del 16%": total_ingresos,
             "Actividades gravadas a la tasa del 0%": 0,
             "Actividades exentas": 0,
             "Actividades no objeto del impuesto": 0,
-            "IVA cobrado del periodo a la tas del 16%": recibidas_pagos['Subtotal'] * Decimal("0.16"),
-            "IVA acreditable del periodo": 0,
-            "IVA retenido": 0,
-            "¿Tienes otras cantidades a cargo?": 0,
-            "Cantidad a cargo": 0,
-            "¿Tienes otras cantidades a favor?": 0,
-            "Impuesto a cargo": recibidas_pagos['Subtotal'] * Decimal("0.16"),
+            "IVA cobrado del periodo a la tasa del 16%": round(total_ingresos * Decimal("0.16")),
+            "IVA acreditable del periodo": recibidas_pagos['IVA16 Tras'],
+            "IVA retenido": emitidas_pagos['IVA Ret'],
+            "¿Tienes otras cantidades a cargo?": 'No',
+            "Cantidad a cargo": iva_a_cargo,
+            "¿Tienes otras cantidades a favor?": 'No',
+            "Impuesto a cargo": iva_a_cargo,
+        },
+        "TOTAL": isr_a_cargo + iva_a_cargo
 
-        }
     }
-    return to_yaml(
-        res
-    )
+    p_desc = period_desc(dp)
+    return p_desc + "\n" + to_yaml(res)
 
 
 def sum_payments(payments):
     return {
         'Subtotal': round(sum(i.sub_total for i in payments)),
         'ISR Ret': round(sum(i.impuestos.get("Retenciones", {}).get(Impuesto.ISR, {}).get("Importe", 0) for i in payments)),
+        'IVA Ret': round(sum(i.impuestos.get("Retenciones", {}).get(Impuesto.IVA, {}).get("Importe", 0) for i in payments)),
+
+        'IVA16 Tras': round(sum(i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0) for i in payments)),
     }
 
 
