@@ -10,6 +10,7 @@ from satcfdi import render
 from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
 from satcfdi.accounting.process import payments_groupby_receptor, payments_retentions_export
 from satcfdi.create.cfd import cfdi40
+from satcfdi.create.cfd.catalogos import Impuesto
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
@@ -384,15 +385,49 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     emisor_rfc = emisor_cif['Rfc']
 
-    emitidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc)
-    recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
+    emitidas_pagos = list(filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc))
+    recibidas_pagos = list(filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc))
+    prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
     emitidas_pagos = sum_payments(emitidas_pagos)
     recibidas_pagos = sum_payments(recibidas_pagos)
+    prediales = sum_payments(prediales)['Subtotal']
+
+    # ISR
+    total_ingresos = emitidas_pagos['Subtotal']
+    deduccion_opcional = round(total_ingresos * Decimal("0.35"))
+    total_deducciones = deduccion_opcional + prediales
+    base_gravable = total_ingresos - deduccion_opcional - prediales
+    isr_causado = isr_mensual(dp, base_gravable)
 
     res = {
-        "Emitidas": emitidas_pagos,
-        "Recibidas": recibidas_pagos,
+        "ISR PERSONAS FÍSICAS. ARRENDAMIENTO DE INMUEBLES (USO O GOCE)": {
+            "¿Tus ingresos fueron obtenidos en copropiedad o sociedad conyugal?": "No",
+            "Tipo de deducción": "Deducción opcional",
+            "Total de ingresos": total_ingresos,
+            "Deducción opcional": deduccion_opcional,
+            "Impuesto predial": prediales,
+            "Total de deducciones autorizadas": total_deducciones,
+            "Base gravable del pago provisional": base_gravable,
+            "ISR causado": isr_causado,
+            "Estímulos acreditables": 0,
+            "Impuesto retenido": emitidas_pagos['ISR Ret'],
+            "ISR a cargo": isr_causado - emitidas_pagos['ISR Ret'],
+        },
+        "IMPUESTO AL VALOR AGREGADO": {
+            "Actividades gravadas a la tasa del 16%": recibidas_pagos['Subtotal'],
+            "Actividades gravadas a la tasa del 0%": 0,
+            "Actividades exentas": 0,
+            "Actividades no objeto del impuesto": 0,
+            "IVA cobrado del periodo a la tas del 16%": recibidas_pagos['Subtotal'] * Decimal("0.16"),
+            "IVA acreditable del periodo": 0,
+            "IVA retenido": 0,
+            "¿Tienes otras cantidades a cargo?": 0,
+            "Cantidad a cargo": 0,
+            "¿Tienes otras cantidades a favor?": 0,
+            "Impuesto a cargo": recibidas_pagos['Subtotal'] * Decimal("0.16"),
+
+        }
     }
     return to_yaml(
         res
@@ -401,8 +436,29 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
 
 def sum_payments(payments):
     return {
-        'Subtotal': sum(i.sub_total for i in payments),
+        'Subtotal': round(sum(i.sub_total for i in payments)),
+        'ISR Ret': round(sum(i.impuestos.get("Retenciones", {}).get(Impuesto.ISR, {}).get("Importe", 0) for i in payments)),
     }
+
+
+def isr_mensual(dp: DatePeriod, ingreso):
+    table_isr_2023 = [
+        (Decimal('375975.62'), Decimal("117912.32"), Decimal("0.3500")),
+        (Decimal('125325.21'), Decimal("32691.18"), Decimal("0.3400")),
+        (Decimal('93993.91'), Decimal("22665.17"), Decimal("0.3200")),
+        (Decimal('49233.01'), Decimal("9236.89"), Decimal("0.3000")),
+        (Decimal('31236.50'), Decimal("5004.12"), Decimal("0.2352")),
+        (Decimal('15487.72'), Decimal("1640.18"), Decimal("0.2136")),
+        (Decimal('12935.83'), Decimal("1182.88"), Decimal("0.1792")),
+        (Decimal('11128.02'), Decimal("893.63"), Decimal("0.1600")),
+        (Decimal('6332.06'), Decimal("371.83"), Decimal("0.1088")),
+        (Decimal('746.05'), Decimal("14.32"), Decimal("0.0640")),
+        (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
+    ]
+
+    for (limite, cuota_fija, porcentaje) in table_isr_2023:
+        if ingreso >= limite:
+            return round((ingreso - limite) * porcentaje + cuota_fija)
 
 
 def generate_pdf_template(template_name, fields):
