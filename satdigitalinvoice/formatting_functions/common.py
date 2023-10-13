@@ -20,6 +20,7 @@ def numero(k):
 
 
 def porcentaje(k):
+    k = k * 100
     return str(k) + '% (' + num_letras(k) + ' POR CIENTO)'
 
 
