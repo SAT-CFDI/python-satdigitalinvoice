@@ -3,7 +3,7 @@ import random
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 
 from satcfdi.models import Signer, DatePeriod
@@ -66,10 +66,10 @@ def cert_info(signer: Signer):
         }
 
 
-def find_best_match(cases, dp: DatePeriod) -> (datetime, object):
+def find_best_match(cases, dp: DatePeriod) -> (date, object):
     fk, fv = (None, None)
     for k, v in cases.items():
-        k = datetime.strptime(k, '%Y-%m')
+        k = datetime.strptime(k, '%Y-%m').date()
         if k <= dp:
             if fk is None or k > fk:
                 fk, fv = k, v
