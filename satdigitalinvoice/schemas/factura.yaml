@@ -47,16 +47,14 @@ properties:
           properties:
             Traslados:
               anyOf:
-              - type: string
               - type: array
                 items:
-                  type: string
+                  type: object
             Retenciones:
               anyOf:
-              - type: string
               - type: array
                 items:
-                  type: string
+                  type: object
           additionalProperties: false
       additionalProperties: false
       required:
