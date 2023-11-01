@@ -4,22 +4,38 @@ Constants:
   Cantidad: 1
   ClaveUnidad: E48
 
+- &isr '001'
+- &iva '002'
+
 - &moral
   Impuestos:
-    Traslados: 'IVA|Tasa|0.160000'
+    Traslados:
+    - Impuesto: *iva
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.160000
     Retenciones:
-    - 'ISR|Tasa|0.100000'
-    - 'IVA|Tasa|0.106667'
-
+    - Impuesto: *isr
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.100000
+    - Impuesto: *iva
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.106667
 - &moral_no_lucrativa
   Impuestos:
-    Traslados: 'IVA|Tasa|0.160000'
+    Traslados:
+    - Impuesto: *iva
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.160000
     Retenciones:
-    - 'ISR|Tasa|0.100000'
-
+    - Impuesto: *isr
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.100000
 - &fisica
   Impuestos:
-    Traslados: 'IVA|Tasa|0.160000'
+    Traslados:
+    - Impuesto: *iva
+      TipoFactor: 'Tasa'
+      TasaOCuota: 0.160000
 
 - &pue
   UsoCFDI: G03
