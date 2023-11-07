@@ -255,6 +255,11 @@ def make_layout(has_fiel, local_db):
                                 sg.HorizontalSeparator(color="black"),
                             ],
                             [
+                                sg.Column([[
+                                    sg.Button("".ljust(10), key="status_sat_recibidas", border_width=0, button_color=sg.theme_background_color()),
+                                ]]),
+                            ],
+                            [
                                 MyTable(
                                     key="recibidas_table",
                                     headings=[

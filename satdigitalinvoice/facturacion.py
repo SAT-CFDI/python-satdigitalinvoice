@@ -404,6 +404,21 @@ class FacturacionGUI:
         finally:
             self.progress_cancel(action_text)
 
+    def set_selected_satcfdis_recibidas(self, cfdis: list):
+        i = cfdis[0] if len(cfdis) == 1 else None
+
+        if i:
+            estatus = EstadoComprobante(i.estatus)
+            self.window["status_sat_recibidas"].update(
+                estatus.name.center(10),
+                disabled=False,
+                button_color="red4" if estatus != EstadoComprobante.VIGENTE else "dark green",
+            )
+        else:
+            self.window["status_sat_recibidas"].update(
+                "".ljust(10), disabled=True, button_color=sg.theme_background_color()
+            )
+
     def set_selected_satcfdis(self, cfdis: list):
         i = cfdis[0] if len(cfdis) == 1 else None
 
@@ -898,7 +913,7 @@ class FacturacionGUI:
                     if event == "emitidas_table":
                         self.set_selected_satcfdis(s_items)
                     elif event == "recibidas_table":
-                        pass
+                        self.set_selected_satcfdis_recibidas(s_items)
                     else:
                         self.action_button_manager.set_items(event.split("_")[0], s_items)
 
@@ -925,6 +940,15 @@ class FacturacionGUI:
                         del solitudes[s["response"]["IdSolicitud"]]
                     self.local_db.set_solicitudes(solitudes)
                     self.main_tab_group(values)
+
+                case "status_sat_recibidas":
+                    # noinspection PyUnresolvedReferences
+                    if i := self.window["recibidas_table"].selected_items()[0]:
+                        res = self.local_db.status_sat(i, update=True)
+                        self.done_message(f"Estado: {res['Estado']}")
+                        self.set_selected_satcfdis_recibidas([i])
+                        # noinspection PyUnresolvedReferences
+                        self.window['recibidas_table'].refresh()
 
                 case "status_sat":
                     # noinspection PyUnresolvedReferences
