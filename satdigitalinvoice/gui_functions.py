@@ -14,7 +14,10 @@ from satcfdi.create.cfd.catalogos import Impuesto
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
-from weasyprint import HTML, CSS
+try:
+    from weasyprint import HTML, CSS
+except:
+    pass
 
 from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
