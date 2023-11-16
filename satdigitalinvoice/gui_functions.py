@@ -481,8 +481,8 @@ def isr_mensual(dp: DatePeriod, ingreso):
 
 
 def generate_pdf_template(template_name, fields):
-    increment_template = facturacion_environment.get_template(template_name)
-    md5_document = increment_template.render(
+    template = facturacion_environment.get_template(template_name)
+    md5_document = template.render(
         fields
     )
     html = markdown(md5_document)
