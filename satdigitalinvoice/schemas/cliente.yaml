@@ -5,6 +5,8 @@ properties:
     type: string
   IdCIF:
     type: string
+  Domicilio:
+    type: string
   RazonSocial:
     type: string
   RegimenFiscal:
