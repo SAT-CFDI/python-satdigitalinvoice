@@ -10,13 +10,13 @@ from zipfile import ZipFile
 
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI as sg, POPUP_BUTTONS_NO_BUTTONS
 from satcfdi import csf
-from satcfdi.models import DatePeriod
 from satcfdi.accounting import EmailManager
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.accounting.process import complement_invoices
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.catalogos import MetodoPago, TipoDeComprobante
 from satcfdi.exceptions import ResponseError
+from satcfdi.models import DatePeriod
 from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
 from xlsxwriter.exceptions import XlsxFileError
@@ -27,7 +27,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes, generar_depositos, generate_pdf_template, calculate_declaracion_provisional
+    generate_ajustes, generar_depositos, calculate_declaracion_provisional
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import header_line, print_yaml

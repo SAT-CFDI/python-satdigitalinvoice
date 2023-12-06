@@ -284,12 +284,11 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
 def create_ajuste_fn(ajuste_porcentaje, data, file_name):
     def fn():
         if ajuste_porcentaje:
-            res = generate_pdf_template(
+            generate_pdf_template(
                 template_name='ajuste_template.md',
-                fields=data
+                fields=data,
+                target=file_name,
             )
-            with open(file_name, 'wb') as f:
-                f.write(res)
             return file_name
 
     return fn
@@ -329,12 +328,11 @@ def generar_depositos(clients, facturas, dp, emisor_rfc):
 
 def create_deposito_fn(data, file_name):
     def fn():
-        res = generate_pdf_template(
+        generate_pdf_template(
             template_name='deposito_template.md',
-            fields=data
+            fields=data,
+            target=file_name,
         )
-        with open(file_name, 'wb') as f:
-            f.write(res)
         return file_name
 
     return fn
@@ -480,18 +478,18 @@ def isr_mensual(dp: DatePeriod, ingreso):
             return round((ingreso - limite) * porcentaje + cuota_fija)
 
 
-def generate_pdf_template(template_name, fields):
+def generate_pdf_template(template_name, fields, target=None, css_string=None):
     template = facturacion_environment.get_template(template_name)
     md5_document = template.render(
         fields
     )
     html = markdown(md5_document)
     pdf = HTML(string=html).write_pdf(
-        target=None,
+        target=target,
         stylesheets=[
             os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6.css"),
             CSS(
-                string='@page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }'
+                string=css_string or '@page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }'
             )
         ]
     )
