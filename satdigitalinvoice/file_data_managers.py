@@ -65,6 +65,7 @@ def load_validator(schema_file):
 
 client_validator = load_validator("cliente.yaml")
 factura_validator = load_validator("factura.yaml")
+product_validator = load_validator("producto.yaml")
 
 
 class LocalData(dict):
@@ -110,6 +111,16 @@ class ClientsManager(LocalData):
             self[k]["RegimenFiscal"] = self[k]["RegimenFiscal"]
 
 
+class ProductosManager(LocalData):
+    file_source = "productos.yaml"
+
+    def __init__(self):
+        super().__init__()
+        for k, v in self.items():
+            if error := jsonschema.exceptions.best_match(product_validator.iter_errors(v)):
+                raise error
+
+
 class FacturasManager(LocalData):
     file_source = "facturas.yaml"
 
@@ -128,8 +139,14 @@ class FacturasManager(LocalData):
         if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
             raise Exception("Factura Duplicada: {}".format(dup))
 
-        if dp:
-            for v in self["Facturas"]:
+        pm = ProductosManager()
+
+        for v in self["Facturas"]:
+            for c in v["Conceptos"]:
+                if "_producto" in c:
+                    c.update(pm[c["_producto"]]["Concepto"])
+
+            if dp:
                 if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
                     raise error
 

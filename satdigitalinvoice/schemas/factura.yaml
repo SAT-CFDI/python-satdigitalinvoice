@@ -40,6 +40,8 @@ properties:
           type: integer
         _deposito:
           type: number
+        _producto:
+          type: string
         ValorUnitario:
           type:
           - number
