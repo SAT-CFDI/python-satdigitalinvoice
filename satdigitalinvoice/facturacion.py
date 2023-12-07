@@ -101,7 +101,7 @@ class FacturacionGUI:
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'depositos_periodo', 'serie', 'folio', 'serie_pago', 'periodo'):
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'serie', 'folio', 'serie_pago', 'periodo'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
@@ -715,19 +715,11 @@ class FacturacionGUI:
         depositos_table = self.window['depositos_table']
         has_value = bool(depositos_table.metadata)
         depositos_table.update(values=[])
-        self.window['preparar_depositos_text'].update("")
 
         if has_value or force:
-            dp = to_date_period(values["depositos_periodo"])
-            if dp is None or dp.month is None:
-                raise ValueError("Periodo no válido")
-
-            self.window['preparar_depositos_text'].update(f"{period_desc(dp)}")
-
             depositos = generar_depositos(
                 clients=ClientsManager(),
-                facturas=FacturasManager(dp)["Facturas"],
-                dp=dp,
+                facturas=FacturasManager(None)["Facturas"],
                 emisor_rfc=self.csd_signer.rfc,
 
             )
@@ -869,9 +861,6 @@ class FacturacionGUI:
 
                 case "ajustes_periodo_enter":
                     self.nuevos_ajustes(values, force=True)
-
-                case "depositos_periodo_enter":
-                    self.nuevos_depositos(values, force=True)
 
                 case 'main_tab_group':
                     self.main_tab_group(values)

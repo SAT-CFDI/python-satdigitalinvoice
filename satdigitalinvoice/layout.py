@@ -394,9 +394,6 @@ def make_layout(has_fiel, local_db):
                         [
                             [
                                 sg.Button(image_data=EDIT_ICON, key="editar_depositos", border_width=0, button_color=BUTTON_COLOR),
-                                sg.Text("Periodo:", pad=TEXT_PADDING),
-                                sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="depositos_periodo"),
-                                sg.Text("", pad=TEXT_PADDING, key="preparar_depositos_text", font=LARGE_FONT),
                             ],
                             [
                                 MyTable(
@@ -411,7 +408,7 @@ def make_layout(has_fiel, local_db):
                                         i,
                                         r["receptor"]["RazonSocial"],
                                         r["receptor"]["Rfc"],
-                                        r["valor_unitario"],
+                                        r["deposito"],
                                     ]
                                 )
                             ]],

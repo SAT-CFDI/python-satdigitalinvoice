@@ -38,6 +38,8 @@ properties:
           type: string
         _desfase_mes:
           type: integer
+        _deposito:
+          type: number
         ValorUnitario:
           type:
           - number

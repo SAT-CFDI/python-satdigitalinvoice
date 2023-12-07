@@ -14,6 +14,7 @@ from satcfdi.create.cfd.catalogos import Impuesto
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
 from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
+
 try:
     from weasyprint import HTML, CSS
 except:
@@ -294,15 +295,23 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
     return fn
 
 
-def generar_depositos(clients, facturas, dp, emisor_rfc):
+def find_depositos(facturas):
+    for f in facturas:
+        rfc = f["Receptor"]
+        for concepto in f["Conceptos"]:
+            if "_deposito" in concepto:
+                yield rfc, concepto
+
+
+def generar_depositos(clients, facturas, emisor_rfc):
     errors = []
-    depositos_dir = os.path.join(archivos_folder(dp), 'depositos')
+    depositos_dir = os.path.join(ARCHIVOS_DIRECTORY, 'depositos')
     os.makedirs(depositos_dir, exist_ok=True)
 
     def depositos_iter():
-        for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp.month), start=1):
+        for i, (receptor_rfc, concepto) in enumerate(find_depositos(facturas), start=1):
             try:
-                vu = concepto["ValorUnitario"]
+                dep = concepto["_deposito"]
 
                 concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
                 file_name = os.path.join(depositos_dir, f'Deposito_{receptor_rfc}_{i}.pdf')
@@ -312,7 +321,7 @@ def generar_depositos(clients, facturas, dp, emisor_rfc):
                     "receptor": client_receptor,
                     "emisor": clients[emisor_rfc],
                     "concepto": concepto,
-                    "valor_unitario": vu,
+                    "deposito": dep,
                     "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
                 }
                 data['create_fn'] = create_deposito_fn(data, file_name)
