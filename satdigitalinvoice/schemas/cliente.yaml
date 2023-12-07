@@ -20,6 +20,28 @@ properties:
     type: string
   EmailNotas:
     type: string
+  Representante:
+    type: object
+    properties:
+      Nombre:
+        type: string
+      CURP:
+        type: string
+      Domicilio:
+        type: string
+    additionalProperties: false
+  Fiadores:
+    type: array
+    items:
+      type: object
+      properties:
+        Nombre:
+          type: string
+        CURP:
+          type: string
+        Domicilio:
+          type: string
+      additionalProperties: false
 required:
 - CodigoPostal
 - IdCIF
