@@ -23,7 +23,7 @@ except:
 from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
-from .formatting_functions.common import fecha_mes
+from .formatting_functions.common import fecha_mes, get_month_name
 from .log_tools import to_yaml
 from .utils import add_month, find_best_match, months_between, open_file
 
@@ -106,6 +106,11 @@ def format_concepto_desc(concepto, periodo):
 
 def period_desc(dp: DatePeriod):
     return fecha_mes(date(year=dp.year, month=dp.month, day=1))
+
+
+def periodicidad_mes_desc(periodo_mes_ajuste):
+    _, mes_ajuste = parse_periodo_mes_ajuste(periodo_mes_ajuste)
+    return get_month_name(mes_ajuste)
 
 
 def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
