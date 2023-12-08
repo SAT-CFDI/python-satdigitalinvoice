@@ -18,6 +18,8 @@ properties:
         type: string
       Descripcion:
         type: string
+      Cantidad:
+        type: number
     additionalProperties: false
     required:
     - Descripcion

@@ -117,6 +117,8 @@ class ProductosManager(LocalData):
     def __init__(self):
         super().__init__()
         for k, v in self.items():
+            if k == 'Constants':
+                continue
             if error := jsonschema.exceptions.best_match(product_validator.iter_errors(v)):
                 raise error
 
@@ -144,7 +146,10 @@ class FacturasManager(LocalData):
         for v in self["Facturas"]:
             for c in v["Conceptos"]:
                 if "_producto" in c:
-                    c.update(pm[c["_producto"]]["Concepto"])
+                    try:
+                        c.update(pm[c["_producto"]]["Concepto"])
+                    except KeyError:
+                        raise Exception("Producto no encontrado: {}".format(c["_producto"]))
 
             if dp:
                 if error := jsonschema.exceptions.best_match(factura_validator.iter_errors(v)):
