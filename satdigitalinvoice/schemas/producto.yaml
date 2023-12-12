@@ -1,6 +1,10 @@
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 type: object
 properties:
+  Simas:
+    type: [string, object]
+  CFE:
+    type: [string, object]
   Detalle:
     type: string
   Concepto:
