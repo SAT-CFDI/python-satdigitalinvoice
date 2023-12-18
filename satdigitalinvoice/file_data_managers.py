@@ -79,8 +79,14 @@ class LocalData(dict):
         super().__init__(self._raw())
 
     def _raw(self):
-        with open(self.file_source, "r", encoding="utf-8") as fs:
-            return yaml.load(fs, DuplicateKeySafeLoader)
+        try:
+            with open(self.file_source, "r", encoding="utf-8") as fs:
+                return yaml.load(fs, DuplicateKeySafeLoader)
+        except FileNotFoundError:
+            os.makedirs(os.path.dirname(self.file_source), exist_ok=True)
+            with open(self.file_source, "w", encoding="utf-8") as fs:
+                fs.write("{}")
+            return {}
 
     def save(self):
         with open(self.file_source, "w", encoding="utf-8") as fs:
@@ -118,9 +124,11 @@ class ProductosManager(LocalData):
 
     def __init__(self):
         super().__init__()
+        if "Constants" in self:
+            del self["Constants"]
         for k, v in self.items():
-            if k == 'Constants':
-                continue
+            # if k == 'Constants':
+            #     continue
             if error := jsonschema.exceptions.best_match(product_validator.iter_errors(v)):
                 raise error
 
