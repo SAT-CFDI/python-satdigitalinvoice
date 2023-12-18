@@ -15,6 +15,7 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 
 from . import SOURCE_DIRECTORY
+from .log_tools import NoAliasDumper
 from .utils import find_best_match, first_duplicate
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,10 @@ class LocalData(dict):
         with open(self.file_source, "r", encoding="utf-8") as fs:
             return yaml.load(fs, DuplicateKeySafeLoader)
 
+    def save(self):
+        with open(self.file_source, "w", encoding="utf-8") as fs:
+            yaml.dump(self, fs, Dumper=NoAliasDumper, allow_unicode=True, width=1280, sort_keys=False)
+
 
 class InitManager(LocalData):
     file_source = "init.yaml"
@@ -94,9 +99,6 @@ class InitManager(LocalData):
 
 class ConfigManager(LocalData):
     file_source = "config.yaml"
-
-    def __init__(self):
-        super().__init__()
 
 
 class ClientsManager(LocalData):
