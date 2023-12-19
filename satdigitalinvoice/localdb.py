@@ -144,7 +144,7 @@ class StatusState(Enum):
 
     def __str__(self):
         if self.name == "NONE":
-            return "💰"
+            return ""
         if self.name == "IGNORED":
             return "🚫"
         if self.name == "PAID":
