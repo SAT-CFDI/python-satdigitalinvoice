@@ -150,7 +150,7 @@ class StatusState(Enum):
         if self.name == "PAID":
             return "✔"
         if self.name == "PENDING":
-            return ""
+            return "⏳"
         if self.name == "CANCELLED":
             return "❌"
 
