@@ -30,7 +30,7 @@ from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, a
     generate_ajustes, generar_depositos, calculate_declaracion_provisional
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
-from .log_tools import header_line, print_yaml
+from .log_tools import header_line, print_yaml, to_yaml
 from .mycfdi import MyCFDI
 from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS
 
@@ -661,6 +661,7 @@ class FacturacionGUI:
             button_type=POPUP_BUTTONS_NO_BUTTONS,
             auto_close=True,
             non_blocking=True,
+            grab_anywhere=True,
         )
 
     def nuevas_facturas(self, values, force=False):
@@ -943,7 +944,8 @@ class FacturacionGUI:
                     # noinspection PyUnresolvedReferences
                     if i := self.window["emitidas_table"].selected_items()[0]:
                         res = self.local_db.status_sat(i, update=True)
-                        self.done_message(f"Estado: {res['Estado']}")
+                        # self.done_message(f"Estado: {res['Estado']}")
+                        self.done_message(to_yaml(res))
                         self.set_selected_satcfdis([i])
                         # noinspection PyUnresolvedReferences
                         self.window['emitidas_table'].refresh()
