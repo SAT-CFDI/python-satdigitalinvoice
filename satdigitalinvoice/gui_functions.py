@@ -105,7 +105,9 @@ def format_concepto_desc(concepto, periodo):
 
 
 def period_desc(dp: DatePeriod):
-    return fecha_mes(date(year=dp.year, month=dp.month, day=1))
+    if dp.month:
+        return fecha_mes(date(year=dp.year, month=dp.month, day=1))
+    return f"AÑO {dp.year}"
 
 
 def periodicidad_mes_desc(periodo_mes_ajuste):
