@@ -24,6 +24,28 @@ properties:
         type: string
       Cantidad:
         type: number
+      Impuestos:
+        type: object
+        properties:
+          Traslados:
+            anyOf:
+              - type: array
+                items:
+                  type: object
+              - type: string # obsolete
+              - type: array
+                items:
+                  type: string
+          Retenciones:
+            anyOf:
+              - type: array
+                items:
+                  type: object
+              - type: string  # obsolete
+              - type: array
+                items:
+                  type: string
+        additionalProperties: false
     additionalProperties: false
     required:
     - Descripcion

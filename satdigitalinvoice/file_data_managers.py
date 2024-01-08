@@ -133,6 +133,21 @@ class ProductosManager(LocalData):
                 raise error
 
 
+# function to deep merge two dictionaries
+def deep_complement(destination, source):
+    for key, value in source.items():
+        if isinstance(value, dict):
+            # get node or create one
+            node = destination.setdefault(key, {})
+            deep_complement(node, value)
+        else:
+            if key in destination:
+                pass
+            else:
+                destination[key] = value
+    return destination
+
+
 class FacturasManager(LocalData):
     file_source = "facturas.yaml"
 
@@ -157,7 +172,9 @@ class FacturasManager(LocalData):
             for c in v["Conceptos"]:
                 if "_producto" in c:
                     try:
-                        c.update(pm[c["_producto"]]["Concepto"] | c)
+                        c.update(
+                            deep_complement(c, pm[c["_producto"]]["Concepto"])
+                        )
                     except KeyError:
                         raise Exception("Producto no encontrado: {}".format(c["_producto"]))
 
