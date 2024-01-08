@@ -1,3 +1,4 @@
+import copy
 import logging
 import os
 from datetime import datetime, date
@@ -26,6 +27,7 @@ from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes, get_month_name
 from .log_tools import to_yaml
 from .utils import add_month, find_best_match, months_between, open_file
+from .sat_functions import isr_mensual, sat_retenciones
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -96,7 +98,6 @@ def parse_periodo_mes_ajuste(periodo_mes_ajuste: str):
 
 
 def format_concepto_desc(concepto, periodo):
-    concepto = concepto.copy()
     template = facturacion_environment.from_string(concepto["Descripcion"])
     concepto["Descripcion"] = template.render(
         periodo=periodo
@@ -139,6 +140,10 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
     def facturas_iter():
         for i, f in enumerate(facturas, start=1):
             try:
+                receptor_cif = clients.get(f['Receptor'])
+                if not receptor_cif:
+                    raise ValueError("client not found")
+
                 def prepare_concepto(c):
                     periodo = periodicidad_desc(
                         dp,
@@ -146,11 +151,9 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
                         c.get('_desfase_mes')
                     )
                     if periodo and c['ValorUnitario'] is not None:
+                        c = copy.deepcopy(c)
+                        sat_retenciones(c, dp, emisor_cif, receptor_cif)
                         return format_concepto_desc(c, periodo=periodo)
-
-                receptor_cif = clients.get(f['Receptor'])
-                if not receptor_cif:
-                    raise ValueError("client not found")
 
                 if f["MetodoPago"] == "PPD" and f["FormaPago"] != "99":
                     raise ValueError(f"FormaPago '{f['FormaPago']}' is invalid, expected '99' for PPD")
@@ -474,26 +477,6 @@ def sum_payments(payments):
     }
 
 
-def isr_mensual(dp: DatePeriod, ingreso):
-    table_isr_2023 = [
-        (Decimal('375975.62'), Decimal("117912.32"), Decimal("0.3500")),
-        (Decimal('125325.21'), Decimal("32691.18"), Decimal("0.3400")),
-        (Decimal('93993.91'), Decimal("22665.17"), Decimal("0.3200")),
-        (Decimal('49233.01'), Decimal("9236.89"), Decimal("0.3000")),
-        (Decimal('31236.50'), Decimal("5004.12"), Decimal("0.2352")),
-        (Decimal('15487.72'), Decimal("1640.18"), Decimal("0.2136")),
-        (Decimal('12935.83'), Decimal("1182.88"), Decimal("0.1792")),
-        (Decimal('11128.02'), Decimal("893.63"), Decimal("0.1600")),
-        (Decimal('6332.06'), Decimal("371.83"), Decimal("0.1088")),
-        (Decimal('746.05'), Decimal("14.32"), Decimal("0.0640")),
-        (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
-    ]
-
-    for (limite, cuota_fija, porcentaje) in table_isr_2023:
-        if ingreso >= limite:
-            return round((ingreso - limite) * porcentaje + cuota_fija)
-
-
 def generate_pdf_template(template_name, fields, target=None, css_string=None):
     template = facturacion_environment.get_template(template_name)
     md5_document = template.render(
@@ -515,7 +498,7 @@ def generate_pdf_template(template_name, fields, target=None, css_string=None):
 def mf_pago_fmt(cfdi):
     i = cfdi
     if i['TipoDeComprobante'] == "I":
-        return i['TipoDeComprobante'].code + ' ' + i['MetodoPago'].code + ' ' + (i['FormaPago'].code if i['FormaPago'].code != '99' else '  ')
+        return i['TipoDeComprobante'].code + ' ' + i['MetodoPago'].code + ' ' + i['FormaPago'].code
     return i['TipoDeComprobante'].code + '       '
 
 
