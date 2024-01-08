@@ -141,11 +141,7 @@ def deep_complement(destination, source):
             node = destination.setdefault(key, {})
             deep_complement(node, value)
         else:
-            if key in destination:
-                pass
-            else:
-                destination[key] = value
-    return destination
+            destination.setdefault(key, value)
 
 
 class FacturasManager(LocalData):
@@ -170,11 +166,9 @@ class FacturasManager(LocalData):
 
         for v in self["Facturas"]:
             for c in v["Conceptos"]:
-                if "_producto" in c:
+                if p := c.get("_producto"):
                     try:
-                        c.update(
-                            deep_complement(c, pm[c["_producto"]]["Concepto"])
-                        )
+                        deep_complement(c, pm[p]["Concepto"])
                     except KeyError:
                         raise Exception("Producto no encontrado: {}".format(c["_producto"]))
 
