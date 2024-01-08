@@ -157,7 +157,7 @@ class FacturasManager(LocalData):
             for c in v["Conceptos"]:
                 if "_producto" in c:
                     try:
-                        c.update(pm[c["_producto"]]["Concepto"])
+                        c.update(pm[c["_producto"]]["Concepto"] | c)
                     except KeyError:
                         raise Exception("Producto no encontrado: {}".format(c["_producto"]))
 
