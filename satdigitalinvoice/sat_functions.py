@@ -4,28 +4,36 @@ from satcfdi.create.cfd.catalogos import Impuesto, TipoFactor, RegimenFiscal
 from satcfdi.models import DatePeriod, RFC, RFCType
 from satcfdi.utils import iterate
 
+ISR_MENSUAL_2023 = [  # limite, cuota_fija, porcentaje
+    (Decimal('375975.62'), Decimal("117912.32"), Decimal("0.3500")),
+    (Decimal('125325.21'), Decimal("32691.18"), Decimal("0.3400")),
+    (Decimal('93993.91'), Decimal("22665.17"), Decimal("0.3200")),
+    (Decimal('49233.01'), Decimal("9236.89"), Decimal("0.3000")),
+    (Decimal('31236.50'), Decimal("5004.12"), Decimal("0.2352")),
+    (Decimal('15487.72'), Decimal("1640.18"), Decimal("0.2136")),
+    (Decimal('12935.83'), Decimal("1182.88"), Decimal("0.1792")),
+    (Decimal('11128.02'), Decimal("893.63"), Decimal("0.1600")),
+    (Decimal('6332.06'), Decimal("371.83"), Decimal("0.1088")),
+    (Decimal('746.05'), Decimal("14.32"), Decimal("0.0640")),
+    (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
+]
+
+ISR_MENSUAL_RESICO_2023 = [
+    (Decimal("208333.34"), None, Decimal("0.0250")),
+    (Decimal("83333.34"), None, Decimal("0.0200")),
+    (Decimal("50000.01"), None, Decimal("0.0150")),
+    (Decimal("25000.01"), None, Decimal("0.0110")),
+    (Decimal("0.00"), None, Decimal("0.0100")),
+]
+
 
 def isr_mensual(dp: DatePeriod, ingreso):
-    table_isr_2023 = [
-        (Decimal('375975.62'), Decimal("117912.32"), Decimal("0.3500")),
-        (Decimal('125325.21'), Decimal("32691.18"), Decimal("0.3400")),
-        (Decimal('93993.91'), Decimal("22665.17"), Decimal("0.3200")),
-        (Decimal('49233.01'), Decimal("9236.89"), Decimal("0.3000")),
-        (Decimal('31236.50'), Decimal("5004.12"), Decimal("0.2352")),
-        (Decimal('15487.72'), Decimal("1640.18"), Decimal("0.2136")),
-        (Decimal('12935.83'), Decimal("1182.88"), Decimal("0.1792")),
-        (Decimal('11128.02'), Decimal("893.63"), Decimal("0.1600")),
-        (Decimal('6332.06'), Decimal("371.83"), Decimal("0.1088")),
-        (Decimal('746.05'), Decimal("14.32"), Decimal("0.0640")),
-        (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
-    ]
-
-    for (limite, cuota_fija, porcentaje) in table_isr_2023:
+    for (limite, cuota_fija, porcentaje) in ISR_MENSUAL_2023:
         if ingreso >= limite:
             return round((ingreso - limite) * porcentaje + cuota_fija)
 
 
-def sat_retenciones(concepto, dp: DatePeriod, emisor, receptor):
+def sat_retenciones(concepto, emisor, receptor):
     if 'Retenciones' in concepto['Impuestos']:
         return
 

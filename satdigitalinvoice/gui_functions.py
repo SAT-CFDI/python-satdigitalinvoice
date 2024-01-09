@@ -152,7 +152,7 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
                     )
                     if periodo and c['ValorUnitario'] is not None:
                         c = copy.deepcopy(c)
-                        sat_retenciones(c, dp, emisor_cif, receptor_cif)
+                        sat_retenciones(c, emisor_cif, receptor_cif)
                         return format_concepto_desc(c, periodo=periodo)
 
                 if f["MetodoPago"] == "PPD" and f["FormaPago"] != "99":
