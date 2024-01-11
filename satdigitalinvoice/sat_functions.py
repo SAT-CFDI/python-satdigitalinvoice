@@ -31,6 +31,7 @@ def isr_mensual(dp: DatePeriod, ingreso):
     for (limite, cuota_fija, porcentaje) in ISR_MENSUAL_2023:
         if ingreso >= limite:
             return round((ingreso - limite) * porcentaje + cuota_fija)
+    return Decimal("0.00")
 
 
 def sat_retenciones(concepto, emisor, receptor):

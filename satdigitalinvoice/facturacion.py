@@ -101,9 +101,12 @@ class FacturacionGUI:
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
 
-        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'serie', 'folio', 'serie_pago', 'periodo'):
+        for t in ('serie', 'folio', 'serie_pago'):
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
+
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'periodo'):
+            self.window[t].bind("<Return>", "_enter")
 
         modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
 
@@ -694,17 +697,16 @@ class FacturacionGUI:
         self.window['preparar_ajustes_text'].update("")
 
         if has_value or force:
-            dp = to_date_period(values["ajustes_periodo"])
-            if dp is None or dp.month is None:
+            dp_effective = to_date_period(values["ajustes_periodo"])
+            if dp_effective is None or dp_effective.month is None:
                 raise ValueError("Periodo no válido")
 
-            dp_effective = add_month(dp, 1)
-            self.window['preparar_ajustes_text'].update(f"{period_desc(dp)}, Ajustes Efectivos Al: {period_desc(dp_effective)}")
+            # dp_effective = add_month(dp, 1)
+            self.window['preparar_ajustes_text'].update(f"Ajustes Efectivos Al: {period_desc(dp_effective)}")
 
             ajustes = generate_ajustes(
                 clients=ClientsManager(),
                 facturas=FacturasManager(None)["Facturas"],
-                dp=dp,
                 dp_effective=dp_effective,
                 emisor_rfc=self.csd_signer.rfc
             )

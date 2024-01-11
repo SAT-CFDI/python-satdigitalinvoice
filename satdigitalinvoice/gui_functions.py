@@ -237,9 +237,9 @@ def find_ajustes(facturas, mes_ajuste):
                 yield rfc, concepto
 
 
-def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
+def generate_ajustes(clients, facturas, dp_effective, emisor_rfc):
     errors = []
-    ajustes_dir = os.path.join(archivos_folder(dp), 'ajustes')
+    ajustes_dir = os.path.join(archivos_folder(dp_effective), 'ajustes')
     os.makedirs(ajustes_dir, exist_ok=True)
 
     def ajustes_iter():
@@ -248,7 +248,7 @@ def generate_ajustes(clients, facturas, dp, dp_effective, emisor_rfc):
                 valor_unitario_raw = concepto["ValorUnitario"]
 
                 if isinstance(valor_unitario_raw, dict):
-                    vu_eff, vu = find_best_match(valor_unitario_raw, dp)
+                    vu_eff, vu = find_best_match(valor_unitario_raw, add_month(dp_effective, -1))
                     vun_eff, vun = find_best_match(valor_unitario_raw, dp_effective)
                     if vu_eff == vun_eff:
                         vun = None

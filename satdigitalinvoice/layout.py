@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 import PySimpleGUI as sg
+from dateutil.relativedelta import relativedelta
 from satcfdi.models import Code
 from satcfdi.catalogs import select_all
 from satcfdi.pacs.sat import TipoDescargaMasivaTerceros
@@ -357,7 +358,7 @@ def make_layout(has_fiel, local_db):
                             [
                                 sg.Button(image_data=EDIT_ICON, key="editar_ajustes", border_width=0, button_color=BUTTON_COLOR),
                                 sg.Text("Periodo:", pad=TEXT_PADDING),
-                                sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="ajustes_periodo"),
+                                sg.Input((date.today() + relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="ajustes_periodo"),
                                 sg.Text("", pad=TEXT_PADDING, key="preparar_ajustes_text", font=LARGE_FONT),
                             ],
                             [
@@ -508,7 +509,7 @@ def make_layout(has_fiel, local_db):
                             [
                                 sg.Column([[
                                     sg.Text("Periodo:", pad=TEXT_PADDING),
-                                    sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
+                                    sg.Input((date.today() - relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
                                     sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
                                 ]])
