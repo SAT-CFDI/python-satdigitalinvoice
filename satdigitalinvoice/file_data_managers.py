@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from datetime import date
 from decimal import Decimal
 
 import jsonschema as jsonschema
@@ -147,7 +148,7 @@ def deep_complement(destination, source):
 class FacturasManager(LocalData):
     file_source = "facturas.yaml"
 
-    def __init__(self, dp: DatePeriod | None):
+    def __init__(self, dp: DatePeriod | date | None):
         def loading_function(loader, node):
             cases = loader.construct_mapping(node, deep=True)
             if dp is None:
