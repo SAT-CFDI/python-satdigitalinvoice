@@ -381,7 +381,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     pagos_hechos_iva = [
         p
         for p in recibidas_pagos
-        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0 and p.comprobante["Receptor"]["RegimenFiscalReceptor"] not in ('616',)
+        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0 and p.comprobante["Receptor"].get("RegimenFiscalReceptor") not in ('616',)
     ]
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
