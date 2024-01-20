@@ -18,6 +18,20 @@ ISR_MENSUAL_2023 = [  # limite, cuota_fija, porcentaje
     (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
 ]
 
+ISR_ANUAL_2023 = [  # limite, cuota_fija, porcentaje
+    (Decimal('4511707.38'), Decimal("1414947.85"), Decimal("0.3500")),
+    (Decimal('1503902.47'), Decimal("392294.17"), Decimal("0.3400")),
+    (Decimal('1127926.85'), Decimal("271981.99"), Decimal("0.3200")),
+    (Decimal('590796.00'), Decimal("110842.74"), Decimal("0.3000")),
+    (Decimal('374837.89'), Decimal("60049.40"), Decimal("0.2352")),
+    (Decimal('185852.58'), Decimal("19682.13"), Decimal("0.2136")),
+    (Decimal('155229.81'), Decimal("14194.54"), Decimal("0.1792")),
+    (Decimal('133536.08'), Decimal("10723.55"), Decimal("0.1600")),
+    (Decimal('75984.56'), Decimal("4461.94"), Decimal("0.1088")),
+    (Decimal('8952.50'), Decimal("171.88"), Decimal("0.0640")),
+    (Decimal("0.00"), Decimal("0.00"), Decimal("0.0192")),
+]
+
 ISR_MENSUAL_RESICO_2023 = [
     (Decimal("208333.34"), None, Decimal("0.0250")),
     (Decimal("83333.34"), None, Decimal("0.0200")),
@@ -28,7 +42,12 @@ ISR_MENSUAL_RESICO_2023 = [
 
 
 def isr_mensual(dp: DatePeriod, ingreso):
-    for (limite, cuota_fija, porcentaje) in ISR_MENSUAL_2023:
+    if dp.month is None:
+        isr_table = ISR_ANUAL_2023
+    else:
+        isr_table = ISR_MENSUAL_2023
+
+    for (limite, cuota_fija, porcentaje) in isr_table:
         if ingreso >= limite:
             return round((ingreso - limite) * porcentaje + cuota_fija)
     return Decimal("0.00")
