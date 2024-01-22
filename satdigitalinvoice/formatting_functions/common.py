@@ -35,3 +35,9 @@ def fecha_mes(date):
 # function to get month name from number
 def get_month_name(month_number):
     return get_month_names('wide', locale=LOCALE)[month_number].upper()
+
+
+def delta_tiempo(duracion):
+    if duracion.months == 12:
+        return 'UN AÑO'
+    return num_letras(duracion.months) + ' MESES'

@@ -69,6 +69,10 @@ class FacturacionEnvironment(Environment):
         def fecha(k):
             return common.fecha(k)
 
+        @self.filter
+        def delta_tiempo(k):
+            return common.delta_tiempo(k)
+
         @self.glob
         def html_str(cdfi):
             return cfdi_render.html_str(cdfi)
