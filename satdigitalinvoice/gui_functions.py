@@ -244,13 +244,13 @@ def generate_ajustes(clients, facturas, dp_effective, emisor_rfc):
 
     def ajustes_iter():
         for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp_effective.month), start=1):
-            try:
+            # try:
                 valor_unitario_raw = concepto["ValorUnitario"]
 
                 if isinstance(valor_unitario_raw, dict):
                     vu_eff, vu = find_best_match(valor_unitario_raw, add_month(dp_effective, -1))
                     vun_eff, vun = find_best_match(valor_unitario_raw, dp_effective)
-                    if vu_eff == vun_eff:
+                    if vu_eff == vun_eff or vun is None or vu is None:
                         vun = None
                         num_meses = None
                     else:
@@ -283,8 +283,8 @@ def generate_ajustes(clients, facturas, dp_effective, emisor_rfc):
                 data['create_fn'] = create_ajuste_fn(ajuste_porcentaje, data, file_name)
 
                 yield data
-            except Exception as e:
-                errors.append(f"{i} {receptor_rfc}: {str(e)}")
+            # except Exception as e:
+            #     errors.append(f"{i} {receptor_rfc}: {str(e)}")
 
     cfdis = list(ajustes_iter())
     if errors:
