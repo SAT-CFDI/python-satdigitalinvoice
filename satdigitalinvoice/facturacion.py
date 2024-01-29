@@ -60,7 +60,13 @@ class FacturacionGUI:
         self.pac_service = getattr(mod, pac_class)(
             **pac['args']
         )
-        self.csd_signer = load_certificate(config.get('csd')) if 'csd' in config else None
+
+        if csds := config.get('csds'):
+            self.csd_signers = {
+                rfc: load_certificate(csd) for rfc, csd in csds.items()
+            }
+        else:
+            self.csd_signers = None
         self.fiel_signer = load_certificate(config.get('fiel')) if 'fiel' in config else None
 
         self.sat_service = SAT(signer=self.fiel_signer)
@@ -77,7 +83,7 @@ class FacturacionGUI:
         MyCFDI.base_dir = ARCHIVOS_DIRECTORY
 
         self.window = sg.Window(
-            f"Facturación Mensual CFDI 4.0 {self.csd_signer.rfc}",
+            f"Facturación Mensual CFDI 4.0",
             make_layout(bool(self.fiel_signer), self.local_db),
             size=(1280, 720),
             resizable=True,
@@ -120,19 +126,18 @@ class FacturacionGUI:
         self.main_loop()
         self.window.close()
 
-    def initial_screen(self, emisor_cif):
+    def initial_screen(self):
         self.header("ACERCA DE")
         print_yaml({
             "version": __version__.__version__,
             "facturacion": "CFDI 4.0",
-            "emisor": emisor_cif,
             "pac_service": {
                 "Type": type(self.pac_service).__name__,
                 "Rfc": self.pac_service.RFC,
                 "Environment": str(self.pac_service.environment)
             },
             "fiel": cert_info(self.fiel_signer),
-            "csd": cert_info(self.csd_signer),
+            "csd": {rfc: cert_info(csd) for rfc, csd in self.csd_signers.items()} if self.csd_signers else None,
         })
 
     def get_all_invoices(self):
@@ -155,7 +160,8 @@ class FacturacionGUI:
             folio = self.local_db.folio()
             invoice['Folio'] = str(folio)
 
-        cfdi40.Comprobante.sign(invoice, self.csd_signer)
+        csd_signer = self.csd_signers[invoice['Emisor']['Rfc']]
+        cfdi40.Comprobante.sign(invoice, csd_signer)
 
         attempts = 3
         try:
@@ -336,10 +342,8 @@ class FacturacionGUI:
                             break
 
                 case 'correos':
-                    clients = ClientsManager()
-                    emisor = clients[self.csd_signer.rfc]
                     with self.email_manager.sender as s:
-                        for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
+                        for emisor, receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
                             def attachments():
                                 for ni in facturas:
                                     yield ni.filename + ".xml"
@@ -440,7 +444,7 @@ class FacturacionGUI:
         # Email
         is_active = \
             bool(i) \
-            and i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+            and i["Emisor"]["Rfc"] in self.csd_signers \
             and i.estatus == EstadoComprobante.VIGENTE
         if is_active:
             self.window["email_notificada"].update(
@@ -523,18 +527,18 @@ class FacturacionGUI:
         def fact_iter():
             if search_text == SearchOptions.PorPagar:
                 for i in self.get_all_invoices().values():
-                    if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Emisor"]["Rfc"] in self.csd_signers \
                             and self.local_db.liquidated_state(i) == StatusState.PENDING:
                         yield i
             elif search_text == SearchOptions.PorEnviar:
                 for i in self.get_all_invoices().values():
-                    if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Emisor"]["Rfc"] in self.csd_signers \
                             and not self.local_db.notified(i) \
                             and i.estatus == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
                 for i in self.get_all_invoices().values():
-                    if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Emisor"]["Rfc"] in self.csd_signers \
                             and i["Fecha"] == date_search_text:
                         yield i
             elif uuid_search_text := to_uuid(search_text):
@@ -551,7 +555,7 @@ class FacturacionGUI:
             else:
                 up_search_text = search_text.upper()
                 for i in self.get_all_invoices().values():
-                    if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Emisor"]["Rfc"] in self.csd_signers \
                             and (
                             i.name == up_search_text
                             or i["Receptor"]["Rfc"] == up_search_text
@@ -573,18 +577,18 @@ class FacturacionGUI:
         def fact_iter():
             if search_text == SearchOptions.PorPagar:
                 for i in self.get_all_invoices().values():
-                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Receptor"]["Rfc"] in self.csd_signers \
                             and self.local_db.liquidated_state(i) == StatusState.PENDING:
                         yield i
             elif search_text == SearchOptions.PorEnviar:
                 for i in self.get_all_invoices().values():
-                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Receptor"]["Rfc"] in self.csd_signers \
                             and not self.local_db.notified(i) \
                             and i.estatus == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
                 for i in self.get_all_invoices().values():
-                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Receptor"]["Rfc"] in self.csd_signers \
                             and i["Fecha"] == date_search_text:
                         yield i
             elif uuid_search_text := to_uuid(search_text):
@@ -601,7 +605,7 @@ class FacturacionGUI:
             else:
                 up_search_text = search_text.upper()
                 for i in self.get_all_invoices().values():
-                    if i["Receptor"]["Rfc"] == self.csd_signer.rfc \
+                    if i["Receptor"]["Rfc"] in self.csd_signers \
                             and (
                             i.name == up_search_text
                             or i["Emisor"]["Rfc"] == up_search_text
@@ -683,8 +687,7 @@ class FacturacionGUI:
             cfdis = generate_ingresos(
                 clients=ClientsManager(),
                 facturas=FacturasManager(dp)["Facturas"],
-                dp=dp,
-                emisor_rfc=self.csd_signer.rfc
+                dp=dp
             )
             facturas_table.update(
                 values=cfdis,
@@ -708,7 +711,6 @@ class FacturacionGUI:
                 clients=ClientsManager(),
                 facturas=FacturasManager(None)["Facturas"],
                 dp_effective=dp_effective,
-                emisor_rfc=self.csd_signer.rfc
             )
             ajustes_table.update(
                 values=ajustes,
@@ -723,8 +725,6 @@ class FacturacionGUI:
             depositos = generar_depositos(
                 clients=ClientsManager(),
                 facturas=FacturasManager(None)["Facturas"],
-                emisor_rfc=self.csd_signer.rfc,
-
             )
             depositos_table.update(
                 values=depositos,
@@ -757,7 +757,7 @@ class FacturacionGUI:
                     for receptor_rfc, notify_invoices in itertools.groupby(
                             sorted(
                                 (i for i in self.get_all_invoices().values()
-                                 if i["Emisor"]["Rfc"] == self.csd_signer.rfc
+                                 if i["Emisor"]["Rfc"] in self.csd_signers
                                     and i.estatus == EstadoComprobante.VIGENTE
                                     and not self.local_db.notified(i)
                                  ),
@@ -769,7 +769,7 @@ class FacturacionGUI:
 
                         def fac_pen_iter():
                             for i in self.get_all_invoices().values():
-                                if i["Emisor"]["Rfc"] == self.csd_signer.rfc \
+                                if i["Emisor"]["Rfc"] in self.csd_signers \
                                         and self.local_db.liquidated_state(i) == StatusState.PENDING \
                                         and i["Fecha"] < dp_now \
                                         and i["Receptor"]["Rfc"] == receptor_rfc \
@@ -839,7 +839,7 @@ class FacturacionGUI:
 
                 case "about":
                     clients = ClientsManager()
-                    self.initial_screen(clients[self.csd_signer.rfc])
+                    self.initial_screen()
 
                 case "nueva_solicitud":
                     self.nueva_solicitud(values)
@@ -1033,7 +1033,7 @@ class FacturacionGUI:
                 case "ver_excel":
                     dp = to_date_period(values["periodo"])
                     clients = ClientsManager()
-                    emisor_cif = clients[self.csd_signer.rfc]
+                    emisor_cif = clients[self.csd_signers[0]]
                     archivo_excel = exportar_facturas(
                         self.get_all_invoices(),
                         dp,
@@ -1047,7 +1047,7 @@ class FacturacionGUI:
                 case "periodo_enter":
                     dp = to_date_period(values["periodo"])
                     clients = ClientsManager()
-                    emisor_cif = clients[self.csd_signer.rfc]
+                    emisor_cif = clients[self.csd_signers[0]]
 
                     declaracion_provisional = calculate_declaracion_provisional(
                         self.get_all_invoices(),

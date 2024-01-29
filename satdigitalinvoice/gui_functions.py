@@ -45,15 +45,13 @@ PERIODICIDAD = {
 CALENDAR_FECHA_FMT = '%Y-%m-%d'
 
 
-def create_cfdi(receptor_cif, factura_details, emisor_cif):
-    emisor = cfdi40.Emisor(
-        rfc=emisor_cif['Rfc'],
-        nombre=emisor_cif['RazonSocial'],
-        regimen_fiscal=emisor_cif['RegimenFiscal']
-    )
-    emisor = emisor | factura_details.get('Emisor', {})
+def create_cfdi(emisor_cif, receptor_cif, factura_details):
     invoice = cfdi40.Comprobante(
-        emisor=emisor,
+        emisor=cfdi40.Emisor(
+            rfc=emisor_cif['Rfc'],
+            nombre=emisor_cif['RazonSocial'],
+            regimen_fiscal=emisor_cif['RegimenFiscal']
+        ),
         lugar_expedicion=emisor_cif['CodigoPostal'],
         receptor=cfdi40.Receptor(
             rfc=receptor_cif['Rfc'],
@@ -133,16 +131,19 @@ def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
     return None
 
 
-def generate_ingresos(clients, facturas, dp, emisor_rfc):
-    emisor_cif = clients[emisor_rfc]
+def generate_ingresos(clients, facturas, dp):
     errors = []
 
     def facturas_iter():
         for i, f in enumerate(facturas, start=1):
             try:
+                emisor_cif = clients.get(f['Emisor'])
+                if not emisor_cif:
+                    raise ValueError("Emisor not found")
+
                 receptor_cif = clients.get(f['Receptor'])
                 if not receptor_cif:
-                    raise ValueError("client not found")
+                    raise ValueError("Receptor not found")
 
                 def prepare_concepto(c):
                     periodo = periodicidad_desc(
@@ -160,7 +161,7 @@ def generate_ingresos(clients, facturas, dp, emisor_rfc):
 
                 if conceptos := [x for x in (prepare_concepto(c) for c in f["Conceptos"]) if x]:
                     f["Conceptos"] = conceptos
-                    cfdi = create_cfdi(receptor_cif, f, emisor_cif)
+                    cfdi = create_cfdi(emisor_cif, receptor_cif, f)
 
                     expected_total = f.get('Total')
                     if expected_total is not None and expected_total != cfdi['Total']:
@@ -230,61 +231,61 @@ def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_p
 
 def find_ajustes(facturas, mes_ajuste):
     for f in facturas:
-        rfc = f["Receptor"]
+        rfc_emisor = f["Emisor"]
+        rfc_receptor = f["Receptor"]
         for concepto in f["Conceptos"]:
             _, mes_aj = parse_periodo_mes_ajuste(concepto['_periodo_mes_ajuste'])
             if mes_aj == mes_ajuste:
-                yield rfc, concepto
+                yield rfc_emisor, rfc_receptor, concepto
 
 
-def generate_ajustes(clients, facturas, dp_effective, emisor_rfc):
+def generate_ajustes(clients, facturas, dp_effective):
     errors = []
     ajustes_dir = os.path.join(archivos_folder(dp_effective), 'ajustes')
     os.makedirs(ajustes_dir, exist_ok=True)
 
     def ajustes_iter():
-        for i, (receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp_effective.month), start=1):
+        for i, (emisor_rfc, receptor_rfc, concepto) in enumerate(find_ajustes(facturas, dp_effective.month), start=1):
             # try:
-                valor_unitario_raw = concepto["ValorUnitario"]
+            valor_unitario_raw = concepto["ValorUnitario"]
 
-                if isinstance(valor_unitario_raw, dict):
-                    vu_eff, vu = find_best_match(valor_unitario_raw, add_month(dp_effective, -1))
-                    vun_eff, vun = find_best_match(valor_unitario_raw, dp_effective)
-                    if vu_eff == vun_eff or vun is None or vu is None:
-                        vun = None
-                        num_meses = None
-                    else:
-                        num_meses = months_between(vun_eff, vu_eff)
-
-                    if vun and vu:
-                        ajuste_porcentaje = round((vun / vu - 1) * 100, 2)
-                    else:
-                        ajuste_porcentaje = None
-                else:
-                    vu = valor_unitario_raw
+            if isinstance(valor_unitario_raw, dict):
+                vu_eff, vu = find_best_match(valor_unitario_raw, add_month(dp_effective, -1))
+                vun_eff, vun = find_best_match(valor_unitario_raw, dp_effective)
+                if vu_eff == vun_eff or vun is None or vu is None:
                     vun = None
                     num_meses = None
+                else:
+                    num_meses = months_between(vun_eff, vu_eff)
+
+                if vun and vu:
+                    ajuste_porcentaje = round((vun / vu - 1) * 100, 2)
+                else:
                     ajuste_porcentaje = None
+            else:
+                vu = valor_unitario_raw
+                vun = None
+                num_meses = None
+                ajuste_porcentaje = None
 
-                concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
-                file_name = os.path.join(ajustes_dir, f'AjusteRenta_{receptor_rfc}_{i}.pdf')
-                client_receptor = clients[receptor_rfc]  # type: dict
-                data = {
-                    "receptor": client_receptor,
-                    "emisor": clients[emisor_rfc],
-                    "concepto": concepto,
-                    "valor_unitario": vu,
-                    "valor_unitario_nuevo": vun or '',
-                    "ajuste_porcentaje": ajuste_porcentaje or "",
-                    "meses": num_meses or '',
-                    "efectivo_periodo_desc": periodicidad_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),
-                    "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
-                }
-                data['create_fn'] = create_ajuste_fn(ajuste_porcentaje, data, file_name)
+            concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
+            file_name = os.path.join(ajustes_dir, f'AjusteRenta_{receptor_rfc}_{i}.pdf')
+            data = {
+                "receptor": clients[receptor_rfc],
+                "emisor": clients[emisor_rfc],
+                "concepto": concepto,
+                "valor_unitario": vu,
+                "valor_unitario_nuevo": vun or '',
+                "ajuste_porcentaje": ajuste_porcentaje or "",
+                "meses": num_meses or '',
+                "efectivo_periodo_desc": periodicidad_desc(dp_effective, concepto['_periodo_mes_ajuste'], concepto.get('_desfase_mes')),
+                "periodo": concepto['_periodo_mes_ajuste'].split('.')[0].upper(),
+            }
+            data['create_fn'] = create_ajuste_fn(ajuste_porcentaje, data, file_name)
 
-                yield data
-            # except Exception as e:
-            #     errors.append(f"{i} {receptor_rfc}: {str(e)}")
+            yield data
+        # except Exception as e:
+        #     errors.append(f"{i} {receptor_rfc}: {str(e)}")
 
     cfdis = list(ajustes_iter())
     if errors:
@@ -307,28 +308,28 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
 
 def find_depositos(facturas):
     for f in facturas:
-        rfc = f["Receptor"]
+        rfc_emisor = f["Emisor"]
+        rfc_receptor = f["Receptor"]
         for concepto in f["Conceptos"]:
             if "_deposito" in concepto:
-                yield rfc, concepto
+                yield rfc_emisor, rfc_receptor, concepto
 
 
-def generar_depositos(clients, facturas, emisor_rfc):
+def generar_depositos(clients, facturas):
     errors = []
     depositos_dir = os.path.join(ARCHIVOS_DIRECTORY, 'depositos')
     os.makedirs(depositos_dir, exist_ok=True)
 
     def depositos_iter():
-        for i, (receptor_rfc, concepto) in enumerate(find_depositos(facturas), start=1):
+        for i, (emisor_rfc, receptor_rfc, concepto) in enumerate(find_depositos(facturas), start=1):
             try:
                 dep = concepto["_deposito"]
 
                 concepto = format_concepto_desc(concepto, periodo="INMUEBLE")
                 file_name = os.path.join(depositos_dir, f'Deposito_{receptor_rfc}_{i}.pdf')
 
-                client_receptor = clients[receptor_rfc]  # type: dict
                 data = {
-                    "receptor": client_receptor,
+                    "receptor": clients[receptor_rfc],
                     "emisor": clients[emisor_rfc],
                     "concepto": concepto,
                     "deposito": dep,
