@@ -20,8 +20,6 @@ properties:
     items:
       type: string
       format: email
-  Celular:
-    type: string
   EmailNotas:
     type: string
   Representante:
