@@ -111,10 +111,11 @@ class LocalDB(diskcache.Cache):
     def set_solicitudes(self, solicitudes):
         self.save_data(SOLICITUDES, solicitudes)
 
-    def solicitud_merge(self, solicitud_id, response, request=None):
+    def solicitud_merge(self, solicitud_id, rfc, response, request=None):
         solicitudes = self.get_solicitudes()
         solicitud = solicitudes.setdefault(solicitud_id, {})
 
+        solicitud['rfc'] = rfc
         solicitud['response'] = solicitud.get('response', {}) | response
         if request:
             solicitud['request'] = solicitud.get('request', {}) | request
