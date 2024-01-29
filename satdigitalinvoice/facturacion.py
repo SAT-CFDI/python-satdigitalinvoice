@@ -256,9 +256,7 @@ class FacturacionGUI:
 
         self.local_db.solicitud_merge(response["IdSolicitud"], rfc=rfc, request=args, response=response)
 
-    def recupera_comprobantes(self, response):
-        sat_service = SAT(signer=self.emisores[0]['fiel'])
-
+    def recupera_comprobantes(self, sat_service, response):
         if response["EstadoSolicitud"] == EstadoSolicitud.TERMINADA:
             for id_paquete in response['IdsPaquetes']:
                 r, paquete = sat_service.recover_comprobante_download(
@@ -354,7 +352,7 @@ class FacturacionGUI:
                         )
                         print_yaml(response)
                         self.local_db.solicitud_merge(id_solicitud, rfc, response=response)
-                        self.recupera_comprobantes(response)
+                        self.recupera_comprobantes(sat_service, response)
 
                 case 'facturas' | 'pago':
                     for invoice in self.progress_iterate(action_text, action_items):
@@ -386,11 +384,11 @@ class FacturacionGUI:
                     with self.email_manager.sender as s:
                         grouped_action_items = []
                         for _, g_data in itertools.groupby(
-                            sorted(
-                                action_items,
-                                key=lambda r: r["receptor"]["Rfc"]
-                            ),
-                            lambda r: r["receptor"]["Rfc"]
+                                sorted(
+                                    action_items,
+                                    key=lambda r: r["receptor"]["Rfc"]
+                                ),
+                                lambda r: r["receptor"]["Rfc"]
                         ):
                             grouped_action_items.append(list(g_data))
 
@@ -820,7 +818,6 @@ class FacturacionGUI:
             case 'contabilidad_tab':
                 pass
 
-
     def main_loop(self):
         _, values = self.window.read(timeout=0)
         event = "main_tab_group"
@@ -1049,13 +1046,13 @@ class FacturacionGUI:
                     )
 
                 case "ver_excel":
+                    rfc = list(self.emisores.keys())[0]
                     dp = to_date_period(values["periodo"])
-                    clients = ClientsManager()
-                    emisor_cif = clients[self.emisores[0]]
+
                     archivo_excel = exportar_facturas(
                         self.get_all_invoices(),
                         dp,
-                        emisor_cif,
+                        ClientsManager()[rfc],
                         self.rfc_prediales
                     )
                     open_file(
@@ -1063,14 +1060,13 @@ class FacturacionGUI:
                     )
 
                 case "periodo_enter":
+                    rfc = list(self.emisores.keys())[0]
                     dp = to_date_period(values["periodo"])
-                    clients = ClientsManager()
-                    emisor_cif = clients[self.emisores[0]]
 
                     declaracion_provisional = calculate_declaracion_provisional(
                         self.get_all_invoices(),
                         dp,
-                        emisor_cif,
+                        ClientsManager()[rfc],
                         self.rfc_prediales
                     )
                     self.window['declaracion'].update(

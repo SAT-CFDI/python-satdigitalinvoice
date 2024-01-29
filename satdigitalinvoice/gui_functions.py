@@ -50,7 +50,7 @@ def create_cfdi(emisor_cif, receptor_cif, factura_details):
         emisor=cfdi40.Emisor(
             rfc=emisor_cif['Rfc'],
             nombre=emisor_cif['RazonSocial'],
-            regimen_fiscal=emisor_cif['RegimenFiscal']
+            regimen_fiscal=factura_details.get("EmisorRegimen") or emisor_cif['RegimenFiscal']
         ),
         lugar_expedicion=emisor_cif['CodigoPostal'],
         receptor=cfdi40.Receptor(
@@ -465,7 +465,7 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
 
     }
     p_desc = period_desc(dp)
-    return p_desc + "\n" + to_yaml(res)
+    return p_desc + "\n" + emisor_rfc + "\n" + to_yaml(res)
 
 
 def sum_payments(payments):

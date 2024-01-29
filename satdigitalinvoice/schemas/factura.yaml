@@ -3,6 +3,8 @@ type: object
 properties:
   Emisor:
     type: string
+  EmisorRegimen:
+    type: string
   Receptor:
     type: string
   UsoCFDI:
@@ -76,6 +78,7 @@ properties:
   Total:
     type: number
 required:
+- Emisor
 - Receptor
 - UsoCFDI
 - MetodoPago
