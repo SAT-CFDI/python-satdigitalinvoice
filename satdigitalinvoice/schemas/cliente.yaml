@@ -9,6 +9,10 @@ properties:
     type: string
   RazonSocial:
     type: string
+  CURP:
+    type: string
+  Cuenta:
+    type: string
   RegimenFiscal:
     type: string
   Email:
