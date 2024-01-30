@@ -229,14 +229,19 @@ def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_p
     return invoice.process()
 
 
-def find_ajustes(facturas, mes_ajuste):
+def iter_conceptos(facturas):
     for f in facturas:
         rfc_emisor = f["Emisor"]
         rfc_receptor = f["Receptor"]
-        for concepto in f["Conceptos"]:
-            _, mes_aj = parse_periodo_mes_ajuste(concepto['_periodo_mes_ajuste'])
-            if mes_aj == mes_ajuste:
-                yield rfc_emisor, rfc_receptor, concepto
+        for c in f["Conceptos"]:
+            yield rfc_emisor, rfc_receptor, c
+
+
+def find_ajustes(facturas, mes_ajuste):
+    for rfc_emisor, rfc_receptor, concepto in iter_conceptos(facturas):
+        _, mes_aj = parse_periodo_mes_ajuste(concepto['_periodo_mes_ajuste'])
+        if mes_aj == mes_ajuste:
+            yield rfc_emisor, rfc_receptor, concepto
 
 
 def generate_ajustes(clients, facturas, dp_effective):
@@ -307,12 +312,9 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
 
 
 def find_depositos(facturas):
-    for f in facturas:
-        rfc_emisor = f["Emisor"]
-        rfc_receptor = f["Receptor"]
-        for concepto in f["Conceptos"]:
-            if "_deposito" in concepto:
-                yield rfc_emisor, rfc_receptor, concepto
+    for rfc_emisor, rfc_receptor, concepto in iter_conceptos(facturas):
+        if "_deposito" in concepto:
+            yield rfc_emisor, rfc_receptor, concepto
 
 
 def generar_depositos(clients, facturas):
