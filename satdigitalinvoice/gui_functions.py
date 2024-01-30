@@ -302,7 +302,7 @@ def create_ajuste_fn(ajuste_porcentaje, data, file_name):
     def fn():
         if ajuste_porcentaje:
             generate_pdf_template(
-                template_name='ajuste_template.md',
+                template_name='ajuste.md',
                 fields=data,
                 target=file_name,
             )
@@ -351,7 +351,7 @@ def generar_depositos(clients, facturas):
 def create_deposito_fn(data, file_name):
     def fn():
         generate_pdf_template(
-            template_name='deposito_template.md',
+            template_name='deposito.md',
             fields=data,
             target=file_name,
         )
