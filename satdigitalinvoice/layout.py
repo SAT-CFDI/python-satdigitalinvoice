@@ -239,7 +239,6 @@ def make_layout(has_fiel, local_db):
                         [
                             [
                                 sg.Column([[
-                                    sg.Button(image_data=IMPORT_CSV, key="importar_recibidas", border_width=0, button_color=BUTTON_COLOR),
                                     sg.ButtonMenu(
                                         image_data=SEARCH_ICON, button_text="", key="buscar_facturas_recibidas", border_width=0, button_color=BUTTON_COLOR,
                                         menu_def=[
@@ -368,23 +367,23 @@ def make_layout(has_fiel, local_db):
                                         "#",
                                         "Receptor Razon Social",
                                         "Recep. Rfc",
+                                        "Producto",
                                         "Actual",
                                         "Nuevo",
                                         "Ajuste %",
                                         "Periodo",
-                                        "Meses",
-                                        "Ajuste Efectivo"
+                                        "Meses"
                                     ],
                                     row_fn=lambda i, r: [
                                         i,
                                         r["receptor"]["RazonSocial"],
                                         r["receptor"]["Rfc"],
+                                        r["concepto"].get("_producto"),
                                         r["valor_unitario"],
                                         r["valor_unitario_nuevo"],
                                         r["ajuste_porcentaje"],
                                         r["periodo"],
-                                        r["meses"],
-                                        r["efectivo_periodo_desc"]
+                                        r["meses"]
                                     ]
                                 )
                             ]],
@@ -403,12 +402,14 @@ def make_layout(has_fiel, local_db):
                                         "#",
                                         "Receptor Razon Social",
                                         "Recep. Rfc",
+                                        "Producto",
                                         "Actual",
                                     ],
                                     row_fn=lambda i, r: [
                                         i,
                                         r["receptor"]["RazonSocial"],
                                         r["receptor"]["Rfc"],
+                                        r["concepto"].get("_producto"),
                                         r["deposito"],
                                     ]
                                 )
