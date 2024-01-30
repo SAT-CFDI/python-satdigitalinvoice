@@ -158,7 +158,7 @@ class MyTable(sg.Table):
         )
 
 
-def make_layout(has_fiel, local_db):
+def make_layout(emisores, local_db):
     # ----- Full layout -----
     return [
         [
@@ -453,6 +453,9 @@ def make_layout(has_fiel, local_db):
                             [
                                 sg.Column([[
                                     sg.Button(image_data=ZIP_ICON, key="cargar_zip", border_width=0, button_color=BUTTON_COLOR),
+                                    sg.Text("Rfc:", pad=TEXT_PADDING),
+                                    sg.Combo(emisores, default_value=emisores[0], key="solicitudes_rfc", size=(15, 1)),
+
                                     sg.Text("Recuperar:", pad=TEXT_PADDING),
                                     sg.Combo([TipoRecuperar.Recibidas, TipoRecuperar.Emitidas], default_value=TipoRecuperar.Recibidas, key="tipo_recuperar", size=(10, 1)),
 
@@ -509,6 +512,8 @@ def make_layout(has_fiel, local_db):
                         [
                             [
                                 sg.Column([[
+                                    sg.Text("Rfc:", pad=TEXT_PADDING),
+                                    sg.Combo(emisores, default_value=emisores[0], key="contabilidad_rfc", size=(15, 1)),
                                     sg.Text("Periodo:", pad=TEXT_PADDING),
                                     sg.Input((date.today() - relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
                                     sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),

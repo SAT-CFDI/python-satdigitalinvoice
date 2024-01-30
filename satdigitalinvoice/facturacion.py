@@ -88,7 +88,7 @@ class FacturacionGUI:
 
         self.window = sg.Window(
             f"Facturación Mensual CFDI 4.0",
-            make_layout(True, self.local_db),
+            make_layout(list(self.emisores.keys()), self.local_db),
             size=(1280, 720),
             resizable=True,
             font=("Courier New", 10, "bold"),
@@ -237,7 +237,7 @@ class FacturacionGUI:
         )
 
     def nueva_solicitud(self, values):
-        rfc = list(self.emisores.keys())[0]
+        rfc = values["solicitudes_rfc"]
 
         sat_service = SAT(signer=self.emisores[rfc]['fiel'])
         tipo_recuperar = values["tipo_recuperar"]
@@ -1046,7 +1046,7 @@ class FacturacionGUI:
                     )
 
                 case "ver_excel":
-                    rfc = list(self.emisores.keys())[0]
+                    rfc = values["contabilidad_rfc"]
                     dp = to_date_period(values["periodo"])
 
                     archivo_excel = exportar_facturas(
@@ -1060,7 +1060,7 @@ class FacturacionGUI:
                     )
 
                 case "periodo_enter":
-                    rfc = list(self.emisores.keys())[0]
+                    rfc = values["contabilidad_rfc"]
                     dp = to_date_period(values["periodo"])
 
                     declaracion_provisional = calculate_declaracion_provisional(
