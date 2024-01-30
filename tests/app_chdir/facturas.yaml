@@ -49,6 +49,7 @@ Constants:
 
 Facturas:
 - Receptor: ABV9901115S7
+  Emisor: CACX7605101P8
   <<: *pue
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -61,6 +62,7 @@ Facturas:
   Total: 18065.66
 
 - Receptor: ABC1511034U3 # Régimen de Personas Morales con Fines no Lucrativos
+  Emisor: CACX7605101P8
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -72,6 +74,7 @@ Facturas:
   Total: 36570.00
 
 - Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -81,6 +84,7 @@ Facturas:
   Total: 37019.16
 
 - Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME2 {{ periodo }}'
@@ -91,6 +95,7 @@ Facturas:
 
 FacturasIncorrectas:
 - Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'
@@ -101,6 +106,7 @@ FacturasIncorrectas:
 
 FacturasIncorrectas2:
 - Receptor: XXXNOEXISTO # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
   <<: *ppd
   Conceptos:
   - Descripcion: 'SOME {{ periodo }}'

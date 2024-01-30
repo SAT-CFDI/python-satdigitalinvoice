@@ -32,7 +32,6 @@ def test_generar_ingresos():
             clients=clients,
             facturas=facturas,
             dp=date(year=2023, month=4, day=1),
-            emisor_rfc=csd_signer.rfc
         )
 
         assert len(facturas) == 3
@@ -51,7 +50,6 @@ def test_generar_ingresos_error():
             clients=clients,
             facturas=facturas,
             dp=date(year=2023, month=4, day=1),
-            emisor_rfc=csd_signer.rfc
         )
 
     assert e.value.errors == ["1 ABMG891115PD7: Total '41000.16' is invalid, expected '37019.16'"]
@@ -66,10 +64,9 @@ def test_generar_ingresos_error2():
             clients=ClientsManager(),
             facturas=facturas,
             dp=date(year=2023, month=4, day=1),
-            emisor_rfc=csd_signer.rfc
         )
 
-    assert e.value.errors == ['1 XXXNOEXISTO: client not found']
+    assert e.value.errors == ['1 XXXNOEXISTO: Receptor not found']
 
 
 def test_periodo_desc():
