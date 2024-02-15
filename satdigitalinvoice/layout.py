@@ -13,6 +13,7 @@ FORMA_PAGO = select_all('C756_c_FormaPago')
 TEXT_PADDING = ((5, 0), 3)
 
 # 24 x 24
+# https://icons8.com/icons
 FOLDER_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAqElEQVR4nO3UsQnCYBRF4U/EAcRJtHUJcQddwQlsxcpVLF0hOoY2FlaC+SUQQWI0PmwscuF0j3PhFZc2" \
               "/5QR9siRnjhhid6vBVlFXGWHwS8Ft4aCHLPydozFGybo1BV8kl8wLe/muDbcryIFBwzRxbpB/OAcfV8f2y/lD17y7qcbHIPy2oKoILUFqX1RdCpSgMIVHrsUoHDVznVWM9cpQF46imlp8ye5AyE7C1To4" \
               "/HLAAAAAElFTkSuQmCC"
@@ -20,6 +21,8 @@ FOLDER_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALE
 EXCEL_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA7klEQVR4nN2VQQqCUBCGv2pfFyhv0FmC7hGFq1bhrgi6gi1cBK6CdhFtvYdCi6CgrZsXwgTyUNOnLmrgBx31" \
              "/+DNOAP/HkNgCqyBK3AHLsDA1HAELIEjcANUjuYm5hbwKDBVKTnyjZ5/ATugkwWwS5qrAsBHkyyA0yBg1SQgAraiSHueCwgBL3V" \
              "/kFwWwAd6Ir8swJXcSZTEvsIRfQXEwFg6y5LruElAogDoioKma1AF4JvUoPUjctsucqi1qVfQpsY1KPuj+SY1qDsqnLaH3SJvF9Qd1wp4ilethTOT9zea7CLzsivzDPSrmPx2vAFRfA9plcmcVwAAAABJRU5ErkJggg=="
+
+DIOT_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAABFElEQVR4nMXUTStFURTG8d/ITChmysDI6BbJwMtMPoEPYMCM5CuQxMSEugZexlLmSmYy8BWMKGJ4S93iaNce3HTO7ZzbPjz1jPZaz7+1d2vzjxrEUEmH2lLqwy4+kFX0O3ZiRqGuewjOfvmqKHwpQXgWvZgHOEgI2M8DNLs03OIGd3gpAWhWBfRjDSuYxiSeUgOyDh9ipk7AF0bxVhcgwwIe6gSM47kuwCUm8J0SsIdtLGMMjykf+TSen+Een6n3IKvo/wO0EoS3igDH2MIF2j0Et3EeM47yAJsd5AE0MFXSjdgTdIKNPMBIXP1ZvWsOrxguKpiPv2QYdT3+oGUcasPVht4A6aowamgKi1XFqx3X9Hf6AfDmP+wR2M6gAAAAAElFTkSuQmCC"
 
 HTML_ICON = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAA/ElEQVR4nN2VOwoCMRCGPz2HB7ARHyfwBN5EsLOxWKzs7Ox0e69gYbOtoK2dZ7BVRwZGWJbsJvuw0IGfDUkmX" \
             "/gzm8A/xgi4AC9AHNLo1gGccxaWFCAC1lUBz0CAVIVICYAYpPVNgJSF+ABtYOHoXzcF6AMdYAmsMuo1ATgZpJTvZQAScEa5ETcAiIsA+vcmDm9XgUpsjUJ7tASnGV1tTL8z26VeKTdgAOwz5esFqA6mKDX2WUR3ebe" \
@@ -517,6 +520,7 @@ def make_layout(emisores, local_db):
                                     sg.Text("Periodo:", pad=TEXT_PADDING),
                                     sg.Input((date.today() - relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
                                     sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
+                                    sg.Button(image_data=DIOT_ICON, key="ver_diot", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),
                                 ]])
                             ],

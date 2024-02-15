@@ -27,7 +27,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes, generar_depositos, calculate_declaracion_provisional
+    generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import header_line, print_yaml, to_yaml
@@ -1057,6 +1057,19 @@ class FacturacionGUI:
                     )
                     open_file(
                         os.path.abspath(archivo_excel)
+                    )
+
+                case "ver_diot":
+                    rfc = values["contabilidad_rfc"]
+                    dp = to_date_period(values["periodo"])
+
+                    archivo_diot = calculate_diot(
+                        self.get_all_invoices(),
+                        dp,
+                        ClientsManager()[rfc],
+                    )
+                    open_file(
+                        os.path.abspath(archivo_diot)
                     )
 
                 case "periodo_enter":

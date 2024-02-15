@@ -11,6 +11,12 @@ properties:
     type: string
   CURP:
     type: string
+  Nombre:
+    type: string
+  ApellidoPaterno:
+    type: string
+  ApellidoMaterno:
+    type: string
   Cuenta:
     type: string
   RegimenFiscal:

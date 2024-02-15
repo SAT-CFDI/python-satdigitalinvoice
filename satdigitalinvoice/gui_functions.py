@@ -4,6 +4,7 @@ import os
 from datetime import datetime, date
 from decimal import Decimal
 from decimal import InvalidOperation
+from itertools import groupby
 
 import xlsxwriter
 from markdown2 import markdown
@@ -13,6 +14,7 @@ from satcfdi.accounting.process import payments_groupby_receptor, payments_reten
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.catalogos import Impuesto
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
+from satcfdi.diot import DIOT, DatosIdentificacion, Periodo, ProveedorTercero, TipoTercero, TipoOperacion
 from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
 
@@ -366,8 +368,8 @@ def archivos_folder(dp: DatePeriod):
     return os.path.join(ARCHIVOS_DIRECTORY, str(dp.year))
 
 
-def archivos_filename(dp: DatePeriod, ext="xlsx"):
-    return os.path.join(archivos_folder(dp), f"{dp}.{ext}")
+def archivos_filename(dp: DatePeriod, name=".xlsx"):
+    return os.path.join(archivos_folder(dp), f"{dp}{name}")
 
 
 def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
@@ -407,7 +409,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
 
     # RETENCIONES
     if dp.month is None:
-        archivo_retenciones = archivos_filename(dp, ext="retenciones.txt")
+        archivo_retenciones = archivos_filename(dp, name="retenciones.txt")
         pagos_agrupados = payments_groupby_receptor(emitidas_pagos)
         payments_retentions_export(archivo_retenciones, pagos_agrupados)
 
@@ -468,6 +470,54 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
     }
     p_desc = period_desc(dp)
     return p_desc + "\n" + emisor_rfc + "\n" + to_yaml(res)
+
+
+def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
+    emisor_rfc = emisor_cif['Rfc']
+    recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
+    recibidas_pagos = list(r for r in recibidas_pagos if r.comprobante["Receptor"].get("RegimenFiscalReceptor") not in ('616',))
+    recibidas_pagos.sort(key=lambda x: x.comprobante["Emisor"]["Rfc"])
+
+    provedores = {}
+    for rfc, group in groupby(recibidas_pagos, lambda x: x.comprobante["Emisor"]["Rfc"]):
+        payments = list(group)
+        provedores[rfc] = {
+            'Subtotal': sum(i.sub_total for i in payments),
+            "002|Tasa|0.160000": sum(i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0) for i in payments),
+        }
+
+    diot = DIOT(
+        datos_identificacion=DatosIdentificacion(
+            rfc=emisor_rfc,
+            curp=emisor_cif['CURP'],
+            nombre=emisor_cif['Nombre'],
+            apellido_paterno=emisor_cif['ApellidoPaterno'],
+            apellido_materno=emisor_cif['ApellidoMaterno'],
+            ejercicio=2021,
+        ),
+        periodo=f'{dp.month:02d}',
+        proveedores=[
+            ProveedorTercero(
+                tipo_tercero=TipoTercero.PROVEEDOR_NACIONAL,
+                tipo_operacion=TipoOperacion.OTROS,
+                rfc=rfc,
+                iva16=round(values["002|Tasa|0.160000"] / Decimal("0.16")),
+            )
+            for rfc, values in provedores.items() if values["002|Tasa|0.160000"]
+        ]
+    )
+
+    diot.generate_package(
+        dirname=archivos_folder(dp)
+    )
+
+    diot_pdf = archivos_filename(dp, name="diot.pdf")
+    render.pdf_write(diot, diot_pdf)
+
+    diot_export = archivos_filename(dp, name="diot.txt")
+    with open(diot_export, "wb") as f:
+        diot.export(f)
+    return diot_pdf
 
 
 def sum_payments(payments):
