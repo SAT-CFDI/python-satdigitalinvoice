@@ -517,6 +517,11 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
     diot_export = archivos_filename(dp, name="diot.txt")
     with open(diot_export, "wb") as f:
         diot.export(f)
+
+    diot_export = archivos_filename(dp, name="diot_plain.txt")
+    with open(diot_export, "wb") as f:
+        diot.plain_write(f)
+
     return diot_pdf
 
 
