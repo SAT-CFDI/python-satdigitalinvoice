@@ -493,7 +493,7 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
             nombre=emisor_cif['Nombre'],
             apellido_paterno=emisor_cif['ApellidoPaterno'],
             apellido_materno=emisor_cif['ApellidoMaterno'],
-            ejercicio=2021,
+            ejercicio=dp.year,
         ),
         periodo=f'{dp.month:02d}',
         proveedores=[
