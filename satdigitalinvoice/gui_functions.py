@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+import shutil
 from datetime import datetime, date
 from decimal import Decimal
 from decimal import InvalidOperation
@@ -483,7 +484,10 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
         payments = list(group)
         provedores[rfc] = {
             'Subtotal': sum(i.sub_total for i in payments),
-            "002|Tasa|0.160000": sum(i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0) for i in payments),
+            "Base16": round(sum(
+                i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Base", 0) for i in payments
+                if i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0)
+            )),
         }
 
     diot = DIOT(
@@ -501,25 +505,27 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
                 tipo_tercero=TipoTercero.PROVEEDOR_NACIONAL,
                 tipo_operacion=TipoOperacion.OTROS,
                 rfc=rfc,
-                iva16=round(values["002|Tasa|0.160000"] / Decimal("0.16")),
+                iva16=values["Base16"],
             )
-            for rfc, values in provedores.items() if values["002|Tasa|0.160000"]
+            for rfc, values in provedores.items() if values["Base16"]
         ]
     )
 
-    diot.generate_package(
-        dirname=archivos_folder(dp)
+    diot_folder = os.path.join(archivos_folder(dp), 'diot')
+    shutil.rmtree(diot_folder, ignore_errors=True)
+    os.makedirs(diot_folder, exist_ok=True)
+
+    diot_file = diot.generate_package(
+        dirname=diot_folder
     )
+    diot_file = os.path.basename(diot_file)
 
-    diot_pdf = archivos_filename(dp, name="diot.pdf")
-    render.pdf_write(diot, diot_pdf)
+    diot_pdf = os.path.join(diot_folder, f"{diot_file}.pdf")
+    render.pdf_write(diot, target=diot_pdf)
 
-    diot_export = archivos_filename(dp, name="diot.txt")
-    with open(diot_export, "wb") as f:
+    with open(os.path.join(diot_folder, f"{diot_file}.export.txt"), "wb") as f:
         diot.export(f)
-
-    diot_export = archivos_filename(dp, name="diot_plain.txt")
-    with open(diot_export, "wb") as f:
+    with open(os.path.join(diot_folder, f"{diot_file}.plain.txt"), "wb") as f:
         diot.plain_write(f)
 
     return diot_pdf
