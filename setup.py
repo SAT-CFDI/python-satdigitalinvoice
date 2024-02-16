@@ -72,7 +72,8 @@ setuptools.setup(
         'markdown2',
         'PySimpleGUI<5.0.0',
         'XlsxWriter',
-        'jsonschema'
+        'jsonschema',
+        'python-dateutil'
     ],
     extras_require={
         'test': [
