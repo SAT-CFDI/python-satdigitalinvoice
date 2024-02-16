@@ -486,7 +486,7 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
             'Subtotal': sum(i.sub_total for i in payments),
             "Base16": round(sum(
                 i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Base", 0) for i in payments
-                if i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0)
+                if i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe")
             )),
         }
 
