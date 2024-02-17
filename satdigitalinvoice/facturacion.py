@@ -54,6 +54,8 @@ class FacturacionGUI:
         self.email_manager = EmailManager(
             **config['email']
         )
+        self.email_signature = config['email_signature']
+
         pac = config['pac']
         pac_module, pac_class = pac['type'].split(".")
         mod = __import__(f"satcfdi.pacs.{pac_module}", fromlist=[pac_class])
@@ -374,6 +376,7 @@ class FacturacionGUI:
                                     facturas=facturas,
                                     facturas_pendientes_meses_anteriores=facturas_facturas_pendientes_meses_anteriores,
                                     receptor=receptor,
+                                    email_signature=self.email_signature
                                 ),
                                 file_attachments=attachments()
                             )
@@ -410,7 +413,10 @@ class FacturacionGUI:
                                 s.send_email(
                                     subject=subject,
                                     to_addrs=receptor["Email"],
-                                    html=facturacion_environment.get_template(f'mail_{action_name}_template.html').render(data),
+                                    html=facturacion_environment.get_template(f'mail_{action_name}_template.html').render(
+                                        email_signature=self.email_signature,
+                                        **data
+                                    ),
                                     file_attachments=file_names
                                 )
 
