@@ -69,16 +69,6 @@ class FacturacionLauncher:
         from satdigitalinvoice.file_data_managers import ConfigManager
         return ConfigManager()
 
-    # def add_sample_files(self):
-    #     # loading the sample.zip
-    #     try:
-    #         with ZipFile(os.path.join(self.app_dir, 'sample.zip'), 'r') as zf:
-    #             for member in zf.infolist():
-    #                 if not os.path.exists(member.filename):
-    #                     zf.extract(member)
-    #     except FileNotFoundError:
-    #         pass
-
     def run(self):
         self.window.finalize()
         self.window.read(timeout=0)
@@ -88,7 +78,6 @@ class FacturacionLauncher:
             from satdigitalinvoice.file_data_managers import InitManager
             if cwd := InitManager().get('cwd'):
                 os.chdir(cwd)
-            # self.add_sample_files()
 
             from satdigitalinvoice.facturacion import FacturacionGUI
             app = FacturacionGUI(
