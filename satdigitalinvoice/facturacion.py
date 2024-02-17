@@ -64,7 +64,7 @@ class FacturacionGUI:
         def load_emisor(data):
             return {
                 "csd": load_certificate(data['csd']),
-                "fiel": load_certificate(data['fiel']),
+                "fiel": load_certificate(data['fiel']) if 'fiel' in data else None,
             }
 
         if emisores := config.get('emisores'):
@@ -136,7 +136,7 @@ class FacturacionGUI:
         def emisor_info(data):
             return {
                 "csd": cert_info(data['csd']),
-                "fiel": cert_info(data['fiel']),
+                "fiel": cert_info(data['fiel']) if 'fiel' in data else None,
             }
 
         print_yaml({
