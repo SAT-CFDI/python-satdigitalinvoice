@@ -80,14 +80,8 @@ class LocalData(dict):
         super().__init__(self._raw())
 
     def _raw(self):
-        try:
-            with open(self.file_source, "r", encoding="utf-8") as fs:
-                return yaml.load(fs, DuplicateKeySafeLoader)
-        except FileNotFoundError:
-            os.makedirs(os.path.dirname(self.file_source), exist_ok=True)
-            with open(self.file_source, "w", encoding="utf-8") as fs:
-                fs.write("{}")
-            return {}
+        with open(self.file_source, "r", encoding="utf-8") as fs:
+            return yaml.load(fs, DuplicateKeySafeLoader)
 
     def save(self):
         with open(self.file_source, "w", encoding="utf-8") as fs:
