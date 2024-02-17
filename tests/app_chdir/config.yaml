@@ -25,6 +25,8 @@ email:
   user: testuser@locahost.com
   password: thisisasecurepassword
 
+email_signature: ""
+
 pac:
   type: diverza.Diverza
   args:
