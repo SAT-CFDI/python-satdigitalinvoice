@@ -152,4 +152,4 @@ class OS:
 
 
 def code_str(value):
-    return value.code if value is Code else value
+    return value.code if type(value) is Code else value

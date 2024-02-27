@@ -29,7 +29,7 @@ from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes, get_month_name
 from .log_tools import to_yaml
-from .utils import add_month, find_best_match, months_between, open_file
+from .utils import add_month, find_best_match, months_between, open_file, code_str
 from .sat_functions import isr_mensual, sat_retenciones
 
 logger = logging.getLogger(__name__)
@@ -563,7 +563,7 @@ def mf_pago_fmt(cfdi):
     i = cfdi
     if i['TipoDeComprobante'] == "I":
         return i['TipoDeComprobante'].code + ' ' + i['MetodoPago'].code + ' ' + i['FormaPago'].code
-    return i['TipoDeComprobante'].code + '       '
+    return code_str(i['TipoDeComprobante']) + '       '
 
 
 def preview_cfdis(cfdis):
