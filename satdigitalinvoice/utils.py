@@ -6,7 +6,7 @@ import sys
 from datetime import datetime, date
 from uuid import UUID
 
-from satcfdi.models import Signer, DatePeriod
+from satcfdi.models import Signer, DatePeriod, Code
 from satcfdi.accounting.models import EstadoComprobante
 
 
@@ -149,3 +149,7 @@ class OS:
             return OS.MACOS
         else:
             return OS.UNKNOWN
+
+
+def code_str(value):
+    return value.code if value is Code else value

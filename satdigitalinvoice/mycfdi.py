@@ -9,8 +9,9 @@ from uuid import UUID
 from satcfdi import render
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
+from satcfdi.models import Code
 
-from .utils import to_uuid
+from .utils import to_uuid, code_str
 
 ALL_INVOICES = 'all_invoices'
 ALL_RETENCIONES = 'all_retenciones'
@@ -80,7 +81,7 @@ class MyCFDI(SatCFDI):
             case '{http://www.sat.gob.mx/cfd/3}Comprobante' | '{http://www.sat.gob.mx/cfd/4}Comprobante':
                 path = "{3:%Y}/{3:%Y-%m}/facturas/{4}_{0}_[{1}]_{2}".format(
                     self.name,
-                    self["TipoDeComprobante"].code,
+                    code_str(self["TipoDeComprobante"]),
                     self.uuid,
                     self["Fecha"],
                     self["Emisor"]["Rfc"],

@@ -256,6 +256,10 @@ class FacturacionGUI:
             **args
         )
 
+        if "IdSolicitud" not in response:
+            self.error_message("Error al solicitar comprobantes" + to_yaml(response))
+            return
+
         self.local_db.solicitud_merge(response["IdSolicitud"], rfc=rfc, request=args, response=response)
 
     def recupera_comprobantes(self, sat_service, response):
