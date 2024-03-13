@@ -870,7 +870,7 @@ class FacturacionGUI:
                 pass
 
     def main_loop(self):
-        self.action("_load_config", {})
+        self.action("_initialize", {})
         _, values = self.window.read(timeout=0)
         event = "main_tab_group"
 
@@ -884,7 +884,7 @@ class FacturacionGUI:
     def action(self, event, values):
         try:
             match event:
-                case '_load_config':
+                case '_initialize':
                     self.load_config()
                     self.set_inputs()
 
