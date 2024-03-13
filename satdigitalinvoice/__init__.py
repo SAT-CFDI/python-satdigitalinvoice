@@ -64,12 +64,7 @@ class FacturacionLauncher:
             auto_close_duration=10,  # seconds
         )
 
-    @staticmethod
-    def read_config():
-        from satdigitalinvoice.file_data_managers import ConfigManager
-        return ConfigManager()
-
-    def run(self):
+    def run(self, config):
         self.window.finalize()
         self.window.read(timeout=0)
 
@@ -80,9 +75,10 @@ class FacturacionLauncher:
                 os.chdir(cwd)
 
             from satdigitalinvoice.facturacion import FacturacionGUI
-            app = FacturacionGUI(
-                config=self.read_config()
-            )
+            app = FacturacionGUI()
+            if config:
+                app.read_config = lambda : config
+
         except Exception as ex:
             logging.exception(ex)
             self.window['console'].update(

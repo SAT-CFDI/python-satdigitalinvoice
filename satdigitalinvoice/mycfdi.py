@@ -98,6 +98,10 @@ class MyCFDI(SatCFDI):
 
         return os.path.join(self.base_dir, path)
 
+    @property
+    def status(self):
+        return str(self.local_db.liquidated_state(self)) + str(" 📧" if self.local_db.notified(self) else "   ")
+
     @classmethod
     def uuid_from_filename(cls, filename):
         filename = os.path.basename(filename)

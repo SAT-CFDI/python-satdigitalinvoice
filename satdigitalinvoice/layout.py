@@ -161,7 +161,7 @@ class MyTable(sg.Table):
         )
 
 
-def make_layout(emisores, local_db):
+def make_layout():
     # ----- Full layout -----
     return [
         [
@@ -231,7 +231,7 @@ def make_layout(emisores, local_db):
                                         r["Fecha"].strftime(CALENDAR_FECHA_FMT),
                                         r["Total"],
                                         r.saldo_pendiente if r.saldo_pendiente else "",
-                                        str(local_db.liquidated_state(r)) + str(" 📧" if local_db.notified(r) else "   "),
+                                        r.status,
                                         mf_pago_fmt(r),
                                         r.uuid
                                     ]
@@ -288,7 +288,7 @@ def make_layout(emisores, local_db):
                                         r["Fecha"].strftime(CALENDAR_FECHA_FMT),
                                         r["Total"],
                                         r.saldo_pendiente if r.saldo_pendiente else "",
-                                        str(local_db.liquidated_state(r)) + str(" 📧" if local_db.notified(r) else "   "),
+                                        r.status,
                                         mf_pago_fmt(r),
                                         r.uuid
                                     ]
@@ -487,7 +487,7 @@ def make_layout(emisores, local_db):
                                 sg.Column([[
                                     sg.Button(image_data=ZIP_ICON, key="cargar_zip", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Text("Rfc:", pad=TEXT_PADDING),
-                                    sg.Combo(emisores, default_value=emisores[0], key="solicitudes_rfc", size=(15, 1)),
+                                    sg.Combo([], default_value="", key="solicitudes_rfc", size=(15, 1)),
 
                                     sg.Text("Recuperar:", pad=TEXT_PADDING),
                                     sg.Combo([TipoRecuperar.Recibidas, TipoRecuperar.Emitidas], default_value=TipoRecuperar.Recibidas, key="tipo_recuperar", size=(10, 1)),
@@ -546,7 +546,7 @@ def make_layout(emisores, local_db):
                             [
                                 sg.Column([[
                                     sg.Text("Rfc:", pad=TEXT_PADDING),
-                                    sg.Combo(emisores, default_value=emisores[0], key="contabilidad_rfc", size=(15, 1)),
+                                    sg.Combo([], default_value="", key="contabilidad_rfc", size=(15, 1)),
                                     sg.Text("Periodo:", pad=TEXT_PADDING),
                                     sg.Input((date.today() - relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
                                     sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
@@ -566,24 +566,6 @@ def make_layout(emisores, local_db):
                             ]
                         ],
                         key='contabilidad_tab',
-                    ),
-                    sg.Tab(
-                        'Consola'.center(13),
-                        [
-                            [
-                                sg.Push(),
-                                sg.Button(image_data=ABOUT_ICON, key="about", border_width=0, button_color=BUTTON_COLOR),
-                            ],
-                            [sg.Multiline(
-                                expand_x=True,
-                                expand_y=True,
-                                key="console",
-                                write_only=True,
-                                autoscroll=True,
-                                reroute_stdout=True
-                            )]
-                        ],
-                        key='errores_tab',
                     ),
                     sg.Tab(
                         'Configuracion'.center(13),
@@ -635,6 +617,24 @@ def make_layout(emisores, local_db):
                             ]
                         ],
                         key='configuracion_tab',
+                    ),
+                    sg.Tab(
+                        'Consola'.center(13),
+                        [
+                            [
+                                sg.Push(),
+                                sg.Button(image_data=ABOUT_ICON, key="about", border_width=0, button_color=BUTTON_COLOR),
+                            ],
+                            [sg.Multiline(
+                                expand_x=True,
+                                expand_y=True,
+                                key="console",
+                                write_only=True,
+                                autoscroll=True,
+                                reroute_stdout=True
+                            )]
+                        ],
+                        key='errores_tab',
                     ),
                 ]],
                 expand_x=True,

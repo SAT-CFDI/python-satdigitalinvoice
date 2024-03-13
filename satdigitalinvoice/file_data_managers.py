@@ -87,6 +87,9 @@ class LocalData(dict):
         with open(self.file_source, "w", encoding="utf-8") as fs:
             yaml.dump(self, fs, Dumper=NoAliasDumper, allow_unicode=True, width=1280, sort_keys=False)
 
+    def last_modified(self):
+        return os.path.getmtime(self.file_source)
+
 
 class InitManager(LocalData):
     file_source = "init.yaml"

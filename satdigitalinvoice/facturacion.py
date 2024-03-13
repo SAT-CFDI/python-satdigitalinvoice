@@ -49,8 +49,21 @@ def open_launch_window():
 
 
 class FacturacionGUI:
-    def __init__(self, config):
-        os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+    @staticmethod
+    def read_config():
+        from satdigitalinvoice.file_data_managers import ConfigManager
+        return ConfigManager()
+
+    def load_config(self):
+        config = self.read_config()
+        if isinstance(config, dict):
+            last_modified = True
+        else:
+            last_modified = config.last_modified()
+        if self.config_last_modified == last_modified:
+            return
+        self.config_last_modified = last_modified
+
         self.email_manager = EmailManager(
             **config['email']
         )
@@ -78,7 +91,6 @@ class FacturacionGUI:
 
         self.rfc_prediales = config['rfc_prediales']
 
-        self._all_invoices = None
         self.local_db = LocalDBSatCFDI(
             base_path=DATA_DIRECTORY,
             enviar_a_partir=config['enviar_a_partir'],
@@ -88,9 +100,25 @@ class FacturacionGUI:
         MyCFDI.local_db = self.local_db
         MyCFDI.base_dir = ARCHIVOS_DIRECTORY
 
+        emisores = list(self.emisores.keys())
+        self.window["solicitudes_rfc"].update(values=emisores, value=emisores[0])
+        self.window["contabilidad_rfc"].update(values=emisores, value=emisores[0])
+
+    def __init__(self):
+        os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+
+        self.email_manager = None
+        self._all_invoices = None
+        self.local_db = None
+        self.rfc_prediales = None
+        self.emisores = {"Test": "Test"}
+        self.pac_service = None
+        self.email_signature = None
+        self.config_last_modified = None
+
         self.window = sg.Window(
             f"Facturación Mensual CFDI 4.0",
-            make_layout(list(self.emisores.keys()), self.local_db),
+            make_layout(),
             size=(1280, 720),
             resizable=True,
             font=("Courier New", 10, "bold"),
@@ -99,7 +127,7 @@ class FacturacionGUI:
             # use_custom_titlebar=True,
             titlebar_font=("Courier New", 11, "bold"),
             finalize=True,
-            scaling=config.get('scaling', 1.0),
+            scaling=1.25,
         )
         self.has_focus = True
 
@@ -108,7 +136,6 @@ class FacturacionGUI:
             preview=self.window["ver_preview"],
         )
         self.console = self.window["console"]
-        self.set_inputs()
 
         self.window.bind("<FocusIn>", "_focus_in")
         self.window.bind("<FocusOut>", "_focus_out")
@@ -843,6 +870,7 @@ class FacturacionGUI:
                 pass
 
     def main_loop(self):
+        self.action("_load_config", {})
         _, values = self.window.read(timeout=0)
         event = "main_tab_group"
 
@@ -856,10 +884,15 @@ class FacturacionGUI:
     def action(self, event, values):
         try:
             match event:
+                case '_load_config':
+                    self.load_config()
+                    self.set_inputs()
+
                 case '_focus_in':
                     if not self.has_focus:
                         self.has_focus = True
                         if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab"):
+                            self.load_config()
                             self.main_tab_group(values)
 
                 case '_focus_out':
