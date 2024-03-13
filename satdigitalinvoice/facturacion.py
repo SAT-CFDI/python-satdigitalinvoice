@@ -1104,6 +1104,20 @@ class FacturacionGUI:
                         os.path.abspath(directory)
                     )
 
+                case "ver_emitidas":
+                    dp = to_date_period(self.window["emitidas_search"].get())
+                    directory = archivos_folder(dp)
+                    open_file(
+                        os.path.abspath(directory)
+                    )
+
+                case "ver_recibidas":
+                    dp = to_date_period(self.window["recibidas_search"].get())
+                    directory = archivos_folder(dp)
+                    open_file(
+                        os.path.abspath(directory)
+                    )
+
                 case "organizar_facturas":
                     MyCFDI.rename_invoices(search_path="**/*.xml")
 

@@ -249,7 +249,7 @@ def find_ajustes(facturas, mes_ajuste):
 
 def generate_ajustes(clients, facturas, dp_effective):
     errors = []
-    ajustes_dir = os.path.join(archivos_folder(dp_effective), 'ajustes')
+    ajustes_dir = os.path.join(TEMP_DIRECTORY, 'ajustes')
     os.makedirs(ajustes_dir, exist_ok=True)
 
     def ajustes_iter():
@@ -322,7 +322,7 @@ def find_depositos(facturas):
 
 def generar_depositos(clients, facturas):
     errors = []
-    depositos_dir = os.path.join(ARCHIVOS_DIRECTORY, 'depositos')
+    depositos_dir = os.path.join(TEMP_DIRECTORY, 'depositos')
     os.makedirs(depositos_dir, exist_ok=True)
 
     def depositos_iter():
@@ -364,8 +364,12 @@ def create_deposito_fn(data, file_name):
 
 
 def archivos_folder(dp: DatePeriod):
+    if not dp:
+        return ARCHIVOS_DIRECTORY
+
     if dp.month:
         return os.path.join(ARCHIVOS_DIRECTORY, str(dp.year), str(dp.year) + "-{:02d}".format(dp.month))
+
     return os.path.join(ARCHIVOS_DIRECTORY, str(dp.year))
 
 
