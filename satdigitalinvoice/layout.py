@@ -331,6 +331,33 @@ def make_layout(emisores, local_db):
                         key='facturas_tab',
                     ),
                     sg.Tab(
+                        'Productos '.center(13),
+                        [
+                            [
+                                sg.Button(image_data=EDIT_ICON, key="editar_productos", border_width=0, button_color=BUTTON_COLOR),
+                            ],
+                            [
+                                MyTable(
+                                    key="productos_table",
+                                    headings=[
+                                        '#',
+                                        'Producto',
+                                        'Descripcion',
+                                        'CuentaPredial',
+                                        'ClaveProdServ'
+                                    ],
+                                    row_fn=lambda i, r: [
+                                        i,
+                                        r['Producto'],
+                                        r['Concepto']['Descripcion'],
+                                        r['Concepto'].get('CuentaPredial'),
+                                        r['Concepto']['ClaveProdServ']
+                                    ]
+                                )
+                            ]],
+                        key='productos_tab',
+                    ),
+                    sg.Tab(
                         'Correos'.center(13),
                         [
                             [

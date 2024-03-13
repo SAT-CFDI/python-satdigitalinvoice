@@ -24,7 +24,7 @@ from xlsxwriter.exceptions import XlsxFileError
 from . import __version__, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
-from .file_data_managers import ClientsManager, FacturasManager
+from .file_data_managers import ClientsManager, FacturasManager, ProductosManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
     generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot
@@ -720,6 +720,17 @@ class FacturacionGUI:
                 values=cfdis,
             )
 
+    def nuevos_productos(self, values, force=False):
+        productos_table = self.window['productos_table']
+        has_value = bool(productos_table.metadata)
+        productos_table.update(values=[])
+
+        if has_value or force:
+            productos = [{"Producto": k} | v for k, v in ProductosManager().items()]
+            productos_table.update(
+                values=productos,
+            )
+
     def nuevos_ajustes(self, values, force=False):
         ajustes_table = self.window['ajustes_table']
         has_value = bool(ajustes_table.metadata)
@@ -761,6 +772,9 @@ class FacturacionGUI:
         self.action_button_manager.clear()
 
         match values['main_tab_group']:
+            case 'productos_tab':
+                self.nuevos_productos(values)
+
             case 'facturas_tab':
                 self.nuevas_facturas(values)
 
@@ -1040,9 +1054,14 @@ class FacturacionGUI:
                         )
                     )
 
-                case "editar_facturas" | "editar_ajustes":
+                case "editar_facturas" | "editar_ajustes" | "editar_depositos":
                     open_file(
                         os.path.abspath("facturas.yaml")
+                    )
+
+                case "editar_productos":
+                    open_file(
+                        os.path.abspath("productos.yaml")
                     )
 
                 case "editar_configurar":
