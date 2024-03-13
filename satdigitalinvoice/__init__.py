@@ -64,7 +64,7 @@ class FacturacionLauncher:
             auto_close_duration=10,  # seconds
         )
 
-    def run(self, config):
+    def run(self, config=None):
         self.window.finalize()
         self.window.read(timeout=0)
 
