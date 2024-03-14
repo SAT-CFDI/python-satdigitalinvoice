@@ -7,7 +7,7 @@ WORKING_DIR = 'working_dir'
 
 class InitDB(diskcache.Cache):
     def __init__(self):
-        super().__init__(directory=os.path.join(os.getcwd(), 'cache'))
+        super().__init__(directory=os.path.join(os.getcwd(), 'init'))
 
     def set_cwd(self):
         cwd = self.get('working_dir', os.getcwd())
