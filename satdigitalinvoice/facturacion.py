@@ -40,15 +40,90 @@ logging.getLogger("fontTools").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 
 
-def open_launch_window():
-    layout = [[sg.Text("New Window", key="new")]]
-    window = sg.Window("Launch Window", layout, modal=True, size=(300, 300))
-    window.read(timeout=1000)
+def get_directory():
+    sg.theme('Default1')
 
-    return window
+    layout = [
+        [sg.Text('Select a directory:')],
+        [sg.InputText(), ],
+        [sg.Button('OK'), sg.Button('Cancel')]
+    ]
+
+    window = sg.Window(
+        'Select Directory',
+        layout
+    )
+
+    while True:
+        event, values = window.read()
+
+        if event == sg.WINDOW_CLOSED or event == 'Cancel':
+            folder_path = None
+            break
+        elif event == 'OK':
+            folder_path = values[0]
+            if not os.path.isdir(folder_path):
+                sg.popup_error('Please select a valid directory.')
+                continue
+            else:
+                break
+
+    window.close()
+    return folder_path
 
 
 class FacturacionGUI:
+    def __init__(self):
+        os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+
+        self.email_manager = None
+        self._all_invoices = None
+        self.local_db = None
+        self.rfc_prediales = None
+        self.emisores = {"Test": "Test"}
+        self.pac_service = None
+        self.email_signature = None
+        self.config_last_modified = None
+
+        self.window = sg.Window(
+            f"Facturación Mensual CFDI 4.0",
+            make_layout(),
+            size=(1280, 720),
+            resizable=True,
+            font=("Courier New", 10, "bold"),
+            ttk_theme="default",
+            margins=(0, 0),
+            # use_custom_titlebar=True,
+            titlebar_font=("Courier New", 11, "bold"),
+            finalize=True,
+            scaling=1.25,
+        )
+        self.has_focus = True
+
+        self.action_button_manager = ActionButtonManager(
+            button=self.window["crear_facturas"],
+            preview=self.window["ver_preview"],
+        )
+        self.console = self.window["console"]
+
+        self.window.bind("<FocusIn>", "_focus_in")
+        self.window.bind("<FocusOut>", "_focus_out")
+
+        for t in ('serie', 'folio', 'serie_pago'):
+            self.window[t].bind("<Return>", "_enter")
+            self.window[t].bind("<FocusOut>", "_enter", propagate=False)
+
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'periodo'):
+            self.window[t].bind("<Return>", "_enter")
+
+        modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
+
+        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
+            self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
+            self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
+            # self.window[t].bind('<Double-Button-1>', '_enter')
+            self.window[t].bind('<Return>', '+enter')
+
     @staticmethod
     def read_config():
         from satdigitalinvoice.file_data_managers import ConfigManager
@@ -103,57 +178,6 @@ class FacturacionGUI:
         emisores = list(self.emisores.keys())
         self.window["solicitudes_rfc"].update(values=emisores, value=emisores[0])
         self.window["contabilidad_rfc"].update(values=emisores, value=emisores[0])
-
-    def __init__(self):
-        os.makedirs(TEMP_DIRECTORY, exist_ok=True)
-
-        self.email_manager = None
-        self._all_invoices = None
-        self.local_db = None
-        self.rfc_prediales = None
-        self.emisores = {"Test": "Test"}
-        self.pac_service = None
-        self.email_signature = None
-        self.config_last_modified = None
-
-        self.window = sg.Window(
-            f"Facturación Mensual CFDI 4.0",
-            make_layout(),
-            size=(1280, 720),
-            resizable=True,
-            font=("Courier New", 10, "bold"),
-            ttk_theme="default",
-            margins=(0, 0),
-            # use_custom_titlebar=True,
-            titlebar_font=("Courier New", 11, "bold"),
-            finalize=True,
-            scaling=1.25,
-        )
-        self.has_focus = True
-
-        self.action_button_manager = ActionButtonManager(
-            button=self.window["crear_facturas"],
-            preview=self.window["ver_preview"],
-        )
-        self.console = self.window["console"]
-
-        self.window.bind("<FocusIn>", "_focus_in")
-        self.window.bind("<FocusOut>", "_focus_out")
-
-        for t in ('serie', 'folio', 'serie_pago'):
-            self.window[t].bind("<Return>", "_enter")
-            self.window[t].bind("<FocusOut>", "_enter", propagate=False)
-
-        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'periodo'):
-            self.window[t].bind("<Return>", "_enter")
-
-        modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
-
-        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
-            self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
-            self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
-            # self.window[t].bind('<Double-Button-1>', '_enter')
-            self.window[t].bind('<Return>', '+enter')
 
     def run(self):
         self.main_loop()
@@ -891,8 +915,8 @@ class FacturacionGUI:
                 case '_focus_in':
                     if not self.has_focus:
                         self.has_focus = True
+                        self.load_config()
                         if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab"):
-                            self.load_config()
                             self.main_tab_group(values)
 
                 case '_focus_out':
@@ -1102,11 +1126,6 @@ class FacturacionGUI:
                         os.path.abspath("config.yaml")
                     )
 
-                case "ver_config":
-                    open_file(
-                        os.path.abspath(".")
-                    )
-
                 case "ver_excel":
                     rfc = values["contabilidad_rfc"]
                     dp = to_date_period(values["periodo"])
@@ -1209,6 +1228,16 @@ class FacturacionGUI:
                         for row in reader:
                             self.local_db.status_merge(*row)
                     self.done_message("FIN")
+
+                case "projecto_ver":
+                    open_file(
+                        os.path.abspath(".")
+                    )
+
+                case "projecto_dir_selected":
+                    self.window['projecto_dir'].update(
+                        values["projecto_dir_browse"]
+                    )
 
                 case _:
                     logger.error(f"Unknown event '{event}'")

@@ -2,6 +2,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 
 import PySimpleGUI as sg
+from PySimpleGUI import BUTTON_TYPE_BROWSE_FOLDER
 from dateutil.relativedelta import relativedelta
 from satcfdi.models import Code
 from satcfdi.catalogs import select_all
@@ -571,29 +572,38 @@ def make_layout():
                         'Configuracion'.center(13),
                         [
                             [
-                                sg.Column([[
-                                    sg.Button(image_data=EDIT_ICON, key="editar_configurar", border_width=0, button_color=BUTTON_COLOR),
-                                    sg.Button(image_data=CONFIG_ICON, key="ver_config", border_width=0, button_color=BUTTON_COLOR),
-                                ]])
+                                sg.Column([
+                                    [
+                                        sg.Button(image_data=FOLDER_ICON, key="projecto_ver", border_width=0, button_color=BUTTON_COLOR),
+                                        sg.Button(
+                                            border_width=0,
+                                            button_text='Seleccionar Projecto', target='projecto_dir_selected',
+                                            button_type=BUTTON_TYPE_BROWSE_FOLDER, key='projecto_dir_browse',
+                                        ),
+                                        sg.Text("", pad=TEXT_PADDING, key="projecto_dir"),
+                                        sg.Button("Projecto:", pad=TEXT_PADDING, key='projecto_dir_selected', visible=False, enable_events=True, change_submits=True),
+                                    ],
+                                    [
+                                        sg.Button(image_data=EDIT_ICON, key="editar_configurar", border_width=0, button_color=BUTTON_COLOR),
+                                    ]
+                                ])
                             ],
                             [
-                                sg.Column([[
-                                    sg.Text(" Proxima Factura:", pad=TEXT_PADDING),
-                                    sg.Text("Serie:", pad=TEXT_PADDING),
-                                    sg.Input("", key="serie", size=(8, 1)),
-                                    sg.Text("Folio:", pad=TEXT_PADDING),
-                                    sg.Input("", key="folio", size=(8, 1)),
-                                ]],
-                                    expand_x=True
-                                )
-                            ],
-                            [
-                                sg.Column([[
-                                    sg.Text("Complemento Pago:", pad=TEXT_PADDING),
-                                    sg.Text("Serie:", pad=TEXT_PADDING),
-                                    sg.Input("", key="serie_pago", size=(8, 1)),
-                                    sg.Text("", key="folio_pago", pad=TEXT_PADDING),
-                                ]],
+                                sg.Column([
+                                    [
+                                        sg.Text(" Proxima Factura:", pad=TEXT_PADDING),
+                                        sg.Text("Serie:", pad=TEXT_PADDING),
+                                        sg.Input("", key="serie", size=(8, 1)),
+                                        sg.Text("Folio:", pad=TEXT_PADDING),
+                                        sg.Input("", key="folio", size=(8, 1)),
+                                    ],
+                                    [
+                                        sg.Text("Complemento Pago:", pad=TEXT_PADDING),
+                                        sg.Text("Serie:", pad=TEXT_PADDING),
+                                        sg.Input("", key="serie_pago", size=(8, 1)),
+                                        sg.Text("", key="folio_pago", pad=TEXT_PADDING),
+                                    ]
+                                ],
                                     expand_x=True
                                 )
                             ],

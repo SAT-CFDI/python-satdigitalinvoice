@@ -88,5 +88,6 @@ class FacturacionLauncher:
             self.window.read(close=True)
             return
 
+        self.window.read(timeout=0, close=True)
         self.window.close()
         app.run()
