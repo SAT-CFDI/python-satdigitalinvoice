@@ -1,10 +1,11 @@
 import logging
 import os
-from zipfile import ZipFile
 
 import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
+
+LOGS_DIRECTORY = "logs"
 
 DATA_DIRECTORY = ".data"
 ARCHIVOS_DIRECTORY = "archivos"
@@ -14,9 +15,9 @@ TEMP_DIRECTORY = ".data/temp"
 
 
 def add_file_handler():
-    os.makedirs(DATA_DIRECTORY, exist_ok=True)
+    os.makedirs(LOGS_DIRECTORY, exist_ok=True)
     fh = logging.FileHandler(
-        os.path.join(DATA_DIRECTORY, 'errors.log'),
+        os.path.join(LOGS_DIRECTORY, 'errors.log'),
         mode='a',
         encoding='utf-8',
     )
@@ -69,11 +70,6 @@ class FacturacionLauncher:
         self.window.read(timeout=0)
 
         try:
-            # check if another directory is configured
-            from satdigitalinvoice.file_data_managers import InitManager
-            if cwd := InitManager().get('cwd'):
-                os.chdir(cwd)
-
             from satdigitalinvoice.facturacion import FacturacionGUI
             app = FacturacionGUI()
             if config:

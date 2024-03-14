@@ -91,14 +91,6 @@ class LocalData(dict):
         return os.path.getmtime(self.file_source)
 
 
-class InitManager(LocalData):
-    file_source = "init.yaml"
-
-    def __init__(self):
-        try:
-            super().__init__()
-        except FileNotFoundError:
-            pass
 
 
 class ConfigManager(LocalData):

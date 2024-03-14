@@ -28,6 +28,7 @@ from .file_data_managers import ClientsManager, FacturasManager, ProductosManage
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
     generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot
+from .initdb import InitDB
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDBSatCFDI, StatusState
 from .log_tools import header_line, print_yaml, to_yaml
@@ -74,7 +75,8 @@ def get_directory():
 
 class FacturacionGUI:
     def __init__(self):
-        os.makedirs(TEMP_DIRECTORY, exist_ok=True)
+        self.init_db = InitDB()
+        self.init_db.set_cwd()
 
         self.email_manager = None
         self._all_invoices = None
@@ -129,13 +131,13 @@ class FacturacionGUI:
         from satdigitalinvoice.file_data_managers import ConfigManager
         return ConfigManager()
 
-    def load_config(self):
+    def load_config(self, force=False):
         config = self.read_config()
         if isinstance(config, dict):
             last_modified = True
         else:
             last_modified = config.last_modified()
-        if self.config_last_modified == last_modified:
+        if self.config_last_modified == last_modified and not force:
             return
         self.config_last_modified = last_modified
 
@@ -819,6 +821,15 @@ class FacturacionGUI:
                 values=depositos,
             )
 
+    def initialize(self, clear=False):
+        self.window['projecto_dir'].update(value=os.getcwd())
+        self.load_config(force=True)
+        self.set_inputs()
+        if clear:
+            self._all_invoices = None
+            for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
+                self.window[t].update(values=[])
+
     def main_tab_group(self, values):
         self.action_button_manager.clear()
 
@@ -909,14 +920,13 @@ class FacturacionGUI:
         try:
             match event:
                 case '_initialize':
-                    self.load_config()
-                    self.set_inputs()
+                    self.initialize()
 
                 case '_focus_in':
                     if not self.has_focus:
                         self.has_focus = True
                         self.load_config()
-                        if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab"):
+                        if values["main_tab_group"] in ("clientes_tab", "facturas_tab", "ajustes_tab", "correos_tab", "depositos_tab"):
                             self.main_tab_group(values)
 
                 case '_focus_out':
@@ -1235,9 +1245,10 @@ class FacturacionGUI:
                     )
 
                 case "projecto_dir_selected":
-                    self.window['projecto_dir'].update(
+                    self.init_db.update_cwd(
                         values["projecto_dir_browse"]
                     )
+                    self.initialize(clear=True)
 
                 case _:
                     logger.error(f"Unknown event '{event}'")
