@@ -21,7 +21,7 @@ from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
 from xlsxwriter.exceptions import XlsxFileError
 
-from . import __version__, TEMP_DIRECTORY, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
+from . import __version__, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager, ProductosManager
@@ -75,7 +75,7 @@ def get_directory():
 
 class FacturacionGUI:
     def __init__(self):
-        self.init_db = InitDB()
+        self.init_db = InitDB(base_path=DATA_DIRECTORY)
         self.init_db.set_cwd()
 
         self.email_manager = None
