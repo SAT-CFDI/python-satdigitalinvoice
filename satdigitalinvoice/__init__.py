@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
 
-LOGS_DIRECTORY = "logs"
+LOGS_DIRECTORY = ".data/logs"
 
 DATA_DIRECTORY = ".data"
 ARCHIVOS_DIRECTORY = "archivos"
