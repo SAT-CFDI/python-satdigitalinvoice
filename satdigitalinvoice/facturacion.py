@@ -30,9 +30,9 @@ from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, a
     generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot
 from .initdb import InitDB
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
-from .localdb import LocalDBSatCFDI, StatusState
+from .localdb import LocalDB
 from .log_tools import header_line, print_yaml, to_yaml
-from .mycfdi import MyCFDI
+from .mycfdi import MyCFDI, LiquidatedState
 from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
@@ -168,14 +168,12 @@ class FacturacionGUI:
 
         self.rfc_prediales = config['rfc_prediales']
 
-        self.local_db = LocalDBSatCFDI(
-            base_path=DATA_DIRECTORY,
-            enviar_a_partir=config['enviar_a_partir'],
-            pagar_a_partir=config['pagar_a_partir']
-        )
+        self.local_db = LocalDB(base_path=DATA_DIRECTORY)
 
         MyCFDI.local_db = self.local_db
         MyCFDI.base_dir = ARCHIVOS_DIRECTORY
+        MyCFDI.enviar_a_partir=config['enviar_a_partir']
+        MyCFDI.pagar_a_partir=config['pagar_a_partir']
 
         emisores = list(self.emisores.keys())
         self.window["solicitudes_rfc"].update(values=emisores, value=emisores[0])
@@ -608,12 +606,12 @@ class FacturacionGUI:
             if search_text == SearchOptions.PorPagar:
                 for i in self.get_all_invoices().values():
                     if i["Emisor"]["Rfc"] in self.emisores \
-                            and self.local_db.liquidated_state(i) == StatusState.PENDING:
+                            and i.liquidated_state() == LiquidatedState.PENDING:
                         yield i
             elif search_text == SearchOptions.PorEnviar:
                 for i in self.get_all_invoices().values():
                     if i["Emisor"]["Rfc"] in self.emisores \
-                            and not self.local_db.notified(i) \
+                            and not i.notified() \
                             and i.estatus == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
@@ -658,7 +656,7 @@ class FacturacionGUI:
             if search_text == SearchOptions.PorPagar:
                 for i in self.get_all_invoices().values():
                     if i["Receptor"]["Rfc"] in self.emisores \
-                            and self.local_db.liquidated_state(i) == StatusState.PENDING:
+                            and i.liquidated_state() == LiquidatedState.PENDING:
                         yield i
             elif search_text == SearchOptions.PorEnviar:
                 for i in self.get_all_invoices().values():
@@ -717,7 +715,6 @@ class FacturacionGUI:
         importe_pago = parse_importe_pago(values["importe_pago"])
         self.window["importe_pago"].update(importe_pago)
 
-        # noinspection PyUnresolvedReferences
         cfdi = pago_factura(
             receptor_cif=clients[facturas_pagar[0]["Receptor"]["Rfc"]],
             factura_pagar=facturas_pagar[0],
@@ -862,7 +859,7 @@ class FacturacionGUI:
                                 (i for i in self.get_all_invoices().values()
                                  if i["Emisor"]["Rfc"] in self.emisores
                                     and i.estatus == EstadoComprobante.VIGENTE
-                                    and not self.local_db.notified(i)
+                                    and not i.notified()
                                  ),
                                 key=lambda r: r["Receptor"]["Rfc"]
                             ),
@@ -873,7 +870,7 @@ class FacturacionGUI:
                         def fac_pen_iter():
                             for i in self.get_all_invoices().values():
                                 if i["Emisor"]["Rfc"] in self.emisores \
-                                        and self.local_db.liquidated_state(i) == StatusState.PENDING \
+                                        and i.liquidated_state() == LiquidatedState.PENDING \
                                         and i["Fecha"] < dp_now \
                                         and i["Receptor"]["Rfc"] == receptor_rfc \
                                         and i not in notify_invoices:
@@ -1042,7 +1039,7 @@ class FacturacionGUI:
                 case "status_sat_recibidas":
                     # noinspection PyUnresolvedReferences
                     if i := self.window["recibidas_table"].selected_items()[0]:
-                        res = self.local_db.status_sat(i, update=True)
+                        res = i.status_sat(update=True)
                         self.done_message(f"Estado: {res['Estado']}")
                         self.set_selected_satcfdis_recibidas([i])
                         # noinspection PyUnresolvedReferences
@@ -1051,7 +1048,7 @@ class FacturacionGUI:
                 case "status_sat":
                     # noinspection PyUnresolvedReferences
                     if i := self.window["emitidas_table"].selected_items()[0]:
-                        res = self.local_db.status_sat(i, update=True)
+                        res = i.status_sat(update=True)
                         # self.done_message(f"Estado: {res['Estado']}")
                         self.done_message(to_yaml(res))
                         self.set_selected_satcfdis([i])
@@ -1221,7 +1218,7 @@ class FacturacionGUI:
                                     cfdi = self.download_invoice(uuid)
 
                                     if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
-                                        self.local_db.status_sat(cfdi, update=True)
+                                        cfdi.status_sat(update=True)
                         self.done_message("FIN")
 
                 case "exportar_metadata":

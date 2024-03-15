@@ -3,35 +3,78 @@ import logging
 import os
 from collections.abc import Mapping
 from datetime import datetime
+from enum import Enum
 from typing import MutableMapping
 from uuid import UUID
 
 from satcfdi import render
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
-from satcfdi.models import Code
+from satcfdi.create.cfd.catalogos import TipoDeComprobante, MetodoPago
+from satcfdi.pacs import sat
 
-from .utils import to_uuid, code_str
+from .utils import to_uuid, code_str, estado_to_estatus
 
 ALL_INVOICES = 'all_invoices'
 ALL_RETENCIONES = 'all_retenciones'
 logger = logging.getLogger(__name__)
 
+sat_manager = sat.SAT()
+
+
+class LiquidatedState(Enum):
+    NONE = 1
+    PAID = 2
+    PENDING = 3
+    IGNORED = 4
+    CANCELLED = 5
+
+    def __str__(self):
+        if self.name == "NONE":
+            return ""
+        if self.name == "IGNORED":
+            return "🚫"
+        if self.name == "PAID":
+            return "✔"
+        if self.name == "PENDING":
+            return "⏳"
+        if self.name == "CANCELLED":
+            return "❌"
+
 
 class MyCFDI(SatCFDI):
     local_db = None
     base_dir = None  # type: str
+    enviar_a_partir = None
+    pagar_a_partir = None
 
     @SatCFDI.estatus.getter
     def estatus(self) -> EstadoComprobante:
-        return self.consulta_estado().get('Estatus', EstadoComprobante.VIGENTE)
+        return self.status_sat().get('Estatus', EstadoComprobante.VIGENTE)
 
-    def consulta_estado(self):
-        return self.local_db.status_sat(self)
+    @property
+    def status_icon(self):
+        return str(self.liquidated_state()) + str(" 📧" if self.notified() else "   ")
+
+    def status_sat(self, update=False) -> dict:
+        if update:
+            res = sat_manager.status(self)
+            if res["ValidacionEFOS"] == "200":
+                self.local_db.status_merge(
+                    uuid=self.uuid,
+                    estatus=estado_to_estatus(res["Estado"]),
+                    es_cancelable=res["EsCancelable"],
+                    estatus_cancelacion=res["EstatusCancelacion"]
+                )
+            else:
+                raise ValueError("Error al actualizar estado de %s: %s", self.uuid, res)
+            return res
+        else:
+            return self.local_db.status(self.uuid)
 
     @SatCFDI.fecha_cancelacion.getter
     def fecha_cancelacion(self) -> datetime | None:
-        return self.consulta_estado().get('FechaCancelacion')
+        return self.status_sat().get('FechaCancelacion')
 
     @classmethod
     def rename_invoices(cls, search_path="*.xml"):
@@ -97,10 +140,6 @@ class MyCFDI(SatCFDI):
                 raise Exception("Unknown Tag", self.tag)
 
         return os.path.join(self.base_dir, path)
-
-    @property
-    def status(self):
-        return str(self.local_db.liquidated_state(self)) + str(" 📧" if self.local_db.notified(self) else "   ")
 
     @classmethod
     def uuid_from_filename(cls, filename):
@@ -179,3 +218,43 @@ class MyCFDI(SatCFDI):
                     os.remove(pdf_current)
                 except FileNotFoundError:
                     render.pdf_write(invoice, pdf_preferred)
+
+    def notified(self):
+        v = self.local_db.notified2(self.uuid)
+        if v is None and self["Fecha"] < self.enviar_a_partir:
+            return True
+        return v
+
+    def notified_flip(self):
+        v = not self.notified()
+        self.local_db.notified_set2(self.uuid, v)
+        return v
+
+    def liquidated(self):
+        v = self.local_db.liquidated2(self.uuid)
+        if v is None and self["Fecha"] < self.pagar_a_partir[self["MetodoPago"]]:
+            return True
+        return v
+
+    def liquidated_flip(self):
+        v = not self.liquidated()
+        self.local_db.liquidated_set2(self.uuid, v)
+        return v
+
+    def liquidated_state(self):
+        if self.estatus == EstadoComprobante.CANCELADO:
+            return LiquidatedState.CANCELLED
+
+        if self["TipoDeComprobante"] != TipoDeComprobante.INGRESO:
+            return LiquidatedState.NONE
+
+        mpago = self["MetodoPago"]
+        if self['Total'] == 0 or (mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO and self.saldo_pendiente == 0):
+            return LiquidatedState.PAID
+
+        if self.liquidated():
+            if mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO:
+                return LiquidatedState.IGNORED
+            return LiquidatedState.PAID
+
+        return LiquidatedState.PENDING
