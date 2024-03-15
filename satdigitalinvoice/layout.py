@@ -231,7 +231,7 @@ def make_layout():
                                         r.name,
                                         r["Fecha"].strftime(CALENDAR_FECHA_FMT),
                                         r["Total"],
-                                        r.saldo_pendiente if r.saldo_pendiente else "",
+                                        r.saldo_pendiente() or "",
                                         r.liquidated_notified_icons,
                                         mf_pago_fmt(r),
                                         r.uuid
@@ -288,7 +288,7 @@ def make_layout():
                                         r.name,
                                         r["Fecha"].strftime(CALENDAR_FECHA_FMT),
                                         r["Total"],
-                                        r.saldo_pendiente if r.saldo_pendiente else "",
+                                        r.saldo_pendiente() or "",
                                         r.liquidated_notified_icons,
                                         mf_pago_fmt(r),
                                         r.uuid

@@ -493,7 +493,7 @@ class FacturacionGUI:
         i = cfdis[0] if len(cfdis) == 1 else None
 
         if i:
-            estatus = EstadoComprobante(i.estatus)
+            estatus = i.estatus()
             self.window["status_sat_recibidas"].update(
                 estatus.name.center(10),
                 disabled=False,
@@ -508,7 +508,7 @@ class FacturacionGUI:
         i = cfdis[0] if len(cfdis) == 1 else None
 
         if i:
-            estatus = EstadoComprobante(i.estatus)
+            estatus = i.estatus()
             self.window["status_sat"].update(
                 estatus.name.center(10),
                 disabled=False,
@@ -523,7 +523,7 @@ class FacturacionGUI:
         is_active = \
             bool(i) \
             and i["Emisor"]["Rfc"] in self.emisores \
-            and i.estatus == EstadoComprobante.VIGENTE
+            and i.estatus() == EstadoComprobante.VIGENTE
         if is_active:
             self.window["email_notificada"].update(
                 "Enviada".center(10) if i.notified() else "Por Enviar",
@@ -539,7 +539,7 @@ class FacturacionGUI:
         is_pendientable = \
             is_active \
             and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
-            and (i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION or i.saldo_pendiente) \
+            and (i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION or i.saldo_pendiente()) \
             and i["Total"]
         if is_pendientable:
             self.window["pendiente_pago"].update(
@@ -553,7 +553,7 @@ class FacturacionGUI:
             is_ppd_pagada = is_active \
                             and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
                             and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
-                            and i.saldo_pendiente == 0
+                            and i.saldo_pendiente() == 0
             if is_ppd_pagada:
                 self.window["pendiente_pago"].update(
                     "Pagada".center(10),
@@ -572,10 +572,10 @@ class FacturacionGUI:
             is_active \
             and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
             and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
-            and i.saldo_pendiente > 0
+            and i.saldo_pendiente() > 0
 
         self.window["ppd_action_items"].update(visible=is_ppd_active)
-        self.window["importe_pago"].update(i.saldo_pendiente if is_ppd_active else '')
+        self.window["importe_pago"].update(i.saldo_pendiente() if is_ppd_active else '')
         if is_ppd_active:
             self.action_button_manager.set_items("pago", [i])
         else:
@@ -612,7 +612,7 @@ class FacturacionGUI:
                 for i in self.get_all_invoices().values():
                     if i["Emisor"]["Rfc"] in self.emisores \
                             and not i.notified() \
-                            and i.estatus == EstadoComprobante.VIGENTE:
+                            and i.estatus() == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
                 for i in self.get_all_invoices().values():
@@ -662,7 +662,7 @@ class FacturacionGUI:
                 for i in self.get_all_invoices().values():
                     if i["Receptor"]["Rfc"] in self.emisores \
                             and not self.local_db.notified(i) \
-                            and i.estatus == EstadoComprobante.VIGENTE:
+                            and i.estatus() == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
                 for i in self.get_all_invoices().values():
@@ -858,7 +858,7 @@ class FacturacionGUI:
                             sorted(
                                 (i for i in self.get_all_invoices().values()
                                  if i["Emisor"]["Rfc"] in self.emisores
-                                    and i.estatus == EstadoComprobante.VIGENTE
+                                    and i.estatus() == EstadoComprobante.VIGENTE
                                     and not i.notified()
                                  ),
                                 key=lambda r: r["Receptor"]["Rfc"]

@@ -222,7 +222,7 @@ def pago_factura(factura_pagar, fecha_pago: datetime, forma_pago: str, importe_p
             PagoComprobante(
                 comprobante=c,
                 num_parcialidad=c.ultima_num_parcialidad + 1,
-                imp_saldo_ant=c.saldo_pendiente,
+                imp_saldo_ant=c.saldo_pendiente(),
                 imp_pagado=importe_pago
             )
         ],

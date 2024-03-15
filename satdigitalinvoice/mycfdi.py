@@ -48,9 +48,12 @@ class MyCFDI(SatCFDI):
     enviar_a_partir = None
     pagar_a_partir = None
 
-    @SatCFDI.estatus.getter
     def estatus(self) -> EstadoComprobante:
-        return self.status_sat().get('Estatus', EstadoComprobante.VIGENTE)
+        res = self.status_sat().get('Estatus', EstadoComprobante.VIGENTE)
+        if isinstance(res, EstadoComprobante):
+            return res
+        else:
+            return EstadoComprobante(res)
 
     def status_sat(self, update=False) -> dict:
         if update:
@@ -238,14 +241,14 @@ class MyCFDI(SatCFDI):
         return v
 
     def liquidated_state(self):
-        if self.estatus == EstadoComprobante.CANCELADO:
+        if self.estatus() == EstadoComprobante.CANCELADO:
             return LiquidatedState.CANCELLED
 
         if self["TipoDeComprobante"] != TipoDeComprobante.INGRESO:
             return LiquidatedState.NONE
 
         mpago = self["MetodoPago"]
-        if self['Total'] == 0 or (mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO and self.saldo_pendiente == 0):
+        if self['Total'] == 0 or (mpago == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO and self.saldo_pendiente() == 0):
             return LiquidatedState.PAID
 
         if self.liquidated():
