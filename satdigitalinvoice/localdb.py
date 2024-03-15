@@ -69,7 +69,7 @@ class LocalDB(diskcache.Cache):
         current_value = self.status(uuid)
 
         value = {
-            "Estatus": Code(code=estatus, description=EstadoComprobante(estatus).name),
+            "Estatus": estatus,
         }
         if es_cancelable:
             value["EsCancelable"] = es_cancelable
@@ -94,7 +94,7 @@ class LocalDB(diskcache.Cache):
         if i := self.status(uuid):
             return [
                 uuid,
-                i["Estatus"].code,
+                i["Estatus"],
                 i.get("EsCancelable"),
                 i.get("EstatusCancelacion"),
                 i.get("FechaCancelacion"),

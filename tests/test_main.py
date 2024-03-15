@@ -18,7 +18,7 @@ def test_layout_unique_keys():
     except ImportError:
         return
 
-    layout = make_layout(emisores=["CACX7605101P8"], local_db=None)
+    layout = make_layout()
 
     def elements(layout):
         for e in layout:

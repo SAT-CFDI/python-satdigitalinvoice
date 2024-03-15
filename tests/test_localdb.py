@@ -1,17 +1,17 @@
 from datetime import datetime
 
-from satdigitalinvoice.localdb import LocalDB, LocalDBSatCFDI
+from satdigitalinvoice.localdb import LocalDB
 from satdigitalinvoice.utils import random_string
 
 
 def test_localdb():
-    db = LocalDBSatCFDI(
+    db = LocalDB(
         base_path=".data",
-        enviar_a_partir=datetime(2020, 1, 1),
-        pagar_a_partir={
-            "PUE": datetime(2020, 1, 1),
-            "PPD": datetime(2020, 1, 1),
-        }
+        # enviar_a_partir=datetime(2020, 1, 1),
+        # pagar_a_partir={
+        #     "PUE": datetime(2020, 1, 1),
+        #     "PPD": datetime(2020, 1, 1),
+        # }
     )
 
     db.folio_set(10)

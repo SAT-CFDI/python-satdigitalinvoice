@@ -49,11 +49,7 @@ class MyCFDI(SatCFDI):
     pagar_a_partir = None
 
     def estatus(self) -> EstadoComprobante:
-        res = self.status_sat().get('Estatus', EstadoComprobante.VIGENTE)
-        if isinstance(res, EstadoComprobante):
-            return res
-        else:
-            return EstadoComprobante(res)
+        return EstadoComprobante(self.status_sat().get('Estatus', '1'))
 
     def status_sat(self, update=False) -> dict:
         if update:
