@@ -436,7 +436,7 @@ class FacturacionGUI:
                                 file_attachments=attachments()
                             )
                             for r in facturas:
-                                self.local_db.notified_set(r.uuid, True)
+                                r.notified_flip()
 
                 case 'ajustes' | 'depositos':
                     with self.email_manager.sender as s:
@@ -526,9 +526,9 @@ class FacturacionGUI:
             and i.estatus == EstadoComprobante.VIGENTE
         if is_active:
             self.window["email_notificada"].update(
-                "Enviada".center(10) if self.local_db.notified(i) else "Por Enviar",
+                "Enviada".center(10) if i.notified() else "Por Enviar",
                 disabled=False,
-                button_color="dark green" if self.local_db.notified(i) else "red4",
+                button_color="dark green" if i.notified() else "red4",
             )
         else:
             self.window["email_notificada"].update(
@@ -544,10 +544,10 @@ class FacturacionGUI:
         if is_pendientable:
             self.window["pendiente_pago"].update(
                 (("Pagada" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "Ignorada")
-                 if self.local_db.liquidated(i) else "Por Pagar").center(10),
+                 if i.liquidated() else "Por Pagar").center(10),
                 disabled=False,
                 button_color=("dark green" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "yellow4")
-                if self.local_db.liquidated(i) else "red4",
+                if i.liquidated() else "red4",
             )
         else:
             is_ppd_pagada = is_active \
@@ -1058,7 +1058,7 @@ class FacturacionGUI:
                 case "pendiente_pago":
                     # noinspection PyUnresolvedReferences
                     if i := self.window["emitidas_table"].selected_items()[0]:
-                        self.local_db.liquidated_flip(i)
+                        i.liquidated_flip()
                         self.set_selected_satcfdis([i])
                         # noinspection PyUnresolvedReferences
                         self.window['emitidas_table'].refresh()
@@ -1066,7 +1066,7 @@ class FacturacionGUI:
                 case "email_notificada":
                     # noinspection PyUnresolvedReferences
                     if i := self.window["emitidas_table"].selected_items()[0]:
-                        self.local_db.notified_flip(i)
+                        i.notified_flip()
                         self.set_selected_satcfdis([i])
                         # noinspection PyUnresolvedReferences
                         self.window['emitidas_table'].refresh()

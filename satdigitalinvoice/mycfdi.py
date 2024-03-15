@@ -52,10 +52,6 @@ class MyCFDI(SatCFDI):
     def estatus(self) -> EstadoComprobante:
         return self.status_sat().get('Estatus', EstadoComprobante.VIGENTE)
 
-    @property
-    def status_icon(self):
-        return str(self.liquidated_state()) + str(" 📧" if self.notified() else "   ")
-
     def status_sat(self, update=False) -> dict:
         if update:
             res = sat_manager.status(self)
@@ -258,3 +254,7 @@ class MyCFDI(SatCFDI):
             return LiquidatedState.PAID
 
         return LiquidatedState.PENDING
+
+    @property
+    def liquidated_notified_icons(self):
+        return str(self.liquidated_state()) + str(" 📧" if self.notified() else "   ")
