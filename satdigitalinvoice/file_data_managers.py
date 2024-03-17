@@ -46,7 +46,7 @@ class DuplicateKeySafeLoader(SafeLoader):
         return mapping
 
 
-decimal_regex = re.compile(r'[-+]?[0-9_]*\.[0-9_]*', re.X)
+decimal_regex = re.compile(r'^[-+]?[0-9_]*\.[0-9_]*$', re.X)
 for ch in '-+0123456789.':
     DuplicateKeySafeLoader.yaml_implicit_resolvers[ch].insert(
         0,
@@ -76,7 +76,9 @@ class LocalData(dict):
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls)
 
-    def __init__(self):
+    def __init__(self, file_source=None):
+        if file_source:
+            self.file_source = file_source
         super().__init__(self._raw())
 
     def _raw(self):
@@ -100,8 +102,8 @@ class ConfigManager(LocalData):
 class ClientsManager(LocalData):
     file_source = "clientes.yaml"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, file_source=None):
+        super().__init__(file_source)
         for k, v in self.items():
             if error := jsonschema.exceptions.best_match(client_validator.iter_errors(v)):
                 raise error
