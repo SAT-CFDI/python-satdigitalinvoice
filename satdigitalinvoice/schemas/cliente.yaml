@@ -19,8 +19,6 @@ properties:
     type: string
   Cuenta:
     type: string
-  Banco:
-    type: string
   CuentaBancaria:
     type: object
     properties:
