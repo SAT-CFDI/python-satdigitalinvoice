@@ -112,7 +112,10 @@ class ClientsManager(LocalData):
 class ProductosManager(LocalData):
     file_source = "productos.yaml"
 
-    def __init__(self):
+    def __init__(self, file_source=None):
+        if file_source:
+            self.file_source = file_source
+
         super().__init__()
         if "Constants" in self:
             del self["Constants"]
@@ -124,6 +127,7 @@ class ProductosManager(LocalData):
 
 
 # function to deep merge two dictionaries
+# add values to destination dictionary if they are not present
 def deep_complement(destination, source):
     for key, value in source.items():
         if isinstance(value, dict):
@@ -137,7 +141,10 @@ def deep_complement(destination, source):
 class FacturasManager(LocalData):
     file_source = "facturas.yaml"
 
-    def __init__(self, dp: DatePeriod | date | None):
+    def __init__(self, dp: DatePeriod | date | None, file_source=None):
+        if file_source:
+            self.file_source = file_source
+
         def loading_function(loader, node):
             cases = loader.construct_mapping(node, deep=True)
             if dp is None:
@@ -152,7 +159,11 @@ class FacturasManager(LocalData):
         if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
             raise Exception("Factura Duplicada: {}".format(dup))
 
-        pm = ProductosManager()
+        if file_source:
+            fp = os.path.join(os.path.dirname(file_source), "productos.yaml")
+            pm = ProductosManager(fp)
+        else:
+            pm = ProductosManager()
 
         for v in self["Facturas"]:
             for c in v["Conceptos"]:
