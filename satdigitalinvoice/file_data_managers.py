@@ -93,8 +93,6 @@ class LocalData(dict):
         return os.path.getmtime(self.file_source)
 
 
-
-
 class ConfigManager(LocalData):
     file_source = "config.yaml"
 
@@ -184,7 +182,7 @@ DuplicateKeySafeLoader.add_constructor("!read", lambda loader, node: open(loader
 
 
 def represent_decimal(dumper, data):
-    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+    return dumper.represent_scalar('!decimal', data.__format__("f"))
 
 
 def represent_str(dumper, data):
