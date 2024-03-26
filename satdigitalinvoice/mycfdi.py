@@ -10,8 +10,9 @@ from uuid import UUID
 from satcfdi import render
 from satcfdi.accounting import complement_invoices_data, SatCFDI
 from satcfdi.accounting.models import EstadoComprobante
-from satcfdi.create.cfd.catalogos import TipoDeComprobante, MetodoPago
+from satcfdi.create.cfd.catalogos import TipoDeComprobante, MetodoPago, TipoRelacion
 from satcfdi.pacs import sat
+from satcfdi.utils import iterate
 
 from .utils import to_uuid, code_str, estado_to_estatus
 
@@ -76,6 +77,12 @@ class MyCFDI(SatCFDI):
         # Check that all names are correct
         for file in glob.iglob(os.path.join(cls.base_dir, search_path), recursive=True):
             cls.rename_invoice(file)
+
+    def cfdi_relacionados(self, tipo_relacion: TipoRelacion = None):
+        for cfdi_rel in iterate(self.get("CfdiRelacionados")):
+            if cfdi_rel["TipoRelacion"] == tipo_relacion:
+                for uuid in cfdi_rel["CfdiRelacionado"]:
+                    yield UUID(uuid)
 
     @classmethod
     def get_all_invoices(cls, invoices: MutableMapping, search_path="*.xml") -> bool:
