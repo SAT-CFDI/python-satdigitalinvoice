@@ -264,6 +264,7 @@ def make_layout():
                             [
                                 sg.Column([[
                                     sg.Button("".ljust(10), key="status_sat_recibidas", border_width=0, button_color=sg.theme_background_color()),
+                                    sg.Button("".ljust(10), key="pendiente_pago_recibidas", border_width=0, button_color=sg.theme_background_color()),
                                 ]]),
                             ],
                             [

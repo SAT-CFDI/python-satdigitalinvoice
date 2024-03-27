@@ -504,6 +504,42 @@ class FacturacionGUI:
                 "".ljust(10), disabled=True, button_color=sg.theme_background_color()
             )
 
+        is_active = \
+            bool(i) \
+            and i.estatus() == EstadoComprobante.VIGENTE
+
+        # Pendiente de Pago
+        is_pendientable = \
+            is_active \
+            and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
+            and (i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION or i.saldo_pendiente()) \
+            and i["Total"]
+        if is_pendientable:
+            self.window["pendiente_pago_recibidas"].update(
+                (("Pagada" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "Ignorada")
+                 if i.liquidated() else "Por Pagar").center(10),
+                disabled=False,
+                button_color=("dark green" if i["MetodoPago"] == MetodoPago.PAGO_EN_UNA_SOLA_EXHIBICION else "yellow4")
+                if i.liquidated() else "red4",
+            )
+        else:
+            is_ppd_pagada = is_active \
+                            and i["TipoDeComprobante"] == TipoDeComprobante.INGRESO \
+                            and i["MetodoPago"] == MetodoPago.PAGO_EN_PARCIALIDADES_O_DIFERIDO \
+                            and i.saldo_pendiente() == 0
+            if is_ppd_pagada:
+                self.window["pendiente_pago_recibidas"].update(
+                    "Pagada".center(10),
+                    disabled=True,
+                    button_color="dark green",
+                )
+            else:
+                self.window["pendiente_pago_recibidas"].update(
+                    "".ljust(10),
+                    disabled=True,
+                    button_color=sg.theme_background_color()
+                )
+
     def set_selected_satcfdis(self, cfdis: list):
         i = cfdis[0] if len(cfdis) == 1 else None
 
@@ -519,10 +555,10 @@ class FacturacionGUI:
                 "".ljust(10), disabled=True, button_color=sg.theme_background_color()
             )
 
+        assert i["Emisor"]["Rfc"] in self.emisores
         # Email
         is_active = \
             bool(i) \
-            and i["Emisor"]["Rfc"] in self.emisores \
             and i.estatus() == EstadoComprobante.VIGENTE
         if is_active:
             self.window["email_notificada"].update(
@@ -1062,6 +1098,14 @@ class FacturacionGUI:
                         self.set_selected_satcfdis([i])
                         # noinspection PyUnresolvedReferences
                         self.window['emitidas_table'].refresh()
+
+                case "pendiente_pago_recibidas":
+                    # noinspection PyUnresolvedReferences
+                    if i := self.window["recibidas_table"].selected_items()[0]:
+                        i.liquidated_flip()
+                        self.set_selected_satcfdis_recibidas([i])
+                        # noinspection PyUnresolvedReferences
+                        self.window['recibidas_table'].refresh()
 
                 case "email_notificada":
                     # noinspection PyUnresolvedReferences

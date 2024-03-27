@@ -6,6 +6,7 @@ import os
 import re
 from datetime import date
 from decimal import Decimal
+from uuid import UUID
 
 import jsonschema as jsonschema
 import yaml
@@ -204,3 +205,4 @@ yaml.SafeDumper.add_multi_representer(dict, lambda dumper, data: dumper.represen
 yaml.SafeDumper.add_representer(Decimal, represent_decimal)
 yaml.SafeDumper.add_representer(Code, represent_str)
 yaml.SafeDumper.add_representer(Xint, represent_str)
+yaml.SafeDumper.add_representer(UUID, represent_str)
