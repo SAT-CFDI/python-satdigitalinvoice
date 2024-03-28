@@ -555,7 +555,7 @@ class FacturacionGUI:
                 "".ljust(10), disabled=True, button_color=sg.theme_background_color()
             )
 
-        assert i["Emisor"]["Rfc"] in self.emisores
+        # assert i["Emisor"]["Rfc"] in self.emisores
         # Email
         is_active = \
             bool(i) \
