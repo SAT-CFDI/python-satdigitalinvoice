@@ -536,13 +536,31 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
 
 
 def sum_payments(payments):
-    return {
-        'Subtotal': round(sum(i.sub_total for i in payments)),
-        'ISR Ret': round(sum(i.impuestos.get("Retenciones", {}).get(Impuesto.ISR, {}).get("Importe", 0) for i in payments)),
-        'IVA Ret': round(sum(i.impuestos.get("Retenciones", {}).get(Impuesto.IVA, {}).get("Importe", 0) for i in payments)),
-
-        'IVA16 Tras': round(sum(i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0) for i in payments)),
+    amounts = {
+        'Subtotal': 0,
+        'ISR Ret': 0,
+        'IVA Ret': 0,
+        'IVA16 Tras': 0,
     }
+    for p in payments:
+        if p.comprobante['TipoDeComprobante'] == "E":
+            if p.comprobante_pagado['MetodoPago'] == 'PPD':
+                continue
+            else:
+                amounts['Subtotal'] -= p.sub_total
+                amounts['ISR Ret'] -= p.impuestos.get("Retenciones", {}).get(Impuesto.ISR, {}).get("Importe", 0)
+                amounts['IVA Ret'] -= p.impuestos.get("Retenciones", {}).get(Impuesto.IVA, {}).get("Importe", 0)
+                amounts['IVA16 Tras'] -= p.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0)
+        else:
+            amounts['Subtotal'] += p.sub_total
+            amounts['ISR Ret'] += p.impuestos.get("Retenciones", {}).get(Impuesto.ISR, {}).get("Importe", 0)
+            amounts['IVA Ret'] += p.impuestos.get("Retenciones", {}).get(Impuesto.IVA, {}).get("Importe", 0)
+            amounts['IVA16 Tras'] += p.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe", 0)
+
+    for k in amounts:
+        amounts[k] = round(amounts[k])
+
+    return amounts
 
 
 def generate_pdf_template(template_name, fields, target=None, css_string=None):
