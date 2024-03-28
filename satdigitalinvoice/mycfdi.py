@@ -81,12 +81,6 @@ class MyCFDI(SatCFDI):
         for file in glob.iglob(os.path.join(cls.base_dir, search_path), recursive=True):
             cls.rename_invoice(file)
 
-    def cfdi_relacionados(self, tipo_relacion: TipoRelacion = None):
-        for cfdi_rel in iterate(self.get("CfdiRelacionados")):
-            if cfdi_rel["TipoRelacion"] == tipo_relacion:
-                for uuid in cfdi_rel["CfdiRelacionado"]:
-                    yield UUID(uuid)
-
     @classmethod
     def get_all_invoices(cls, invoices: MutableMapping, search_path="*.xml") -> bool:
         # Check that all names are correct
