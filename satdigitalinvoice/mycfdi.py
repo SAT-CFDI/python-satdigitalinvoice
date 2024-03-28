@@ -52,6 +52,9 @@ class MyCFDI(SatCFDI):
     def estatus(self) -> EstadoComprobante:
         return EstadoComprobante(self.status_sat().get('Estatus', '1'))
 
+    def consulta_estado(self) -> dict:
+        return self.status_sat(update=False)
+
     def status_sat(self, update=False) -> dict:
         if update:
             res = sat_manager.status(self)
