@@ -1,4 +1,6 @@
 import glob
+import hashlib
+import json
 import logging
 import os
 from collections.abc import Mapping
@@ -18,6 +20,7 @@ from .utils import to_uuid, code_str, estado_to_estatus
 
 ALL_INVOICES = 'all_invoices'
 ALL_RETENCIONES = 'all_retenciones'
+ALL_TRANSFERENCIAS = 'all_trasferencias'
 logger = logging.getLogger(__name__)
 
 sat_manager = sat.SAT()
@@ -41,6 +44,12 @@ class LiquidatedState(Enum):
             return "⏳"
         if self.name == "CANCELLED":
             return "❌"
+
+
+def generate_pseudo_random_guid(cadena):
+    hash_object = hashlib.md5()
+    hash_object.update(cadena.encode('utf-8'))
+    return UUID(hash_object.hexdigest())
 
 
 class MyCFDI(SatCFDI):
@@ -135,6 +144,12 @@ class MyCFDI(SatCFDI):
                     self["FechaExp"],
                     self["Emisor"].get('RFCEmisor') or self["Emisor"].get('RfcE')
                 )
+            case 'SPEI_Tercero':
+                path = "{0:%Y}/{0:%Y-%m}/transferencias/{0:%Y%m%d}_{1}_{2}".format(
+                    self["FechaOperacion"],
+                    self["Ordenante"]["RFC"],
+                    generate_pseudo_random_guid(self['CadenaCDA'])
+                )
             case _:
                 raise Exception("Unknown Tag", self.tag)
 
@@ -191,6 +206,16 @@ class MyCFDI(SatCFDI):
         has_updates = cls.get_all_invoices(invoices=all_invoices, search_path=os.path.join(cls.base_dir, "*/*/retenciones/*.xml"))
         if has_updates:
             cls.local_db.save_data(ALL_RETENCIONES, all_invoices)
+
+        return all_invoices
+
+    @classmethod
+    def get_all_transferencias(cls) -> Mapping[UUID, 'MyCFDI']:
+        all_invoices = cls.local_db.load_data(ALL_TRANSFERENCIAS, {})
+
+        has_updates = cls.get_all_invoices(invoices=all_invoices, search_path=os.path.join(cls.base_dir, "*/*/transferencias/*.xml"))
+        if has_updates:
+            cls.local_db.save_data(ALL_TRANSFERENCIAS, all_invoices)
 
         return all_invoices
 
