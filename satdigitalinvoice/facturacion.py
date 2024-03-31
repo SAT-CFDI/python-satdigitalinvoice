@@ -9,7 +9,7 @@ from uuid import UUID
 from zipfile import ZipFile
 
 from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI as sg, POPUP_BUTTONS_NO_BUTTONS
-from satcfdi import csf
+from satcfdi import csf, render
 from satcfdi.accounting import EmailManager
 from satcfdi.accounting.models import EstadoComprobante
 from satcfdi.accounting.process import complement_invoices
@@ -33,7 +33,7 @@ from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptio
 from .localdb import LocalDB
 from .log_tools import header_line, print_yaml, to_yaml
 from .mycfdi import MyCFDI, LiquidatedState
-from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS
+from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS, first_duplicate
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
@@ -802,6 +802,8 @@ class FacturacionGUI:
                 facturas=FacturasManager(dp)["Facturas"],
                 dp=dp
             )
+            if dup := first_duplicate(render.json_str(x) for x in cfdis):
+                raise Exception("Factura Duplicada: {}".format(dup))
             facturas_table.update(
                 values=cfdis,
             )
