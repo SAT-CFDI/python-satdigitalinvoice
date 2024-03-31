@@ -67,13 +67,14 @@ def cert_info(signer: Signer):
 
 
 def find_best_match(cases, dp: DatePeriod | date) -> (date, object):
-    fk, fv = (None, None)
+    best_date, best_value = (None, None)
     for k, v in cases.items():
-        k = datetime.strptime(k, '%Y-%m').date()
+        if isinstance(k, str):
+            k = datetime.strptime(k, '%Y-%m').date()
         if k <= dp:
-            if fk is None or k > fk:
-                fk, fv = k, v
-    return fk, fv
+            if best_date is None or k > best_date:
+                best_date, best_value = k, v
+    return best_date, best_value
 
 
 def clear_directory(directory):

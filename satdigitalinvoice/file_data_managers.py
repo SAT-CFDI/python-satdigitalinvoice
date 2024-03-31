@@ -157,8 +157,8 @@ class FacturasManager(LocalData):
 
         DuplicateKeySafeLoader.add_constructor("!case", loading_function)
         super().__init__()
-        if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
-            raise Exception("Factura Duplicada: {}".format(dup))
+        # if dup := first_duplicate(json.dumps(x, sort_keys=True, default=str) for x in self["Facturas"]):
+        #     raise Exception("Factura Duplicada: {}".format(dup))
 
         if file_source:
             fp = os.path.join(os.path.dirname(file_source), "productos.yaml")
