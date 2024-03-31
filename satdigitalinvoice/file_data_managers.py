@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -148,6 +148,9 @@ class FacturasManager(LocalData):
 
         def loading_function(loader, node):
             cases = loader.construct_mapping(node, deep=True)
+            cases = {
+                datetime.strptime(k, '%Y-%m').date() if isinstance(k, str) else k: v for k, v in cases.items()
+            }
             if dp is None:
                 return cases
             return find_best_match(
