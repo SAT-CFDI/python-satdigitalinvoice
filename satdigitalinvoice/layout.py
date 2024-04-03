@@ -551,6 +551,9 @@ def make_layout():
                                     sg.Combo([], default_value="", key="contabilidad_rfc", size=(15, 1)),
                                     sg.Text("Periodo:", pad=TEXT_PADDING),
                                     sg.Input((date.today() - relativedelta(months=1)).strftime(PERIODO_FMT), size=(11, 1), key="periodo"),
+                                    sg.Text("Prediales:", pad=TEXT_PADDING),
+                                    sg.Input("", size=(11, 1), key="prediales"),
+
                                     sg.Button(image_data=EXCEL_ICON, key="ver_excel", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Button(image_data=DIOT_ICON, key="ver_diot", border_width=0, button_color=BUTTON_COLOR),
                                     sg.Button(image_data=FOLDER_ICON, key="ver_carpeta", border_width=0, button_color=BUTTON_COLOR),

@@ -422,7 +422,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     return archivo_excel
 
 
-def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
+def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales, prediales_pago):
     emisor_rfc = emisor_cif['Rfc']
 
     emitidas_pagos = list(filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc))
@@ -431,7 +431,7 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
 
     emitidas_pagos = sum_payments(emitidas_pagos)
     recibidas_pagos = sum_payments(recibidas_pagos)
-    prediales = sum_payments(prediales)['Subtotal']
+    prediales = prediales_pago or sum_payments(prediales)['Subtotal']
 
     # ISR
     total_ingresos = emitidas_pagos['Subtotal']

@@ -115,7 +115,7 @@ class FacturacionGUI:
             self.window[t].bind("<Return>", "_enter")
             self.window[t].bind("<FocusOut>", "_enter", propagate=False)
 
-        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'periodo'):
+        for t in ('facturas_periodo', 'emitidas_search', 'recibidas_search', 'ajustes_periodo', 'periodo', 'prediales'):
             self.window[t].bind("<Return>", "_enter")
 
         modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
@@ -1206,15 +1206,17 @@ class FacturacionGUI:
                         os.path.abspath(archivo_diot)
                     )
 
-                case "periodo_enter":
+                case "periodo_enter" | "prediales_enter":
                     rfc = values["contabilidad_rfc"]
                     dp = to_date_period(values["periodo"])
+                    prediales = to_int(values["prediales"])
 
                     declaracion_provisional = calculate_declaracion_provisional(
                         self.get_all_invoices(),
                         dp,
                         ClientsManager()[rfc],
-                        self.rfc_prediales
+                        self.rfc_prediales,
+                        prediales
                     )
                     self.window['declaracion'].update(
                         append=False,
