@@ -850,7 +850,7 @@ class FacturacionGUI:
         if has_value or force:
             depositos = generar_depositos(
                 clients=ClientsManager(),
-                facturas=FacturasManager(None)["Facturas"],
+                facturas=FacturasManager(date.today())["Facturas"],
             )
             depositos_table.update(
                 values=depositos,

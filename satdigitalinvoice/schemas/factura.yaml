@@ -38,6 +38,8 @@ properties:
           type: integer
         _deposito:
           type: number
+        _deposito_contabilizar:
+          type: boolean
         _producto:
           type: string
         ValorUnitario:
