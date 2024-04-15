@@ -477,7 +477,7 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
     return p_desc + "\n" + emisor_rfc + "\n" + to_yaml(res)
 
 
-def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
+def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif, proveedores_tipo):
     emisor_rfc = emisor_cif['Rfc']
     recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
     recibidas_pagos = list(r for r in recibidas_pagos if r.comprobante["Receptor"].get("RegimenFiscalReceptor") not in ('616',))
@@ -507,7 +507,7 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif):
         proveedores=[
             ProveedorTercero(
                 tipo_tercero=TipoTercero.PROVEEDOR_NACIONAL,
-                tipo_operacion=TipoOperacion.OTROS,
+                tipo_operacion=proveedores_tipo.get(rfc, TipoOperacion.OTROS),
                 rfc=rfc,
                 iva16=values["Base16"],
             )

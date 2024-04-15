@@ -86,6 +86,7 @@ class FacturacionGUI:
         self.pac_service = None
         self.email_signature = None
         self.config_last_modified = None
+        self.proveedores = {}
 
         self.window = sg.Window(
             f"Facturación Mensual CFDI 4.0",
@@ -152,6 +153,7 @@ class FacturacionGUI:
         self.pac_service = getattr(mod, pac_class)(
             **pac['args']
         )
+        self.proveedores = config['proveedores']
 
         def load_emisor(data):
             return {
@@ -1201,6 +1203,7 @@ class FacturacionGUI:
                         self.get_all_invoices(),
                         dp,
                         ClientsManager()[rfc],
+                        self.proveedores
                     )
                     open_file(
                         os.path.abspath(archivo_diot)
