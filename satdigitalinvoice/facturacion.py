@@ -33,6 +33,7 @@ from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptio
 from .localdb import LocalDB
 from .log_tools import header_line, print_yaml, to_yaml
 from .mycfdi import MyCFDI, LiquidatedState
+from .prediales import process_predial
 from .utils import random_string, to_date_period, load_certificate, to_int, cert_info, add_month, to_uuid, open_file, OS, first_duplicate
 
 logging.getLogger("weasyprint").setLevel(logging.ERROR)
@@ -121,7 +122,7 @@ class FacturacionGUI:
 
         modifier_key = "Command" if OS.get_os() == OS.MACOS else "Control"
 
-        for t in ('facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
+        for t in ('productos_table', 'facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
             self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
@@ -400,6 +401,15 @@ class FacturacionGUI:
     def action_button(self, action_name, action_items, action_text):
         try:
             match action_name:
+                case 'productos':
+                    folder = archivos_folder(DatePeriod(date.today().year))
+                    folder = os.path.join(folder, "prediales")
+                    os.makedirs(folder, exist_ok=True)
+
+                    for p in self.progress_iterate(action_text, action_items):
+                        predial = p['Concepto']['CuentaPredial']
+                        process_predial(folder, predial)
+
                 case 'solicitudes':
                     for solicitud in self.progress_iterate(action_text, action_items):
                         rfc = solicitud["rfc"]
@@ -1042,7 +1052,7 @@ class FacturacionGUI:
                 case 'correos_table+enter' | 'solicitudes_table+enter':
                     pass
 
-                case "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "recibidas_table" | "solicitudes_table" | "depositos_table":
+                case "productos_table" | "facturas_table" | "clientes_table" | "correos_table" | "ajustes_table" | "depositos_table" | "emitidas_table" | "recibidas_table" | "solicitudes_table" | "depositos_table":
                     # noinspection PyUnresolvedReferences
                     s_items = self.window[event].selected_items()
                     if event == "emitidas_table":
@@ -1052,7 +1062,7 @@ class FacturacionGUI:
                     else:
                         self.action_button_manager.set_items(event.split("_")[0], s_items)
 
-                case "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
+                case "productos_table+select_all" | "facturas_table+select_all" | "clientes_table+select_all" | "correos_table+select_all" | \
                      "ajustes_table+select_all" | "emitidas_table+select_all" | "recibidas_table" | 'solicitudes_table+select_all' | \
                      'depositos_table+select_all':
                     # noinspection PyUnresolvedReferences
