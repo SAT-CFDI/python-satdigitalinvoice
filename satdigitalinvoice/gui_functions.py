@@ -134,6 +134,17 @@ def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
     return None
 
 
+def cliente_prediales(facturas):
+    res = {}
+    for f in facturas:
+        receptor = f['Receptor']
+        s = res.setdefault(receptor, set())
+        for c in f['Conceptos']:
+            s.add(c['CuentaPredial'])
+
+    return res
+
+
 def generate_ingresos(clients, facturas, dp):
     errors = []
 

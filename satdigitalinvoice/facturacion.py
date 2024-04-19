@@ -27,7 +27,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager, ProductosManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot
+    generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot, cliente_prediales
 from .initdb import InitDB
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDB
@@ -397,6 +397,31 @@ class FacturacionGUI:
         sg.one_line_progress_meter_cancel(
             key=title
         )
+
+    def enviar_prediales(self):
+        folder = archivos_folder(DatePeriod(date.today().year))
+        folder = os.path.join(folder, "prediales")
+
+        facturas = FacturasManager(None)["Facturas"]
+        clientes = ClientsManager()
+
+        cp = cliente_prediales(facturas)
+        for receptor, prediales in self.progress_iterate("Enviando Prediales", cp.items()):
+            def attachments():
+                for p in prediales:
+                    yield os.path.join(folder, f"{p}.pdf")
+
+            receptor = clientes[receptor]
+            with self.email_manager.sender as s:
+                s.send_email(
+                    subject=f"Prediales {receptor['RazonSocial']} - {receptor['Rfc']}",
+                    to_addrs=["satcfdi@outlook.com"],  # receptor["Email"],
+                    html=facturacion_environment.get_template('mail_prediales_template.html').render(
+                        receptor=receptor,
+                        email_signature=self.email_signature
+                    ),
+                    file_attachments=attachments()
+                )
 
     def action_button(self, action_name, action_items, action_text):
         try:
@@ -1157,9 +1182,12 @@ class FacturacionGUI:
                             self.action_button(
                                 action_name=action_name,
                                 action_items=action_items,
-                                action_text=action_text
+                                action_text=action_text,
                             )
                             self.main_tab_group(values)
+
+                case "enviar_prediales":
+                    self.enviar_prediales()
 
                 case "editar_clientes":
                     open_file(

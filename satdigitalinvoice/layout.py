@@ -337,6 +337,7 @@ def make_layout():
                         [
                             [
                                 sg.Button(image_data=EDIT_ICON, key="editar_productos", border_width=0, button_color=BUTTON_COLOR),
+                                sg.Button("Enviar Prediales a Clientes", key="enviar_prediales"),
                             ],
                             [
                                 MyTable(
