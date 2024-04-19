@@ -306,6 +306,8 @@ def make_layout():
                                 sg.Text("Periodo:", pad=TEXT_PADDING),
                                 sg.Input(date.today().strftime(PERIODO_FMT), size=(11, 1), key="facturas_periodo"),
                                 sg.Text("", pad=TEXT_PADDING, key="preparar_facturas_text", font=LARGE_FONT),
+                                sg.Push(),
+                                sg.Button("Enviar Prediales", key="enviar_prediales"),
                             ],
                             [
                                 MyTable(
@@ -337,7 +339,6 @@ def make_layout():
                         [
                             [
                                 sg.Button(image_data=EDIT_ICON, key="editar_productos", border_width=0, button_color=BUTTON_COLOR),
-                                sg.Button("Enviar Prediales a Clientes", key="enviar_prediales"),
                             ],
                             [
                                 MyTable(

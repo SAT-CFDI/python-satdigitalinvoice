@@ -398,18 +398,22 @@ class FacturacionGUI:
             key=title
         )
 
-    def enviar_prediales(self):
+    def enviar_prediales(self, cfdis):
         folder = archivos_folder(DatePeriod(date.today().year))
         folder = os.path.join(folder, "prediales")
 
-        facturas = FacturasManager(None)["Facturas"]
         clientes = ClientsManager()
 
-        cp = cliente_prediales(facturas)
+        cp = cliente_prediales(cfdis)
         for receptor, prediales in self.progress_iterate("Enviando Prediales", cp.items()):
             def attachments():
                 for p in prediales:
-                    yield os.path.join(folder, f"{p}.pdf")
+                    file = os.path.join(folder, f"{p}.pdf")
+                    # check file exists
+                    if not os.path.exists(file):
+                        raise FileNotFoundError(f"File not found: {file}")
+
+                    yield file
 
             receptor = clientes[receptor]
             with self.email_manager.sender as s:
@@ -1187,7 +1191,17 @@ class FacturacionGUI:
                             self.main_tab_group(values)
 
                 case "enviar_prediales":
-                    self.enviar_prediales()
+                    action_items = self.action_button_manager.items
+
+                    res = sg.popup(
+                        f"Estas seguro que quieres 'Enviar Prediales'?",
+                        title="Confirmar",
+                        button_type=POPUP_BUTTONS_OK_CANCEL,
+                        location=center_location(self.window),
+                        keep_on_top=True,
+                    )
+                    if res == "OK":
+                        self.enviar_prediales(action_items)
 
                 case "editar_clientes":
                     open_file(

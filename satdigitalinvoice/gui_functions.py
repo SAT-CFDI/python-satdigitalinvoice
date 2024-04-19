@@ -137,11 +137,11 @@ def periodicidad_desc(dp: DatePeriod, periodo_mes_ajuste, offset):
 def cliente_prediales(facturas):
     res = {}
     for f in facturas:
-        receptor = f['Receptor']
+        receptor = f['Receptor']['Rfc']
         s = res.setdefault(receptor, set())
         for c in f['Conceptos']:
-            s.add(c['CuentaPredial'])
-
+            for p in c['CuentaPredial']:
+                s.add(p)
     return res
 
 
