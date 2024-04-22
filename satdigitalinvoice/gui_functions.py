@@ -433,61 +433,6 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     return archivo_excel
 
 
-def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales, prediales_pago):
-    emisor_rfc = emisor_cif['Rfc']
-
-    emitidas_pagos = list(filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_emisor=emisor_rfc))
-    recibidas_pagos = list(filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc))
-    prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
-
-    emitidas_pagos = sum_payments(emitidas_pagos)
-    recibidas_pagos = sum_payments(recibidas_pagos)
-    prediales = prediales_pago or sum_payments(prediales)['Subtotal']
-
-    # ISR
-    total_ingresos = emitidas_pagos['Subtotal']
-    deduccion_opcional = round(total_ingresos * Decimal("0.35"))
-    total_deducciones = deduccion_opcional + prediales
-    base_gravable = total_ingresos - deduccion_opcional - prediales
-    isr_causado = isr_mensual(dp, base_gravable)
-    isr_a_cargo = isr_causado - emitidas_pagos['ISR Ret']
-
-    # IVA
-    iva_a_cargo = round(total_ingresos * Decimal("0.16")) - emitidas_pagos['IVA Ret'] - recibidas_pagos['IVA16 Tras']
-    res = {
-        "ISR PERSONAS FÍSICAS. ARRENDAMIENTO DE INMUEBLES (USO O GOCE)": {
-            "¿Tus ingresos fueron obtenidos en copropiedad o sociedad conyugal?": "No",
-            "Tipo de deducción": "Deducción opcional",
-            "Total de ingresos": total_ingresos,
-            "Deducción opcional": deduccion_opcional,
-            "Impuesto predial": prediales,
-            "Total de deducciones autorizadas": total_deducciones,
-            "Base gravable del pago provisional": base_gravable,
-            "ISR causado": isr_causado,
-            "Estímulos acreditables": 0,
-            "Impuesto retenido": emitidas_pagos['ISR Ret'],
-            "ISR a cargo": isr_a_cargo,
-        },
-        "IMPUESTO AL VALOR AGREGADO": {
-            "Actividades gravadas a la tasa del 16%": total_ingresos,
-            "Actividades gravadas a la tasa del 0%": 0,
-            "Actividades exentas": 0,
-            "Actividades no objeto del impuesto": 0,
-            "IVA cobrado del periodo a la tasa del 16%": round(total_ingresos * Decimal("0.16")),
-            "IVA acreditable del periodo": recibidas_pagos['IVA16 Tras'],
-            "IVA retenido": emitidas_pagos['IVA Ret'],
-            "¿Tienes otras cantidades a cargo?": 'No',
-            "Cantidad a cargo": iva_a_cargo,
-            "¿Tienes otras cantidades a favor?": 'No',
-            "Impuesto a cargo": iva_a_cargo,
-        },
-        "TOTAL": isr_a_cargo + iva_a_cargo
-
-    }
-    p_desc = period_desc(dp)
-    return p_desc + "\n" + emisor_rfc + "\n" + to_yaml(res)
-
-
 def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif, proveedores_tipo):
     emisor_rfc = emisor_cif['Rfc']
     recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)

@@ -27,7 +27,7 @@ from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager, ProductosManager
 from .gui_functions import generate_ingresos, pago_factura, exportar_facturas, archivos_folder, period_desc, parse_fecha_pago, parse_importe_pago, preview_cfdis, center_location, \
     CALENDAR_FECHA_FMT, ConsoleErrors, \
-    generate_ajustes, generar_depositos, calculate_declaracion_provisional, calculate_diot, cliente_prediales
+    generate_ajustes, generar_depositos, calculate_diot, cliente_prediales
 from .initdb import InitDB
 from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
 from .localdb import LocalDB
@@ -1259,23 +1259,6 @@ class FacturacionGUI:
                     )
                     open_file(
                         os.path.abspath(archivo_diot)
-                    )
-
-                case "periodo_enter" | "prediales_enter":
-                    rfc = values["contabilidad_rfc"]
-                    dp = to_date_period(values["periodo"])
-                    prediales = to_int(values["prediales"])
-
-                    declaracion_provisional = calculate_declaracion_provisional(
-                        self.get_all_invoices(),
-                        dp,
-                        ClientsManager()[rfc],
-                        self.rfc_prediales,
-                        prediales
-                    )
-                    self.window['declaracion'].update(
-                        append=False,
-                        value=declaracion_provisional
                     )
 
                 case "ver_carpeta":
