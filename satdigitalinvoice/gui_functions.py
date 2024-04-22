@@ -433,63 +433,6 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     return archivo_excel
 
 
-def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif, proveedores_tipo):
-    emisor_rfc = emisor_cif['Rfc']
-    recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
-    recibidas_pagos = list(recibidas_pagos)
-    recibidas_pagos.sort(key=lambda x: x.comprobante["Emisor"]["Rfc"])
-
-    provedores = {}
-    for rfc, group in groupby(recibidas_pagos, lambda x: x.comprobante["Emisor"]["Rfc"]):
-        payments = list(group)
-        provedores[rfc] = {
-            'Subtotal': sum(i.sub_total for i in payments),
-            "Base16": round(sum(
-                i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Base", 0) for i in payments
-            )),
-        }
-
-    diot = DIOT(
-        datos_identificacion=DatosIdentificacion(
-            rfc=emisor_rfc,
-            curp=emisor_cif['CURP'],
-            nombre=emisor_cif['Nombre'],
-            apellido_paterno=emisor_cif['ApellidoPaterno'],
-            apellido_materno=emisor_cif['ApellidoMaterno'],
-            ejercicio=dp.year,
-        ),
-        periodo=f'{dp.month:02d}',
-        proveedores=[
-            ProveedorTercero(
-                tipo_tercero=TipoTercero.PROVEEDOR_NACIONAL,
-                tipo_operacion=proveedores_tipo.get(rfc, TipoOperacion.OTROS),
-                rfc=rfc,
-                iva16=values["Base16"],
-            )
-            for rfc, values in provedores.items() if values["Base16"]
-        ]
-    )
-
-    diot_folder = os.path.join(archivos_folder(dp), 'diot')
-    shutil.rmtree(diot_folder, ignore_errors=True)
-    os.makedirs(diot_folder, exist_ok=True)
-
-    diot_file = diot.generate_package(
-        dirname=diot_folder
-    )
-    diot_file = os.path.basename(diot_file)
-
-    diot_pdf = os.path.join(diot_folder, f"{diot_file}.pdf")
-    render.pdf_write(diot, target=diot_pdf)
-
-    with open(os.path.join(diot_folder, f"{diot_file}.export.txt"), "wb") as f:
-        diot.export(f)
-    with open(os.path.join(diot_folder, f"{diot_file}.plain.txt"), "wb") as f:
-        diot.plain_write(f)
-
-    return diot_pdf
-
-
 def sum_payments(payments):
     amounts = {
         'Subtotal': 0,
