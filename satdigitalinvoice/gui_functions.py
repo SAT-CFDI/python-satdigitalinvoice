@@ -402,7 +402,7 @@ def exportar_facturas(all_invoices, dp: DatePeriod, emisor_cif, rfc_prediales):
     pagos_hechos_iva = [
         p
         for p in recibidas_pagos
-        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values()) > 0 and p.comprobante["Receptor"].get("RegimenFiscalReceptor") not in ('616',)
+        if sum(x.get("Importe", 0) for x in p.impuestos.get("Traslados", {}).values())
     ]
     prediales = [p for p in recibidas_pagos if p.comprobante["Emisor"]["Rfc"] in rfc_prediales]
 
@@ -491,7 +491,7 @@ def calculate_declaracion_provisional(all_invoices, dp: DatePeriod, emisor_cif, 
 def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif, proveedores_tipo):
     emisor_rfc = emisor_cif['Rfc']
     recibidas_pagos = filter_payments_iter(invoices=all_invoices, fecha=dp, rfc_receptor=emisor_rfc)
-    recibidas_pagos = list(r for r in recibidas_pagos if r.comprobante["Receptor"].get("RegimenFiscalReceptor") not in ('616',))
+    recibidas_pagos = list(recibidas_pagos)
     recibidas_pagos.sort(key=lambda x: x.comprobante["Emisor"]["Rfc"])
 
     provedores = {}
@@ -501,7 +501,6 @@ def calculate_diot(all_invoices, dp: DatePeriod, emisor_cif, proveedores_tipo):
             'Subtotal': sum(i.sub_total for i in payments),
             "Base16": round(sum(
                 i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Base", 0) for i in payments
-                if i.impuestos.get("Traslados", {}).get("002|Tasa|0.160000", {}).get("Importe")
             )),
         }
 
