@@ -29,19 +29,19 @@ class LocalDB(diskcache.Cache):
         self.base_path = base_path
 
     def folio(self) -> int:
-        return self.get(FOLIO, 1000)
+        return self.get(FOLIO, 1)
 
     def folio_set(self, value: int):
         self[FOLIO] = value
 
     def serie(self) -> str:
-        return self.get(SERIE, 'A')
+        return self.get(SERIE, '')
 
     def serie_set(self, value: str):
         self[SERIE] = value
 
     def serie_pago(self) -> str:
-        return self.get(SERIE_PAGO, 'P')
+        return self.get(SERIE_PAGO, '')
 
     def serie_pago_set(self, value: str):
         self[SERIE_PAGO] = value

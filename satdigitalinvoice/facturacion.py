@@ -419,7 +419,7 @@ class FacturacionGUI:
             with self.email_manager.sender as s:
                 s.send_email(
                     subject=f"Prediales {receptor['RazonSocial']} - {receptor['Rfc']}",
-                    to_addrs=["satcfdi@outlook.com"],  # receptor["Email"],
+                    to_addrs=receptor["Email"],
                     html=facturacion_environment.get_template('mail_prediales_template.html').render(
                         receptor=receptor,
                         email_signature=self.email_signature
@@ -1159,6 +1159,9 @@ class FacturacionGUI:
                         self.window['emitidas_table'].refresh()
 
                 case "crear_facturas" | "ver_preview":
+                    if not self.local_db.serie():
+                        raise Exception("Serie no configurada")
+
                     action_text = self.action_button_manager.text()
                     action_name = self.action_button_manager.name
                     action_items = self.action_button_manager.items

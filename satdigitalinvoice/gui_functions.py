@@ -488,6 +488,7 @@ def mf_pago_fmt(cfdi):
 
 def preview_cfdis(cfdis):
     outfile = os.path.join(TEMP_DIRECTORY, "factura.html")
+    os.makedirs(TEMP_DIRECTORY, exist_ok=True)
     render.html_write(
         xlm=cfdis,
         target=outfile,
