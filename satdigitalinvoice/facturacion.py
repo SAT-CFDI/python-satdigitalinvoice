@@ -124,6 +124,7 @@ class FacturacionGUI:
 
         for t in ('productos_table', 'facturas_table', 'clientes_table', 'emitidas_table', 'recibidas_table', 'correos_table', 'ajustes_table', 'depositos_table', 'solicitudes_table'):
             self.window[t].bind(f'<{modifier_key}-a>', '+select_all')
+            self.window[t].bind(f'<{modifier_key}-A>', '+select_all')
             self.window[t].bind('<BackSpace>', '+delete')  # BackSpace
             # self.window[t].bind('<Double-Button-1>', '_enter')
             self.window[t].bind('<Return>', '+enter')
