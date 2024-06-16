@@ -4,6 +4,7 @@ from itertools import batched
 import requests
 import yaml
 from bs4 import BeautifulSoup
+from satcfdi.exceptions import ResponseError
 
 from satdigitalinvoice.log_tools import NoAliasDumper
 
@@ -25,27 +26,26 @@ def request_predial(predial: str):
             "txt_clavecat": predial
         }
     )
-    assert r.status_code == 200
-    res = _parse_response(r.content)
-    return res
+    if r.status_code == 200:
+        return _parse_response(r.content)
+
+    raise ResponseError(r)
 
 
 def process_predial(folder, predial: str):
     res = request_predial(predial)
-    if not res:
-        print("No encontrado", predial)
-        return
 
-    if res['predial_recibo'] is not None:
+    if pr := res['predial_recibo']:
         r = requests.get(
-            url=res['predial_recibo']
+            url=pr
         )
         pdf_file = os.path.join(folder, f"{predial}.pdf")
         with open(pdf_file, "wb") as f:
             f.write(r.content)
-    else:
+
+    if pec := res['predial_estado_cuenta']:
         r = requests.get(
-            url=res['predial_estado_cuenta']
+            url=pec
         )
         pdf_file = os.path.join(folder, f"{predial}_adeudo.pdf")
         with open(pdf_file, "wb") as f:
