@@ -70,10 +70,10 @@ setuptools.setup(
         'PyYAML',
         'babel',
         'markdown2',
-        'PySimpleGUI<5.0.0',
         'XlsxWriter',
         'jsonschema',
-        'python-dateutil'
+        'python-dateutil',
+        'babel'
     ],
     extras_require={
         'test': [
