@@ -1,0 +1,84 @@
+Constants:
+- &product
+  ClaveProdServ: '10101702' # Trucha Viva
+  Cantidad: 1
+  ClaveUnidad: E48
+
+- &moral
+  Impuestos:
+    Traslados: 'IVA|Tasa|0.160000'
+    Retenciones:
+    - 'ISR|Tasa|0.100000'
+    - 'IVA|Tasa|0.106667'
+
+- &moral_no_lucrativa
+  Impuestos:
+    Traslados: 'IVA|Tasa|0.160000'
+    Retenciones:
+    - 'ISR|Tasa|0.100000'
+
+- &fisica
+  Impuestos:
+    Traslados: 'IVA|Tasa|0.160000'
+
+- &pue
+  UsoCFDI: G03
+  MetodoPago: PUE
+  FormaPago: "03"
+
+- &ppd
+  UsoCFDI: G03
+  MetodoPago: PPD
+  FormaPago: "99"
+
+Facturas:
+- Receptor: ABV9901115S7
+  Emisor: CACX7605101P8
+  <<: *pue
+  Conceptos:
+  - Descripcion: 'SOME {{ periodo }}'
+    ValorUnitario: !decimal 18950.00
+    <<: [*product, *moral]
+    _periodo_mes_ajuste: Mensual.1
+  Total: !decimal 18065.66
+
+- Receptor: ABC1511034U3 # Régimen de Personas Morales con Fines no Lucrativos
+  Emisor: CACX7605101P8
+  <<: *ppd
+  Conceptos:
+  - Descripcion: 'SOME {{ periodo }}'
+    ValorUnitario: !case
+      '2023-04': !decimal 34500.00
+    <<: [*product, *moral_no_lucrativa]
+    _periodo_mes_ajuste: Mensual.1
+  Total: !decimal 36570.00
+
+- Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
+  <<: *ppd
+  Conceptos:
+  - Descripcion: 'SOME {{ periodo }}'
+    ValorUnitario: !decimal 31913.07
+    <<: [*product, *fisica]
+    _periodo_mes_ajuste: Mensual.1
+  Total: !decimal 37019.16
+
+- Receptor: ABMG891115PD7 # Régimen de Incorporacion Fiscal
+  Emisor: CACX7605101P8
+  <<: *ppd
+  Conceptos:
+  - Descripcion: 'SOME2 {{ periodo }}'
+    ValorUnitario: null
+    <<: [*product, *fisica]
+    _periodo_mes_ajuste: Mensual.1
+  Total: !decimal 37019.16
+
+- Receptor: ABV9901115S7
+  Emisor: CACX7605101P8
+  <<: *pue
+  Conceptos:
+  - Descripcion: 'SOME {{ periodo }}'
+    ValorUnitario: !decimal 18950.00
+    <<: [*product, *moral]
+    _periodo_mes_ajuste: Mensual.1
+  Total: !decimal 18065.66

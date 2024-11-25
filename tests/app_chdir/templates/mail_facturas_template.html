@@ -1,0 +1,19 @@
+Hello<br>
+<br>
+INVOICES DETAILS<br><br>
+{% if pending_invoices %}
+	Invoices Pending From Previous Months: {{ pending_invoices }}
+{% endif %}
+<br><br>
+{% for c in invoices %}
+	{{ c.html_str() | safe }}
+{% endfor %}
+<br><br><br><br>
+Grettings<br>
+<br>{{ Emisor.RazonSocial }}
+{% for e in Emisor.Email %}
+<br>{{ e }}
+{% endfor %}
+{% if Emisor.Celular is defined %}
+<br>Cel. {{ Emisor.Celular }}
+{% endif %}

@@ -1,0 +1,35 @@
+# cambios en la configuración requieren reiniciar
+enviar_a_partir: 2023-04-04 00:00:00
+pagar_a_partir:
+  PUE: 2023-04-01 00:00:00
+  PPD: 2023-03-01 00:00:00
+
+rfc_prediales:
+- ABC123456ABC
+
+csd:
+  certificate: !read csd/cacx7605101p8.cer
+  key: !read csd/cacx7605101p8.key
+  password: !read csd/cacx7605101p8.txt
+
+#fiel:
+#  certificate: !read csd/cacx7605101p8.cer
+#  key: !read csd/cacx7605101p8.key
+#  password: !read csd/cacx7605101p8.txt
+
+email:
+  stmp_host: email.test.stmp
+  stmp_port: 587
+  imap_host: email.test.imap
+  imap_port: 993
+  user: testuser@locahost.com
+  password: thisisasecurepassword
+
+email_signature: ""
+
+pac:
+  type: diverza.Diverza
+  args:
+    id: '000000'
+    token: testtoken
+    rfc: ABC123456ABC

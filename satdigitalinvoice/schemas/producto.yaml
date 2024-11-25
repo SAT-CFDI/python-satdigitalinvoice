@@ -1,0 +1,60 @@
+$schema: 'https://json-schema.org/draft/2020-12/schema'
+type: object
+properties:
+  Simas:
+    type: [string, object]
+  CFE:
+    type: [string, object]
+  Detalle:
+    type: string
+  Escritura:
+    type: string
+  Metros:
+    type: number
+  Concepto:
+    type: object
+    properties:
+      CuentaPredial:
+        anyOf:
+        - type: string
+        - type: array
+          items:
+            type: string
+      ClaveProdServ:
+        type: string
+      ClaveUnidad:
+        type: string
+      Descripcion:
+        type: string
+      Cantidad:
+        type: number
+      Impuestos:
+        type: object
+        properties:
+          Traslados:
+            anyOf:
+              - type: array
+                items:
+                  type: object
+              - type: string # obsolete
+              - type: array
+                items:
+                  type: string
+          Retenciones:
+            anyOf:
+              - type: array
+                items:
+                  type: object
+              - type: string  # obsolete
+              - type: array
+                items:
+                  type: string
+        additionalProperties: false
+    additionalProperties: false
+    required:
+    - Descripcion
+    - ClaveProdServ
+    - ClaveUnidad
+additionalProperties: false
+
+
