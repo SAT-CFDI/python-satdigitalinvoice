@@ -771,7 +771,7 @@ class FacturacionGUI:
                         yield i
 
         self.window['recibidas_table'].update(
-            values=sorted(fact_iter(), key=lambda x: x["Fecha"], reverse=False),
+            values=sorted(fact_iter(), key=lambda x: (x["Fecha"], x.get('Serie'), x.get('Folio')), reverse=False),
         )
 
     def crear_pago(self, values, facturas_pagar):
