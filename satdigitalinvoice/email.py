@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmailManager:
-    def __init__(self, stmp_host, stmp_port, imap_host, imap_port, user, password, xoauth2_token=None):
+    def __init__(self, stmp_host, stmp_port, imap_host, imap_port, user, password=None, xoauth2_token=None):
         # self.receiver = EmailReceiver(
         #     host=imap_host,
         #     port=imap_port,
