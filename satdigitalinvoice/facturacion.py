@@ -740,7 +740,7 @@ class FacturacionGUI:
             elif search_text == SearchOptions.PorEnviar:
                 for i in self.get_all_invoices().values():
                     if i["Receptor"]["Rfc"] in self.emisores \
-                            and not self.local_db.notified(i) \
+                            and not self.local_db.notified2(i) \
                             and i.estatus() == EstadoComprobante.VIGENTE:
                         yield i
             elif date_search_text := to_date_period(search_text):
