@@ -23,6 +23,7 @@ def add_file_handler():
     )
     fh.setLevel(logging.ERROR)
     formatter = logging.Formatter('%(asctime)s - %(message)s')
+    logging.getLogger("fontTools").setLevel(logging.ERROR)
     fh.setFormatter(formatter)
     logging.root.addHandler(fh)
 
