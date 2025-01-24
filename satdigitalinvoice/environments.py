@@ -62,6 +62,10 @@ class FacturacionEnvironment(Environment):
             return common.numero(k)
 
         @self.filter
+        def letras(k):
+            return common.num_letras(k)
+
+        @self.filter
         def porcentaje(k):
             return common.porcentaje(k)
 
