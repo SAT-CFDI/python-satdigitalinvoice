@@ -1,7 +1,7 @@
 @page {
     @bottom-center{
         content: counter(page) " / " counter(pages);
-        font:13px "Myriad Pro","Lucida Grande",Lucida,Verdana,sans-serif;
+        font:13px Verdana,sans-serif;
     }
 }
 /* Main CSS from the Markdown Viewer Extension */
@@ -10,7 +10,7 @@ body,h1{
 }
 body{
     background-color:#fff;
-    font:13px "Myriad Pro","Lucida Grande",Lucida,Verdana,sans-serif
+    font:13px Verdana,sans-serif
 }
 a:link,a:visited{
     color:#00f;
@@ -51,7 +51,7 @@ h1{
     font-size:30px
 }
 h1,h2,h3,h4,h5,h6{
-    font-family:"Myriad Pro","Lucida Grande",Lucida,Verdana,sans-serif;
+    font-family:Verdana,sans-serif;
     font-weight:700
 }
 h2,table td,table th{
