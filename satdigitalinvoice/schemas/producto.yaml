@@ -11,6 +11,8 @@ properties:
     type: string
   Metros:
     type: number
+  Frente:
+    type: number
   Concepto:
     type: object
     properties:
