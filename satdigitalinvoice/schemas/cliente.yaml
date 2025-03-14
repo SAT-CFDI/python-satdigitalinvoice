@@ -1,6 +1,8 @@
 $schema: 'https://json-schema.org/draft/2020-12/schema'
 type: object
 properties:
+  ActaConstitutiva:
+    type: string
   CodigoPostal:
     type: string
   IdCIF:
@@ -44,6 +46,8 @@ properties:
       CURP:
         type: string
       Domicilio:
+        type: string
+      Poder:
         type: string
     additionalProperties: false
   Fiadores:
