@@ -21,7 +21,7 @@ from satcfdi.pacs import Accept
 from satcfdi.pacs.sat import SAT, EstadoSolicitud
 from xlsxwriter.exceptions import XlsxFileError
 
-from . import __version__, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE
+from . import __version__, ARCHIVOS_DIRECTORY, DATA_DIRECTORY, METADATA_FILE, PAQUETE_FILE
 from .client_validation import validar_client, clientes_generar_txt
 from .environments import facturacion_environment
 from .file_data_managers import ClientsManager, FacturasManager, ProductosManager
@@ -328,6 +328,8 @@ class FacturacionGUI:
                 print_yaml(r)
                 if paquete:
                     data = base64.b64decode(paquete)
+                    with open(PAQUETE_FILE, 'wb') as f:
+                        f.write(data)
                     with io.BytesIO(data) as b:
                         self.unzip_cfdi(b)
 

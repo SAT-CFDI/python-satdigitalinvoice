@@ -10,6 +10,7 @@ LOGS_DIRECTORY = ".data/logs"
 DATA_DIRECTORY = ".data"
 ARCHIVOS_DIRECTORY = "archivos"
 METADATA_FILE = os.path.join(ARCHIVOS_DIRECTORY, "metadata.csv")
+PAQUETE_FILE = os.path.join(ARCHIVOS_DIRECTORY, "paquete.zip")
 TEMPLATES_DIRECTORY = "templates"
 TEMP_DIRECTORY = ".data/temp"
 
