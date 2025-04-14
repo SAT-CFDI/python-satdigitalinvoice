@@ -352,6 +352,8 @@ class FacturacionGUI:
                                 quotechar='|'
                             )
                             header = next(cfdi_metadata_reader)
+                            if 'Estatus' not in header:
+                                continue
                             for row in cfdi_metadata_reader:
                                 row = dict(zip(header, row))
                                 print_yaml(row)
