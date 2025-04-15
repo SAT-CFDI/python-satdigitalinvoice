@@ -62,6 +62,15 @@ properties:
         Domicilio:
           type: string
       additionalProperties: false
+  Corredores:
+    type: array
+    items:
+      type: object
+      properties:
+        Nombre:
+          type: string
+        CURP:
+          type: string
 required:
 - CodigoPostal
 - IdCIF
