@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import logging
 import os
 import shutil
@@ -416,22 +417,43 @@ def sum_payments(payments):
     return amounts
 
 
+def sha256_hash(data):
+    hash_object = hashlib.sha1(data.encode())
+    hex_dig = hash_object.hexdigest()
+    return hex_dig
+
 def generate_pdf_template(template_name, fields, target=None, css_string=None):
     template = facturacion_environment.get_template(template_name)
     md5_document = template.render(
         fields
     )
+    hex_dig = sha256_hash(md5_document)
+
+    hash_mark = """
+    @page {
+        @bottom-left{
+            content: "sha1: [[hash]]";
+            font:8px Verdana,sans-serif;
+        }
+    }
+""".replace("[[hash]]", hex_dig)
+
     html = markdown(md5_document)
     pdf = HTML(string=html).write_pdf(
         target=target,
         stylesheets=[
             os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6.css"),
             CSS(
-                string=css_string or '@page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }'
+                string=css_string
+            ),
+            CSS(
+                string=hash_mark
             )
         ]
     )
-    return pdf
+    with open(target + ".sha1_" + hex_dig[-8:] + ".txt", "w") as f:
+        f.write(md5_document)
+
 
 
 def mf_pago_fmt(cfdi):

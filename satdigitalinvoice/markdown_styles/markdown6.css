@@ -4,6 +4,8 @@
         font:13px Verdana,sans-serif;
     }
 }
+@page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }
+
 /* Main CSS from the Markdown Viewer Extension */
 body,h1{
     color:#000

@@ -61,6 +61,8 @@ properties:
           type: string
         Domicilio:
           type: string
+        Poder:
+          type: string
       additionalProperties: false
   Corredores:
     type: array
