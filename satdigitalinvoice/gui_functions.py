@@ -432,7 +432,7 @@ def generate_pdf_template(template_name, fields, target=None, css_string=None):
     hash_mark = """
     @page {
         @bottom-left{
-            content: "sha1: [[hash]]";
+            content: "sha1:[[hash]]";
             font:8px Verdana,sans-serif;
         }
     }
