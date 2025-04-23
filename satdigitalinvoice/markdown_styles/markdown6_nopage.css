@@ -1,10 +1,13 @@
-@page {
-    @bottom-center{
-        content: counter(page) " / " counter(pages);
-        font:13px Verdana,sans-serif;
-    }
-}
+
 @page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }
+
+.box {
+  border: 2px solid #000;  /* black border */
+  padding: 5px;           /* space inside the box */
+  width: fit-content;      /* adjusts box size to content */
+  background-color: #f0f0f0; /* light gray background */
+  border-radius: 0px;     /* rounded corners (optional) */
+}
 
 /* Main CSS from the Markdown Viewer Extension */
 body,h1{

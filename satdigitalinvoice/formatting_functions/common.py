@@ -12,6 +12,9 @@ def pesos(amount):
     return "${0:,.2f} (SON: {1} {2}/100M.N.)".format(amount, integer_part, decimal_part)
 
 
+def pesos_sinletra(amount):
+    return "${0:,.2f}".format(amount)
+
 def num_letras(number):
     return num2words(number, lang=LANG).upper()
 

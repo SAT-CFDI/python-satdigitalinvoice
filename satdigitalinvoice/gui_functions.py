@@ -464,7 +464,7 @@ def generate_pdf_template_basic(template_name, fields, target=None, css_string=N
     pdf = HTML(string=html).write_pdf(
         target=target,
         stylesheets=[
-            os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6.css"),
+            os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6_nopage.css"),
             CSS(
                 string=css_string
             )

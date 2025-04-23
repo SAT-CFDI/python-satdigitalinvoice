@@ -58,6 +58,11 @@ class FacturacionEnvironment(Environment):
             return common.pesos(k)
 
         @self.filter
+        def pesos_sinletra(k):
+            return common.pesos_sinletra(k)
+
+
+        @self.filter
         def numero(k):
             return common.numero(k)
 
