@@ -454,6 +454,22 @@ def generate_pdf_template(template_name, fields, target=None, css_string=None):
     with open(target + ".sha1_" + hex_dig[-8:] + ".txt", "w") as f:
         f.write(md5_document)
 
+def generate_pdf_template_basic(template_name, fields, target=None, css_string=None):
+    template = facturacion_environment.get_template(template_name)
+    md5_document = template.render(
+        fields
+    )
+
+    html = markdown(md5_document)
+    pdf = HTML(string=html).write_pdf(
+        target=target,
+        stylesheets=[
+            os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6.css"),
+            CSS(
+                string=css_string
+            )
+        ]
+    )
 
 
 def mf_pago_fmt(cfdi):
