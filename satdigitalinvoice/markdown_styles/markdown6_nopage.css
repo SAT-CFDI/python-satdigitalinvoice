@@ -9,6 +9,22 @@
   border-radius: 0px;     /* rounded corners (optional) */
 }
 
+.inverted-text {
+  background-color: black;
+  color: white;
+  padding: 10px 50px 10px 50px;
+  display: inline-block;
+  border-radius: 4px; /* optional, for rounded corners */
+  font-size:24px
+}
+
+  html {
+    border: 1px solid #969696;;
+    height: 100%;
+    width: 100%
+    box-sizing: border-box;
+  }
+
 /* Main CSS from the Markdown Viewer Extension */
 body,h1{
     color:#000
@@ -46,7 +62,7 @@ hr,table{
     width:100%
 }
 hr{
-    color:#919699;
+    color:#969696;
     size:1;
     noshade:"noshade"
 }
@@ -119,8 +135,8 @@ li>a+p,li>p+p{
     display:block
 }
 table{
-    border-top:1px solid #919699;
-    border-left:1px solid #919699;
+    border-top:1px solid #969696;
+    border-left:1px solid #969696;
     border-spacing:0
 }
 table td,table th{
