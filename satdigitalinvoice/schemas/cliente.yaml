@@ -49,6 +49,8 @@ properties:
         type: string
       Poder:
         type: string
+      Tipo:
+        type: string
     additionalProperties: false
   Fiadores:
     type: array
@@ -62,6 +64,8 @@ properties:
         Domicilio:
           type: string
         Poder:
+          type: string
+        Tipo:
           type: string
       additionalProperties: false
   Corredores:
