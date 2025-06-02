@@ -524,6 +524,7 @@ def make_layout():
                                         "FechaInicial",
                                         "FechaFinal",
                                         "TipoSolicitud",
+                                        "TipoRecuperar",
                                         "RfcReceptor",
                                         "RfcEmisor",
                                     ],
@@ -535,8 +536,9 @@ def make_layout():
                                         r["request"]["fecha_inicial"].strftime(CALENDAR_FECHA_FMT),
                                         r["request"]["fecha_final"].strftime(CALENDAR_FECHA_FMT),
                                         r["request"]["tipo_solicitud"],
-                                        r["request"]["rfc_receptor"] or "",
-                                        r["request"]["rfc_emisor"] or "",
+                                        r["request"].get('tipo_recuperar'),
+                                        r["request"].get("rfc_receptor"),
+                                        r["request"].get("rfc_emisor"),
                                     ]
                                 )
                             ]

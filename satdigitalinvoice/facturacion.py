@@ -299,18 +299,33 @@ class FacturacionGUI:
 
         sat_service = SAT(signer=self.emisores[rfc]['fiel'])
         tipo_recuperar = values["tipo_recuperar"]
+        fecha_final = datetime.strptime(values["fecha_final"], CALENDAR_FECHA_FMT)
+        fecha_inicial = datetime.strptime(values["fecha_inicial"], CALENDAR_FECHA_FMT)
 
         args = {
-            'fecha_inicial': datetime.strptime(values["fecha_inicial"], CALENDAR_FECHA_FMT),
-            'fecha_final': datetime.strptime(values["fecha_final"], CALENDAR_FECHA_FMT),
-            'rfc_receptor': sat_service.signer.rfc if tipo_recuperar == TipoRecuperar.Recibidas else None,
-            'rfc_emisor': sat_service.signer.rfc if tipo_recuperar == TipoRecuperar.Emitidas else None,
+            'fecha_inicial': fecha_inicial,
+            'fecha_final': fecha_final,
             'tipo_solicitud': values["tipo_solicitud"],
+            'tipo_recuperar': tipo_recuperar.value
         }
 
-        response = sat_service.recover_comprobante_request(
-            **args
-        )
+        if tipo_recuperar == TipoRecuperar.Recibidas:
+            response = sat_service.recover_comprobante_received_request(
+                fecha_final=fecha_final,
+                fecha_inicial=fecha_inicial,
+                rfc_receptor=sat_service.signer.rfc,
+                tipo_solicitud=values["tipo_solicitud"],
+                estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
+            )
+        elif tipo_recuperar == TipoRecuperar.Emitidas:
+            response = sat_service.recover_comprobante_emited_request(
+                fecha_final=fecha_final,
+                fecha_inicial=fecha_inicial,
+                rfc_emisor=sat_service.signer.rfc,
+                tipo_solicitud=values["tipo_solicitud"]
+            )
+        else:
+            raise ValueError(f"Tipo de solicitud no soportado: {tipo_recuperar}")
 
         if "IdSolicitud" not in response:
             self.error_message("Error al solicitar comprobantes" + to_yaml(response))
