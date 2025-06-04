@@ -318,7 +318,7 @@ class FacturacionGUI:
                 estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
             )
         elif tipo_recuperar == TipoRecuperar.Emitidas:
-            response = sat_service.recover_comprobante_emited_request(
+            response = sat_service.recover_comprobante_emitted_request(
                 fecha_final=fecha_final,
                 fecha_inicial=fecha_inicial,
                 rfc_emisor=sat_service.signer.rfc,
