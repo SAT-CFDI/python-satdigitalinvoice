@@ -444,7 +444,7 @@ def generate_pdf_template(template_name, fields, target=None, css_string=None):
         stylesheets=[
             os.path.join(SOURCE_DIRECTORY, "markdown_styles", "markdown6.css"),
             CSS(
-                string=css_string
+                string=css_string or '@page { width: Letter; margin: 1.6cm 1.6cm 1.6cm 1.6cm; }'
             ),
             CSS(
                 string=hash_mark
