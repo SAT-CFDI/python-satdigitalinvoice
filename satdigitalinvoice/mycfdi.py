@@ -2,6 +2,7 @@ import glob
 import hashlib
 import json
 import logging
+import re
 import os
 from collections.abc import Mapping
 from datetime import datetime
@@ -51,6 +52,31 @@ def generate_pseudo_random_guid(cadena):
     hash_object.update(cadena.encode('utf-8'))
     return UUID(hash_object.hexdigest())
 
+
+def sanitize_filename(filename: str, replacement: str = "") -> str:
+    """
+    Removes or replaces characters that are invalid in filenames.
+
+    Args:
+        filename (str): The input string.
+        replacement (str): What to put instead of invalid characters (default "_").
+
+    Returns:
+        str: A safe filename.
+    """
+    # Characters forbidden in Windows filenames: \ / : * ? " < > |
+    invalid_chars = r'[\\/:*?"<>|]+'
+
+    # Replace invalid characters
+    safe = re.sub(invalid_chars, replacement, filename)
+
+    # Optionally, remove other special characters (keeping alphanumeric, space, _, -, .)
+    safe = re.sub(r'[^a-zA-Z0-9 _.\-]', replacement, safe)
+
+    # # Remove leading/trailing whitespace and dots (Windows restriction)
+    # safe = safe.strip(" .")
+
+    return safe
 
 class MyCFDI(SatCFDI):
     local_db = None
@@ -131,7 +157,7 @@ class MyCFDI(SatCFDI):
         match self.tag:
             case '{http://www.sat.gob.mx/cfd/3}Comprobante' | '{http://www.sat.gob.mx/cfd/4}Comprobante':
                 path = "{3:%Y}/{3:%Y-%m}/facturas/{4}_{0}_[{1}]_{2}".format(
-                    self.name,
+                    sanitize_filename(self.name),
                     code_str(self["TipoDeComprobante"]),
                     self.uuid,
                     self["Fecha"],
