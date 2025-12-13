@@ -5,9 +5,6 @@ from datetime import datetime
 from uuid import UUID
 
 import diskcache
-from satcfdi.accounting import SatCFDI
-from satcfdi.accounting.models import EstadoComprobante
-from satcfdi.models import Code
 from satcfdi.pacs import sat
 
 from satdigitalinvoice.microsoft_auth.microsoft_oauth2 import get_token_manual, token_refresh

@@ -1,13 +1,8 @@
-from datetime import date, datetime
-
 import pytest
 from satcfdi.models import DatePeriod
-
-from satdigitalinvoice.facturacion import FacturacionGUI
 from yaml.constructor import ConstructorError
 
-from satdigitalinvoice.file_data_managers import LocalData, ConfigManager, FacturasManager
-
+from satdigitalinvoice.file_data_managers import ConfigManager, FacturasManager
 from satdigitalinvoice.layout import make_layout
 from satdigitalinvoice.utils import random_string, add_month
 

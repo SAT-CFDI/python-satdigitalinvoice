@@ -73,7 +73,8 @@ setuptools.setup(
         'XlsxWriter',
         'jsonschema',
         'python-dateutil',
-        'babel'
+        'babel',
+        'azure-identity',
     ],
     extras_require={
         'test': [

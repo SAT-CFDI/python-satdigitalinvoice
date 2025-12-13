@@ -4,8 +4,7 @@ from azure.identity import AzureCliCredential
 from azure.keyvault.secrets import SecretClient
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives._serialization import Encoding, PrivateFormat, NoEncryption
-from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption, pkcs12
 
 
 def get_certificate(vault_url, certificate_name):
