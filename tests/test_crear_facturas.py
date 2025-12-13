@@ -100,17 +100,19 @@ def test_periodo_desc():
 
 
 def test_find_best_match():
+    def d(k):
+        return datetime.strptime(k, '%Y-%m').date()
     casesA = {
-        '2022-12': Decimal('20.00'),
-        '2023-12': Decimal('30.00'),
-        '2024-12': Decimal('40.00'),
-        '2025-12': None,
+        d('2022-12'): Decimal('20.00'),
+        d('2023-12'): Decimal('30.00'),
+        d('2024-12'): Decimal('40.00'),
+        d('2025-12'): None,
     }
     casesB = {
-        '2025-12': None,
-        '2024-12': Decimal('40.00'),
-        '2023-12': Decimal('30.00'),
-        '2022-12': Decimal('20.00'),
+        d('2025-12'): None,
+        d('2024-12'): Decimal('40.00'),
+        d('2023-12'): Decimal('30.00'),
+        d('2022-12'): Decimal('20.00'),
     }
 
     for cases in (casesA, casesB):

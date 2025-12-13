@@ -69,8 +69,6 @@ def cert_info(signer: Signer):
 def find_best_match(cases, dp: DatePeriod | date) -> (date, object):
     best_date, best_value = (None, None)
     for k, v in cases.items():
-        # if isinstance(k, str):
-        #     k = datetime.strptime(k, '%Y-%m').date()
         if k <= dp:
             if best_date is None or k > best_date:
                 best_date, best_value = k, v
