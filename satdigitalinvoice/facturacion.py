@@ -8,7 +8,7 @@ from datetime import date, datetime
 from uuid import UUID
 from zipfile import ZipFile
 
-from PySimpleGUI import POPUP_BUTTONS_OK_CANCEL, PySimpleGUI as sg, POPUP_BUTTONS_NO_BUTTONS
+from . import PySimpleGUI as sg
 from satcfdi import csf, render
 
 from satcfdi.accounting.models import EstadoComprobante
@@ -803,7 +803,7 @@ class FacturacionGUI:
             res = sg.popup(
                 f"Estas seguro que quieres hacer Complemento de Pago con fecha de pago de hace '{dif_dias}' dias?",
                 title="Confirmar",
-                button_type=POPUP_BUTTONS_OK_CANCEL,
+                button_type=sg.POPUP_BUTTONS_OK_CANCEL,
                 location=center_location(self.window),
                 keep_on_top=True,
             )
@@ -829,7 +829,7 @@ class FacturacionGUI:
             no_titlebar=True,
             background_color="red4",
             location=center_location(self.window),
-            button_type=POPUP_BUTTONS_NO_BUTTONS,
+            button_type=sg.POPUP_BUTTONS_NO_BUTTONS,
             auto_close=True,
             non_blocking=True,
         )
@@ -840,7 +840,7 @@ class FacturacionGUI:
             no_titlebar=True,
             background_color="green4",
             location=center_location(self.window),
-            button_type=POPUP_BUTTONS_NO_BUTTONS,
+            button_type=sg.POPUP_BUTTONS_NO_BUTTONS,
             auto_close=True,
             non_blocking=True,
             grab_anywhere=True,
@@ -1200,7 +1200,7 @@ class FacturacionGUI:
                         res = sg.popup(
                             f"Estas seguro que quieres '{action_text}'?",
                             title="Confirmar",
-                            button_type=POPUP_BUTTONS_OK_CANCEL,
+                            button_type=sg.POPUP_BUTTONS_OK_CANCEL,
                             location=center_location(self.window),
                             keep_on_top=True,
                         )
@@ -1220,7 +1220,7 @@ class FacturacionGUI:
                     res = sg.popup(
                         f"Estas seguro que quieres 'Enviar Prediales'?",
                         title="Confirmar",
-                        button_type=POPUP_BUTTONS_OK_CANCEL,
+                        button_type=sg.POPUP_BUTTONS_OK_CANCEL,
                         location=center_location(self.window),
                         keep_on_top=True,
                     )

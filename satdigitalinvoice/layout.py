@@ -1,8 +1,7 @@
 from datetime import date, datetime, timedelta
 from enum import StrEnum
 
-import PySimpleGUI as sg
-from PySimpleGUI import BUTTON_TYPE_BROWSE_FOLDER
+from . import PySimpleGUI as sg
 from dateutil.relativedelta import relativedelta
 from satcfdi.models import Code
 from satcfdi.catalogs import select_all
@@ -586,7 +585,7 @@ def make_layout():
                                         sg.Button(
                                             border_width=0,
                                             button_text='Seleccionar Projecto', target='projecto_dir_selected',
-                                            button_type=BUTTON_TYPE_BROWSE_FOLDER, key='projecto_dir_browse',
+                                            button_type=sg.BUTTON_TYPE_BROWSE_FOLDER, key='projecto_dir_browse',
                                         ),
                                         sg.Text("", pad=TEXT_PADDING, key="projecto_dir"),
                                         sg.Button("Projecto:", pad=TEXT_PADDING, key='projecto_dir_selected', visible=False, enable_events=True, change_submits=True),

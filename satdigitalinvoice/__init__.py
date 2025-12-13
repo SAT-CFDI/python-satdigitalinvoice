@@ -1,7 +1,7 @@
 import logging
 import os
 
-import PySimpleGUI as sg
+from . import PySimpleGUI as sg
 
 SOURCE_DIRECTORY = os.path.dirname(__file__)
 
