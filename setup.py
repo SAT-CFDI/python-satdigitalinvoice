@@ -75,6 +75,7 @@ setuptools.setup(
         'python-dateutil',
         'babel',
         'azure-identity',
+        'azure-keyvault'
     ],
     extras_require={
         'test': [
