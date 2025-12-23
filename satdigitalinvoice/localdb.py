@@ -19,8 +19,8 @@ SOLICITUDES = 'solicitudes'
 EMAIL_TOKEN = 'email_token'
 
 MozillaThunderbird_ID = '9e5f94bc-e8a4-4e73-b8be-63364c29d753'
-USER = ''
-BROWSER_NAME = None
+ISSUER_URI = "https://login.microsoftonline.com/common/"
+REDIRECT_URI = "https://localhost"
 SCOPES = [
     'https://outlook.office.com/SMTP.Send',
     'offline_access'
@@ -122,12 +122,23 @@ class LocalDB(diskcache.Cache):
         data = self.get(EMAIL_TOKEN)
         data = token_refresh(
             refresh_token=data['refresh_token'],
-            issuer_uri="https://login.microsoftonline.com/common/",
+            issuer_uri=ISSUER_URI,
             client_id=MozillaThunderbird_ID,
             scopes=SCOPES
         )
         self.set_email_token(data)
         return data
+
+    def get_email_token_manual(self):
+        token = get_token_manual(
+            issuer_uri=ISSUER_URI,
+            client_id=MozillaThunderbird_ID,
+            scopes=SCOPES,
+            login_hint='',
+            browser_name=None,
+            redirect_uri=REDIRECT_URI
+        )
+        self.set_email_token(token)
 
     def solicitud_merge(self, solicitud_id, rfc, response, request=None):
         solicitudes = self.get_solicitudes()
@@ -153,13 +164,3 @@ class LocalDB(diskcache.Cache):
         except FileNotFoundError:
             return default
 
-
-def get_email_token():
-    return get_token_manual(
-        issuer_uri=f"https://login.microsoftonline.com/common/",
-        client_id=MozillaThunderbird_ID,
-        scopes=SCOPES,
-        login_hint=USER,
-        browser_name=BROWSER_NAME,
-        redirect_uri="https://localhost"
-    )
