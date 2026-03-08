@@ -2,21 +2,15 @@ import copy
 import hashlib
 import logging
 import os
-import shutil
 from datetime import datetime, date
 from decimal import Decimal
 from decimal import InvalidOperation
-from itertools import groupby
 
-import xlsxwriter
 from markdown2 import markdown
 from satcfdi import render
-from satcfdi.accounting import filter_invoices_iter, filter_payments_iter, invoices_export, payments_export
-from satcfdi.accounting.process import payments_groupby_receptor, payments_retentions_export
 from satcfdi.create.cfd import cfdi40
 from satcfdi.create.cfd.catalogos import Impuesto
 from satcfdi.create.cfd.cfdi40 import Comprobante, PagoComprobante
-from satcfdi.diot import DIOT, DatosIdentificacion, Periodo, ProveedorTercero, TipoTercero, TipoOperacion
 from satcfdi.models import DatePeriod
 from satcfdi.pacs import sat
 
@@ -29,9 +23,8 @@ from . import SOURCE_DIRECTORY, ARCHIVOS_DIRECTORY, TEMP_DIRECTORY
 from .environments import facturacion_environment
 from .exceptions import ConsoleErrors
 from .formatting_functions.common import fecha_mes, get_month_name
-from .log_tools import to_yaml
 from .utils import add_month, find_best_match, months_between, open_file, code_str
-from .sat_functions import isr_mensual, sat_retenciones
+from .sat_functions import sat_retenciones
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

@@ -180,7 +180,7 @@ def make_layout():
                                             [str(o) for o in SearchOptions],
                                         ],
                                     ),
-                                    sg.Input(datetime.now().strftime(PERIODO_FMT), size=(40, 1), key="emitidas_search"),
+                                    sg.Input(SearchOptions.PorPagar, size=(40, 1), key="emitidas_search"), # datetime.now().strftime(PERIODO_FMT)
                                     sg.Push(),
                                     sg.Button(image_data=IMPORT_CSV, key="importar_emitidas", border_width=0, button_color=BUTTON_COLOR),
                                 ]],
@@ -252,7 +252,7 @@ def make_layout():
                                             [str(o) for o in SearchOptions],
                                         ],
                                     ),
-                                    sg.Input(datetime.now().strftime(PERIODO_FMT), size=(40, 1), key="recibidas_search"),
+                                    sg.Input(SearchOptions.PorPagar, size=(40, 1), key="recibidas_search"),
                                 ]],
                                     expand_x=True
                                 )
