@@ -85,7 +85,7 @@ class FacturacionGUI:
         self.local_db = None
         self.rfc_prediales = None
         self.emisores = {"Test": "Test"}
-        self.pac_service = None
+        self.pac_services = {}
         self.email_signature = None
         self.config_last_modified = None
         self.proveedores = {}
@@ -146,11 +146,16 @@ class FacturacionGUI:
         self.config_last_modified = last_modified
 
         pac = config['pac']
-        pac_module, pac_class = pac['type'].split(".")
-        mod = __import__(f"satcfdi.pacs.{pac_module}", fromlist=[pac_class])
-        self.pac_service = getattr(mod, pac_class)(
-            **pac['args']
-        )
+
+        def load_pac(pac_config):
+            pac_module, pac_class = pac_config['type'].split(".")
+            mod = __import__(f"satcfdi.pacs.{pac_module}", fromlist=[pac_class])
+            return getattr(mod, pac_class)(**pac_config['args'])
+
+        # Per-RFC pac configuration
+        self.pac_services = {
+            rfc: load_pac(pac_config) for rfc, pac_config in pac.items()
+        }
 
         def load_emisor(data):
             return {
@@ -184,6 +189,9 @@ class FacturacionGUI:
         self.window["solicitudes_rfc"].update(values=emisores, value=emisores[0])
         self.window["contabilidad_rfc"].update(values=emisores, value=emisores[0])
 
+    def get_pac_service(self, rfc):
+        return self.pac_services[rfc]
+
     def run(self):
         self.main_loop()
         self.window.close()
@@ -197,14 +205,17 @@ class FacturacionGUI:
                 "fiel": cert_info(data['fiel']) if 'fiel' in data else None,
             }
 
+        def pac_info(pac_svc):
+            return {
+                "Type": type(pac_svc).__name__,
+                "Rfc": pac_svc.RFC,
+                "Environment": str(pac_svc.environment)
+            }
+
         print_yaml({
             "version": __version__.__version__,
             "facturacion": "CFDI 4.0",
-            "pac_service": {
-                "Type": type(self.pac_service).__name__,
-                "Rfc": self.pac_service.RFC,
-                "Environment": str(self.pac_service.environment)
-            },
+            "pac_service": {rfc: pac_info(svc) for rfc, svc in self.pac_services.items()},
             "emisores": {rfc: emisor_info(data) for rfc, data in self.emisores.items()},
         })
 
@@ -239,7 +250,7 @@ class FacturacionGUI:
                     title, range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
             ):
                 try:
-                    res = self.pac_service.stamp(
+                    res = self.get_pac_service(invoice['Emisor']['Rfc']).stamp(
                         cfdi=invoice,
                         accept=Accept.XML_PDF,
                         ref_id=ref_id
