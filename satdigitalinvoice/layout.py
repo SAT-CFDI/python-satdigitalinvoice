@@ -81,6 +81,9 @@ class TipoRecuperar(StrEnum):
     Emitidas = 'Emitidas'
     Recibidas = 'Recibidas'
 
+class TipoDocumento(StrEnum):
+    Comprobantes = 'Comprobantes'
+    Retenciones = 'Retenciones'
 
 class SearchOptions(StrEnum):
     PorPagar = 'Por Pagar'
@@ -493,6 +496,9 @@ def make_layout():
                                     sg.Combo([], default_value="", key="solicitudes_rfc", size=(15, 1)),
 
                                     sg.Text("Recuperar:", pad=TEXT_PADDING),
+                                    sg.Combo([TipoDocumento.Comprobantes, TipoDocumento.Retenciones],
+                                             default_value=TipoDocumento.Comprobantes, key="tipo_documento", size=(10, 1)),
+
                                     sg.Combo([TipoRecuperar.Recibidas, TipoRecuperar.Emitidas], default_value=TipoRecuperar.Recibidas, key="tipo_recuperar", size=(10, 1)),
 
                                     sg.CalendarButton("Inicio:", format=CALENDAR_FECHA_FMT, title="Inicio", no_titlebar=False, target="fecha_inicial", pad=TEXT_PADDING,
@@ -523,6 +529,7 @@ def make_layout():
                                         "FechaInicial",
                                         "FechaFinal",
                                         "TipoSolicitud",
+                                        "TipoDocumento",
                                         "TipoRecuperar",
                                         "RfcReceptor",
                                         "RfcEmisor",
@@ -535,6 +542,7 @@ def make_layout():
                                         r["request"]["fecha_inicial"].strftime(CALENDAR_FECHA_FMT),
                                         r["request"]["fecha_final"].strftime(CALENDAR_FECHA_FMT),
                                         r["request"]["tipo_solicitud"],
+                                        r["request"].get('tipo_documento'),
                                         r["request"].get('tipo_recuperar'),
                                         r["request"].get("rfc_receptor"),
                                         r["request"].get("rfc_emisor"),

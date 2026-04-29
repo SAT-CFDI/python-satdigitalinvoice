@@ -29,7 +29,7 @@ from .gui_functions import generate_ingresos, pago_factura, archivos_folder, per
     CALENDAR_FECHA_FMT, ConsoleErrors, \
     generate_ajustes, generar_depositos, cliente_prediales
 from .initdb import InitDB
-from .layout import make_layout, ActionButtonManager, TipoRecuperar, SearchOptions
+from .layout import make_layout, ActionButtonManager, TipoRecuperar, TipoDocumento, SearchOptions
 from .localdb import LocalDB
 from .log_tools import header_line, print_yaml, to_yaml
 from .mycfdi import MyCFDI, LiquidatedState
@@ -299,6 +299,7 @@ class FacturacionGUI:
 
         sat_service = SAT(signer=self.emisores[rfc]['fiel'])
         tipo_recuperar = values["tipo_recuperar"]
+        tipo_documento = values["tipo_documento"]
         fecha_final = datetime.strptime(values["fecha_final"], CALENDAR_FECHA_FMT)
         fecha_inicial = datetime.strptime(values["fecha_inicial"], CALENDAR_FECHA_FMT)
 
@@ -306,26 +307,46 @@ class FacturacionGUI:
             'fecha_inicial': fecha_inicial,
             'fecha_final': fecha_final,
             'tipo_solicitud': values["tipo_solicitud"],
-            'tipo_recuperar': tipo_recuperar.value
+            'tipo_recuperar': tipo_recuperar.value,
+            'tipo_documento': tipo_documento.value
         }
 
-        if tipo_recuperar == TipoRecuperar.Recibidas:
-            response = sat_service.recover_comprobante_received_request(
-                fecha_final=fecha_final,
-                fecha_inicial=fecha_inicial,
-                rfc_receptor=sat_service.signer.rfc,
-                tipo_solicitud=values["tipo_solicitud"],
-                estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
-            )
-        elif tipo_recuperar == TipoRecuperar.Emitidas:
-            response = sat_service.recover_comprobante_emitted_request(
-                fecha_final=fecha_final,
-                fecha_inicial=fecha_inicial,
-                rfc_emisor=sat_service.signer.rfc,
-                tipo_solicitud=values["tipo_solicitud"]
-            )
+        if tipo_documento == TipoDocumento.Retenciones:
+            if tipo_recuperar == TipoRecuperar.Recibidas:
+                response = sat_service.recover_retencion_received_request(
+                    fecha_final=fecha_final,
+                    fecha_inicial=fecha_inicial,
+                    rfc_receptor=sat_service.signer.rfc,
+                    tipo_solicitud=values["tipo_solicitud"],
+                    estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
+                )
+            elif tipo_recuperar == TipoRecuperar.Emitidas:
+                response = sat_service.recover_retencion_emitted_request(
+                    fecha_final=fecha_final,
+                    fecha_inicial=fecha_inicial,
+                    rfc_emisor=sat_service.signer.rfc,
+                    tipo_solicitud=values["tipo_solicitud"]
+                )
+            else:
+                raise ValueError(f"Tipo de solicitud no soportado: {tipo_recuperar}")
         else:
-            raise ValueError(f"Tipo de solicitud no soportado: {tipo_recuperar}")
+            if tipo_recuperar == TipoRecuperar.Recibidas:
+                response = sat_service.recover_comprobante_received_request(
+                    fecha_final=fecha_final,
+                    fecha_inicial=fecha_inicial,
+                    rfc_receptor=sat_service.signer.rfc,
+                    tipo_solicitud=values["tipo_solicitud"],
+                    estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
+                )
+            elif tipo_recuperar == TipoRecuperar.Emitidas:
+                response = sat_service.recover_comprobante_emitted_request(
+                    fecha_final=fecha_final,
+                    fecha_inicial=fecha_inicial,
+                    rfc_emisor=sat_service.signer.rfc,
+                    tipo_solicitud=values["tipo_solicitud"]
+                )
+            else:
+                raise ValueError(f"Tipo de solicitud no soportado: {tipo_recuperar}")
 
         if "IdSolicitud" not in response:
             self.error_message("Error al solicitar comprobantes" + to_yaml(response))
@@ -333,12 +354,17 @@ class FacturacionGUI:
 
         self.local_db.solicitud_merge(response["IdSolicitud"], rfc=rfc, request=args, response=response)
 
-    def recupera_comprobantes(self, sat_service, response):
+    def recupera_comprobantes(self, sat_service, response, tipo_documento=None):
         if response["EstadoSolicitud"] == EstadoSolicitud.TERMINADA:
             for id_paquete in response['IdsPaquetes']:
-                r, paquete = sat_service.recover_comprobante_download(
-                    id_paquete=id_paquete
-                )
+                if tipo_documento == TipoDocumento.Retenciones:
+                    r, paquete = sat_service.recover_retencion_download(
+                        id_paquete=id_paquete
+                    )
+                else:
+                    r, paquete = sat_service.recover_comprobante_download(
+                        id_paquete=id_paquete
+                    )
                 print(f"paquete: {id_paquete}")
                 print_yaml(r)
                 if paquete:
@@ -466,12 +492,19 @@ class FacturacionGUI:
                         sat_service = SAT(signer=self.emisores[rfc]['fiel'])
 
                         id_solicitud = solicitud["response"]["IdSolicitud"]
-                        response = sat_service.recover_comprobante_status(
-                            id_solicitud=id_solicitud
-                        )
+                        tipo_documento = solicitud.get("request", {}).get("tipo_documento")
+
+                        if tipo_documento == TipoDocumento.Retenciones:
+                            response = sat_service.recover_retencion_status(
+                                id_solicitud=id_solicitud
+                            )
+                        else:
+                            response = sat_service.recover_comprobante_status(
+                                id_solicitud=id_solicitud
+                            )
                         print_yaml(response)
                         self.local_db.solicitud_merge(id_solicitud, rfc, response=response)
-                        self.recupera_comprobantes(sat_service, response)
+                        self.recupera_comprobantes(sat_service, response, tipo_documento=tipo_documento)
 
                 case 'facturas' | 'pago':
                     for invoice in self.progress_iterate(action_text, action_items):
