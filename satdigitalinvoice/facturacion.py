@@ -247,7 +247,7 @@ class FacturacionGUI:
         attempts = 3
         try:
             for i in self.progress_iterate(
-                    title, range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=2000
+                    title, range(attempts), lambda r: f'Intentando de nuevo... Intento {r + 1} de {attempts}', skip_first=True, delay=3000
             ):
                 try:
                     res = self.get_pac_service(invoice['Emisor']['Rfc']).stamp(
