@@ -252,7 +252,7 @@ class FacturacionGUI:
                 try:
                     res = self.get_pac_service(invoice['Emisor']['Rfc']).stamp(
                         cfdi=invoice,
-                        accept=Accept.XML_PDF,
+                        accept=Accept.XML,
                         ref_id=ref_id
                     )
                 except Exception as ex:
@@ -733,7 +733,7 @@ class FacturacionGUI:
         self.window['errores_tab'].select()
 
     def download_invoice(self, uuid: UUID):
-        res = self.pac_service.recover(uuid, accept=Accept.XML_PDF)
+        res = self.pac_service.recover(uuid, accept=Accept.XML)
         self._all_invoices = None
         return MyCFDI.move_to_folder(res.xml, pdf_data=res.pdf)
 
