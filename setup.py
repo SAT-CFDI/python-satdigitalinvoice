@@ -53,7 +53,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12"
     ],
-    python_requires='>=3.11',
+    python_requires='>=3.12',
     package_dir={package: package_dir},
     packages=packages,
     package_data={
@@ -64,7 +64,7 @@ setuptools.setup(
         ],
     },
     install_requires=[
-        'satcfdi==4.9.17',
+        'satcfdi>=4.9.21',
         'diskcache',
         'num2words',
         'PyYAML',
