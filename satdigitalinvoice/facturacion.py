@@ -4,6 +4,7 @@ import io
 import itertools
 import logging
 import os
+import re
 from datetime import date, datetime
 from uuid import UUID
 from zipfile import ZipFile
@@ -537,6 +538,18 @@ class FacturacionGUI:
                                 titulo = "Comprobantes Fiscales"
                             else:
                                 titulo = "Complementos de Pago"
+
+                            if len(facturas) == 1 and facturas[0]["TipoDeComprobante"] == "P":
+                                f = facturas[0]
+                                pago = f["Complemento"]["Pagos"]["Pago"][0]["DoctoRelacionado"][0]["IdDocumento"]
+                                doc = self.get_all_invoices().get(UUID(pago))
+
+                                descripcion = doc["Conceptos"][0]['Descripcion']
+                                match = re.search(r'\bMES DE\s+(\w+)', descripcion, re.IGNORECASE)
+                                desc = match.group(1)
+
+                                titulo =  "Complemento de Pago del mes " + desc
+
                             s.send_email(
                                 subject=f"{titulo} {receptor['RazonSocial']} - {receptor['Rfc']}",
                                 to_addrs=clientes.correos(receptor['Rfc'], filters=tipos_facturas),
