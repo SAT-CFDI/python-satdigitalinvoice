@@ -530,8 +530,8 @@ class FacturacionGUI:
 
                             def attachments():
                                 for ni in facturas:
-                                    yield ni.filename + ".xml"
-                                    yield ni.filename + ".pdf"
+                                    yield ni.xml_filename
+                                    yield ni.pdf_filename
 
                             if "I" in tipos_facturas:
                                 titulo = "Comprobantes Fiscales"
@@ -1356,6 +1356,23 @@ class FacturacionGUI:
                                     if row.get("Estatus", "Entregado SAT") != "Entregado SAT":
                                         cfdi.status_sat(update=True)
                         self.done_message("FIN")
+
+                case 'descargar_emitidas':
+                    download_folder = sg.popup_get_folder('', no_window=True,)
+                    if download_folder:
+                        emitidas = self.window["emitidas_table"].selected_items()
+
+                        zip_name = f"emitidas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                        zip_path = os.path.join(download_folder, zip_name)
+                        added = 0
+                        with ZipFile(zip_path, 'w') as zf:
+                            for i in emitidas:
+                                for f in (i.xml_filename, i.pdf_filename):
+                                    if not os.path.isfile(f):
+                                        raise FileNotFoundError(f"Archivo no encontrado: {f}")
+                                    zf.write(f, arcname=os.path.basename(f))
+                                    added += 1
+                        self.done_message(f"ZIP creado con {added} archivo(s): {zip_path}")
 
                 case "exportar_metadata":
                     with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:

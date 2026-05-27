@@ -181,6 +181,14 @@ class MyCFDI(SatCFDI):
 
         return os.path.join(self.base_dir, path)
 
+    @property
+    def pdf_filename(self):
+        return self.filename + ".pdf"
+
+    @property
+    def xml_filename(self):
+        return self.filename + ".xml"
+
     @classmethod
     def uuid_from_filename(cls, filename):
         filename = os.path.basename(filename)
@@ -197,16 +205,16 @@ class MyCFDI(SatCFDI):
         os.makedirs(os.path.dirname(full_name), exist_ok=True)
 
         try:
-            with open(full_name + ".xml", 'xb') as fp:
+            with open(cfdi.xml_filename, 'xb') as fp:
                 fp.write(xml_data)
             print(f"Factura ha sido agregada: '{full_name}'")
 
             if pdf_data:
-                with open(full_name + ".pdf", 'wb') as fp:
+                with open(cfdi.pdf_filename, 'wb') as fp:
                     fp.write(pdf_data)
             else:
                 try:
-                    render.pdf_write(cfdi, full_name + ".pdf")
+                    render.pdf_write(cfdi, cfdi.pdf_filename)
                 except:
                     logger.exception("Fallo crear PDF: '%s'", full_name)
         except FileExistsError:

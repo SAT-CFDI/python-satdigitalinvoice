@@ -72,6 +72,8 @@ IMPORT_CSV = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEw
              "+xiLmLj2MZHPCl0WbrjhZjPb7EEh3CEU/zAOpYiZxKf8LUMYCPEI6jFDz3DYfhYdPEb7/ET9TKAbqtoGt9xheWINWInt3KnygDehKjWIR7GaxzjIPJW43treh5EbBY7eHQdoFXsJMRNPMRmvJ" \
              "/jZeSNRqzeUfwiYvu9IAN4EcXFCCcwWMibwdNC8bwXpL1LU+0Z9grHePtYX6l6VPzNkrQpF07WxZMBqVdmVhVwE/v3gD+of4e/h7E8SwAAAABJRU5ErkJggg=="
 
+DOWNLOAD = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAj0lEQVR4nO2UwQmDQBQF5xhIsCh7CEsgfaSGVPW9xGrswIBh4S2EILqbfD2EHZjbdx56ECrOmNwMqwNrWB3YdeAAtBkDrW6LuQMjEBYGgm7ibTFHoAOewHVm4Kx4DzTfDMyNmHSJJxqFYnCQbvHPN5mkazwRgw/pHk+c5M9cgFuh8Zls7O17T5lu+gvhf3kBdHg9SpCbAQgAAAAASUVORK5CYII="
+
 BUTTON_COLOR = (sg.theme_background_color(), sg.theme_background_color())
 LARGE_FONT = ("Courier New", 11, "bold")
 PERIODO_FMT = "%Y-%m"
@@ -186,6 +188,7 @@ def make_layout():
                                     sg.Input(SearchOptions.PorPagar, size=(40, 1), key="emitidas_search"), # datetime.now().strftime(PERIODO_FMT)
                                     sg.Push(),
                                     sg.Button(image_data=IMPORT_CSV, key="importar_emitidas", border_width=0, button_color=BUTTON_COLOR),
+                                    sg.Button(image_data=DOWNLOAD, key="descargar_emitidas", border_width=0, button_color=BUTTON_COLOR),
                                 ]],
                                     expand_x=True
                                 )
