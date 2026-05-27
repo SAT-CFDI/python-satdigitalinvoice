@@ -539,7 +539,7 @@ class FacturacionGUI:
                                 titulo = "Complementos de Pago"
                             s.send_email(
                                 subject=f"{titulo} {receptor['RazonSocial']} - {receptor['Rfc']}",
-                                to_addrs=clientes.correos(receptor['rfc'], filters=tipos_facturas),
+                                to_addrs=clientes.correos(receptor['Rfc'], filters=tipos_facturas),
                                 html=facturacion_environment.get_template('mail_facturas_template.html').render(
                                     facturas=facturas,
                                     facturas_pendientes_meses_anteriores=facturas_facturas_pendientes_meses_anteriores,
