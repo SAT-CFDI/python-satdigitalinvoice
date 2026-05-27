@@ -32,10 +32,29 @@ properties:
   RegimenFiscal:
     type: string
   Email:
-    type: array
-    items:
-      type: string
-      format: email
+    oneOf:
+    - type: array
+      items:
+        type: string
+        format: email
+    - type: object
+      additionalProperties: false
+      properties:
+        "*":
+          type: array
+          items:
+            type: string
+            format: email
+        "P":
+          type: array
+          items:
+            type: string
+            format: email
+        "I":
+          type: array
+          items:
+            type: string
+            format: email
   EmailNotas:
     type: string
   Representante:

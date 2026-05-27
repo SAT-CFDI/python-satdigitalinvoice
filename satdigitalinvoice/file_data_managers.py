@@ -109,6 +109,34 @@ class ClientsManager(LocalData):
             self[k]["Rfc"] = k
             self[k]["RegimenFiscal"] = self[k]["RegimenFiscal"]
 
+    def correos(self, receptor, filters=None):
+        r_email = self[receptor]["Email"]
+        if isinstance(r_email, list):
+            return r_email
+
+        if not isinstance(r_email, dict):
+            raise TypeError(f"Email must be a list or dict, got {type(r_email).__name__}")
+
+        if filters is None:
+            filters = []
+
+        emails = []
+        seen = set()
+
+        def add_emails(values):
+            if values is None:
+                return
+            for email in values:
+                if email and email not in seen:
+                    seen.add(email)
+                    emails.append(email)
+
+        add_emails(r_email.get("*"))
+        for f in filters:
+            add_emails(r_email.get(f))
+
+        return emails
+
 
 class ProductosManager(LocalData):
     file_source = "productos.yaml"

@@ -473,13 +473,13 @@ class FacturacionGUI:
 
                     yield file
 
-            receptor = clientes[receptor]
+            receptor_info = clientes[receptor]
             with self.email_manager.sender as s:
                 s.send_email(
-                    subject=f"Prediales {receptor['RazonSocial']} - {receptor['Rfc']}",
-                    to_addrs=receptor["Email"],
+                    subject=f"Prediales {receptor_info['RazonSocial']} - {receptor_info['Rfc']}",
+                    to_addrs=clientes.correos(receptor),
                     html=facturacion_environment.get_template('mail_prediales_template.html').render(
-                        receptor=receptor,
+                        receptor=receptor_info,
                         email_signature=self.email_signature
                     ),
                     file_attachments=attachments()
@@ -523,16 +523,23 @@ class FacturacionGUI:
                             break
 
                 case 'correos':
+                    clientes = ClientsManager()
                     with self.email_manager.sender as s:
                         for receptor, facturas, facturas_facturas_pendientes_meses_anteriores in self.progress_iterate(action_text, action_items):
+                            tipos_facturas = set(i["TipoDeComprobante"] for i in facturas)
+
                             def attachments():
                                 for ni in facturas:
                                     yield ni.filename + ".xml"
                                     yield ni.filename + ".pdf"
 
+                            if "I" in tipos_facturas:
+                                titulo = "Comprobantes Fiscales"
+                            else:
+                                titulo = "Complementos de Pago"
                             s.send_email(
-                                subject=f"Comprobantes Fiscales {receptor['RazonSocial']} - {receptor['Rfc']}",
-                                to_addrs=receptor["Email"],
+                                subject=f"{titulo} {receptor['RazonSocial']} - {receptor['Rfc']}",
+                                to_addrs=clientes.correos(receptor['rfc'], filters=tipos_facturas),
                                 html=facturacion_environment.get_template('mail_facturas_template.html').render(
                                     facturas=facturas,
                                     facturas_pendientes_meses_anteriores=facturas_facturas_pendientes_meses_anteriores,
