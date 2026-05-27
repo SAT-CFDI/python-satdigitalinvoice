@@ -120,22 +120,18 @@ class ClientsManager(LocalData):
         if filters is None:
             filters = []
 
-        emails = []
-        seen = set()
+        emails = set()
 
         def add_emails(values):
             if values is None:
                 return
-            for email in values:
-                if email and email not in seen:
-                    seen.add(email)
-                    emails.append(email)
+            emails.update(email for email in values if email)
 
         add_emails(r_email.get("*"))
         for f in filters:
             add_emails(r_email.get(f))
 
-        return emails
+        return list(emails)
 
 
 class ProductosManager(LocalData):
