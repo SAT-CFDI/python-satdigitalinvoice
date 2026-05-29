@@ -28,7 +28,10 @@ def porcentaje(k):
 
 
 def fecha(date):
-    return format_date(date, locale=LOCALE, format="d 'de' MMMM 'del' y").upper()
+    day_numero = num_letras(date.day)
+    anio_numero = num_letras(date.year)
+    formated_d = format_date(date, locale=LOCALE, format="d '{0} de' MMMM 'del' yyyy '{1}'")
+    return formated_d.format(day_numero, anio_numero).upper()
 
 
 def fecha_mes(date):
