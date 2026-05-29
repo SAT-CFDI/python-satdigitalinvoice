@@ -30,7 +30,7 @@ def porcentaje(k):
 def fecha(date):
     day_numero = num_letras(date.day)
     anio_numero = num_letras(date.year)
-    formated_d = format_date(date, locale=LOCALE, format="d '{0} de' MMMM 'del' yyyy '{1}'")
+    formated_d = format_date(date, locale=LOCALE, format="d '({0}) de' MMMM 'del' yyyy '({1})'")
     return formated_d.format(day_numero, anio_numero).upper()
 
 
