@@ -9,11 +9,11 @@ def pesos(amount):
     decimal_part = "{:.2f}".format(amount).split(".")[1]
     integer_part = num2words(int(amount), lang=LANG, to='currency').upper()
 
-    return "${0:,.2f} (SON: {1} {2}/100M.N.)".format(amount, integer_part, decimal_part)
+    return "${0:,.2f} (SON: {1} {2}/100 MONEDA NACIONAL)".format(amount, integer_part, decimal_part)
 
 
-def pesos_sinletra(amount):
-    return "${0:,.2f}".format(amount)
+# def pesos_sinletra(amount):
+#     return "${0:,.2f}".format(amount)
 
 def num_letras(number):
     return num2words(number, lang=LANG).upper()
