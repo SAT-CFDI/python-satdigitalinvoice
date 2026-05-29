@@ -45,6 +45,6 @@ def get_month_name(month_number):
 
 def delta_tiempo(duracion):
     months = duracion.years * 12 + duracion.months
-    if months == 12:
-        return 'UN AÑO'
-    return num_letras(duracion.months) + ' MESES'
+    # if months == 12:
+    #     return '1 (UN) AÑO'
+    return numero(months) + ' MESES'
