@@ -328,7 +328,6 @@ class FacturacionGUI:
                 response = sat_service.recover_retencion_received_request(
                     fecha_final=fecha_final,
                     fecha_inicial=fecha_inicial,
-                    rfc_receptor=sat_service.signer.rfc,
                     tipo_solicitud=values["tipo_solicitud"],
                     estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
                 )
@@ -336,7 +335,6 @@ class FacturacionGUI:
                 response = sat_service.recover_retencion_emitted_request(
                     fecha_final=fecha_final,
                     fecha_inicial=fecha_inicial,
-                    rfc_emisor=sat_service.signer.rfc,
                     tipo_solicitud=values["tipo_solicitud"]
                 )
             else:
@@ -346,7 +344,6 @@ class FacturacionGUI:
                 response = sat_service.recover_comprobante_received_request(
                     fecha_final=fecha_final,
                     fecha_inicial=fecha_inicial,
-                    rfc_receptor=sat_service.signer.rfc,
                     tipo_solicitud=values["tipo_solicitud"],
                     estado_comprobante="Vigente" if values['tipo_solicitud'] == "CFDI" else None
                 )
@@ -354,7 +351,6 @@ class FacturacionGUI:
                 response = sat_service.recover_comprobante_emitted_request(
                     fecha_final=fecha_final,
                     fecha_inicial=fecha_inicial,
-                    rfc_emisor=sat_service.signer.rfc,
                     tipo_solicitud=values["tipo_solicitud"]
                 )
             else:
