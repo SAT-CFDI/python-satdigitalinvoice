@@ -1383,6 +1383,23 @@ class FacturacionGUI:
                                     added += 1
                         self.done_message(f"ZIP creado con {added} archivo(s): {zip_path}")
 
+                case 'descargar_recibidas':
+                    download_folder = sg.popup_get_folder('', no_window=True,)
+                    if download_folder:
+                        recibidas = self.window["recibidas_table"].selected_items()
+
+                        zip_name = f"recibidas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                        zip_path = os.path.join(download_folder, zip_name)
+                        added = 0
+                        with ZipFile(zip_path, 'w') as zf:
+                            for i in recibidas:
+                                for f in (i.xml_filename, i.pdf_filename):
+                                    if not os.path.isfile(f):
+                                        raise FileNotFoundError(f"Archivo no encontrado: {f}")
+                                    zf.write(f, arcname=os.path.basename(f))
+                                    added += 1
+                        self.done_message(f"ZIP creado con {added} archivo(s): {zip_path}")
+
                 case "exportar_metadata":
                     with open(METADATA_FILE, 'w', newline='', encoding='utf-8') as f:
                         writer = csv.writer(f)

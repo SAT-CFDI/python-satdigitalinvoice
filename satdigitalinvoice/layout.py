@@ -259,6 +259,10 @@ def make_layout():
                                         ],
                                     ),
                                     sg.Input(SearchOptions.PorPagar, size=(40, 1), key="recibidas_search"),
+                                    sg.Push(),
+                                    sg.Button(image_data=DOWNLOAD, key="descargar_recibidas", border_width=0,
+                                              button_color=BUTTON_COLOR),
+
                                 ]],
                                     expand_x=True
                                 )
