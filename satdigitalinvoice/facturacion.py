@@ -854,6 +854,11 @@ class FacturacionGUI:
         )
 
     def crear_pago(self, values, facturas_pagar):
+        if len(facturas_pagar) != 1:
+            raise ValueError("Debe de seleccionar una sola factura para crear un Complemento de Pago")
+
+        factura_pagar = facturas_pagar[0]
+
         clients = ClientsManager()
         fecha_pago = parse_fecha_pago(values["fecha_pago"])
 
@@ -870,12 +875,30 @@ class FacturacionGUI:
             if res != "OK":
                 return []
 
+        if any(
+            i["Emisor"]["Rfc"] in self.emisores
+            and i["Receptor"]["Rfc"] == factura_pagar["Receptor"]["Rfc"]
+            and i.liquidated_state() == LiquidatedState.PENDING
+            and i["Fecha"].date() < factura_pagar["Fecha"].date()
+            for i in self.get_all_invoices().values()
+        ):
+            res = sg.popup(
+                f"Estas seguro que quieres hacer Complemento de Pago de una factura de un cliente que tiene facturas pendientes de pago anteriores?",
+                title="Confirmar",
+                button_type=sg.POPUP_BUTTONS_OK_CANCEL,
+                location=center_location(self.window),
+                keep_on_top=True,
+            )
+            if res != "OK":
+                return []
+
+
         importe_pago = parse_importe_pago(values["importe_pago"])
         self.window["importe_pago"].update(importe_pago)
 
         cfdi = pago_factura(
-            receptor_cif=clients[facturas_pagar[0]["Receptor"]["Rfc"]],
-            factura_pagar=facturas_pagar[0],
+            receptor_cif=clients[factura_pagar["Receptor"]["Rfc"]],
+            factura_pagar=factura_pagar,
             fecha_pago=fecha_pago,
             forma_pago=values["forma_pago"],
             importe_pago=importe_pago,
