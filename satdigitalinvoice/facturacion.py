@@ -892,6 +892,8 @@ class FacturacionGUI:
             if res != "OK":
                 return []
 
+        if fecha_pago < factura_pagar["Fecha"]:
+            raise ValueError("La fecha de pago no puede ser anterior a la fecha de la factura")
 
         importe_pago = parse_importe_pago(values["importe_pago"])
         self.window["importe_pago"].update(importe_pago)
